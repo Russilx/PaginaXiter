@@ -64,6 +64,13 @@ const PAQUETES_FREE_FIRE = {
   547: 6160,
 };
 
+// Código de "validación" del PRODUCTO Free Fire en FlashTopup (distinto
+// de los serviceId de arriba, que son de cada PAQUETE de diamantes). Lo
+// buscás en tu panel de FlashTopup, en la ficha del juego Free Fire —
+// es el mismo tipo de código que en su doc de ejemplo usa "mlbb" para
+// Mobile Legends. Reemplazá el texto de abajo por el tuyo.
+const VALIDATION_CODE_FREE_FIRE = 'PONE_ACA_TU_CODIGO_DE_VALIDACION';
+
 const FT_HOST = 'https://api.flashtopup.com';
 
 // ---------- utilidades de firma HMAC-SHA256 (según la doc de FlashTopup) ----------
@@ -168,6 +175,49 @@ export default {
     let body;
     try { body = await request.json(); } catch (e) {
       return jsonResponse({ ok: false, motivo: 'BODY_INVALIDO' }, 400, cors);
+    }
+
+    // ---------- POST /validar-uid ----------
+    // body esperado: { uid: "123456789" }
+    // Confirma que el UID de Free Fire existe ANTES de cobrar/crear la
+    // orden, y devuelve el nombre de la cuenta para mostrárselo al
+    // cliente (así puede confirmar que es la suya antes de recargar).
+    if (url.pathname === '/validar-uid') {
+      const { uid } = body;
+
+      if (!uid || typeof uid !== 'string' || uid.trim().length < 3) {
+        return jsonResponse({ ok: false, motivo: 'UID_INVALIDO' }, 400, cors);
+      }
+
+      const checkBody = {
+        user_id: uid.trim(),
+        // Free Fire no tiene server_id (a diferencia de otros juegos
+        // como Mobile Legends), se manda vacío.
+        server_id: '',
+        validation_code: VALIDATION_CODE_FREE_FIRE,
+      };
+
+      const { httpStatus, data } = await llamarFlashTopup(
+        env, 'POST', '/api/reseller/v2/check-id', null, checkBody
+      );
+
+      if (!data) {
+        return jsonResponse({ ok: false, motivo: 'RESPUESTA_INVALIDA_DE_FLASHTOPUP' }, 502, cors);
+      }
+      if (!data.exito) {
+        return jsonResponse({
+          ok: false,
+          motivo: data.error?.codigo || 'ERROR_DESCONOCIDO',
+          mensaje: data.error?.mensaje || '',
+        }, httpStatus, cors);
+      }
+
+      const datos = data.datos || {};
+      return jsonResponse({
+        ok: true,
+        valido: datos['válido'] !== false,
+        nombreCuenta: datos['nombre_de_cuenta'] || '',
+      }, 200, cors);
     }
 
     // ---------- POST /crear-orden ----------
