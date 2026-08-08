@@ -10,69 +10,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=10">
 <style>
-  /* ============================================================
-     HÉROE — la gema "forjada" con resplandor y brasas subiendo.
-     Es el elemento que distingue esta página del resto del sitio.
-  ============================================================ */
-  .rf-hero{ position:relative; display:flex; flex-direction:column; align-items:center; text-align:center; padding-bottom:22px; }
-  .rf-eyebrow{
-    display:inline-flex; align-items:center; gap:6px;
-    font-size:10.5px; letter-spacing:1.6px; text-transform:uppercase;
-    color:var(--yellow);
-    background:rgba(245,197,66,0.1);
-    border:1px solid rgba(245,197,66,0.3);
-    padding:5px 12px 5px 10px;
-    border-radius:999px;
-    margin-bottom:20px;
-  }
-  .rf-eyebrow svg{ width:12px; height:12px; flex:none; }
-
-  .rf-hero-visual{ position:relative; width:108px; height:108px; margin-bottom:4px; display:flex; align-items:center; justify-content:center; }
-  .rf-hero-glow{
-    position:absolute; inset:-26px;
-    background:radial-gradient(circle, rgba(225,6,0,0.4), rgba(245,197,66,0.14) 45%, transparent 72%);
-    filter:blur(4px);
-    border-radius:50%;
-    animation:rf-pulse 3.6s ease-in-out infinite;
-  }
-  .rf-hero-gem{
-    position:relative; width:66px; height:66px;
-    filter:drop-shadow(0 8px 20px rgba(225,6,0,0.5));
-    animation:rf-float 4.6s ease-in-out infinite;
-  }
-  .rf-hero-gem svg{ width:100%; height:100%; display:block; }
-  .rf-hero-embers{ position:absolute; inset:0; pointer-events:none; }
-  .rf-hero-embers span{
-    position:absolute; bottom:14%; left:50%;
-    width:3px; height:3px; border-radius:50%;
-    background:var(--yellow);
-    opacity:0;
-    animation:rf-ember-rise 3.4s ease-in infinite;
-  }
-  @keyframes rf-pulse{ 0%,100%{ transform:scale(1); opacity:.85; } 50%{ transform:scale(1.14); opacity:1; } }
-  @keyframes rf-float{ 0%,100%{ transform:translateY(0) rotate(0deg); } 50%{ transform:translateY(-6px) rotate(3deg); } }
-  @keyframes rf-ember-rise{
-    0%{ transform:translate(0,0) scale(.5); opacity:0; }
-    18%{ opacity:1; }
-    100%{ transform:translate(var(--ex,0px), -78px) scale(1); opacity:0; }
-  }
-  @media (prefers-reduced-motion: reduce){
-    .rf-hero-glow, .rf-hero-gem, .rf-hero-embers span{ animation:none !important; }
-  }
-
-  .rf-gem-icon-sm{ width:15px; height:15px; flex:none; vertical-align:-3px; }
-
-  /* ---------- input con ícono (UID) ---------- */
-  .rf-input-wrap{ position:relative; }
-  .rf-input-wrap svg{
-    position:absolute; left:13px; top:50%; transform:translateY(-50%);
-    width:16px; height:16px; color:var(--grey); pointer-events:none;
-  }
-  .rf-input-wrap input{ padding-left:38px !important; }
-
-  .rf-uid-note{ font-size:11.5px; color:var(--grey); line-height:1.5; margin-top:6px; }
-  .rf-recargar-btn[disabled]{ opacity:0.5; cursor:not-allowed; }
-
   /* ---------- grilla de paquetes de diamantes ---------- */
   .rf-paquetes-grid{
     display:grid;
@@ -81,43 +18,42 @@
     margin:22px 0 6px;
   }
   .rf-paquete{
-    position:relative;
-    background:linear-gradient(160deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015));
+    background:rgba(255,255,255,0.03);
     border:1.5px solid rgba(255,255,255,0.08);
     border-radius:14px;
-    padding:18px 12px 14px;
+    padding:16px 12px;
     text-align:center;
     cursor:pointer;
-    overflow:hidden;
-    transition:border-color .18s ease, background .18s ease, transform .18s ease, box-shadow .18s ease;
-  }
-  .rf-paquete::before{
-    content:''; position:absolute; top:-45%; left:50%; width:150%; height:150%;
-    background:radial-gradient(circle, rgba(225,6,0,0.18), transparent 60%);
-    transform:translateX(-50%);
-    opacity:0; transition:opacity .2s ease; pointer-events:none;
+    transition:border-color .18s ease, background .18s ease, transform .18s ease;
   }
   .rf-paquete:hover{ transform:translateY(-2px); border-color:rgba(255,140,40,0.4); }
-  .rf-paquete:hover::before{ opacity:1; }
   .rf-paquete.activo{
     border-color:var(--red-light);
     background:rgba(225,6,0,0.1);
     box-shadow:0 0 0 1px rgba(255,59,48,0.35), 0 0 18px rgba(225,6,0,0.25);
   }
-  .rf-paquete.activo::before{ opacity:1; }
-  .rf-ribbon{
-    position:absolute; top:7px; right:7px;
-    font-size:8.5px; font-weight:800; letter-spacing:.4px; text-transform:uppercase;
-    color:#1a1200; background:var(--yellow);
-    padding:3px 7px; border-radius:6px;
-    box-shadow:0 3px 8px rgba(245,197,66,0.35);
-  }
-  .rf-paquete-icono{ width:26px; height:26px; margin:0 auto 8px; position:relative; z-index:1; }
-  .rf-paquete-icono svg{ width:100%; height:100%; display:block; filter:drop-shadow(0 3px 7px rgba(225,6,0,0.4)); }
-  .rf-paquete-cant{ font-family:'Anton', sans-serif; font-size:16px; letter-spacing:0.5px; color:var(--white); position:relative; z-index:1; }
-  .rf-paquete-precio{ font-size:13px; color:var(--yellow); font-weight:600; margin-top:4px; position:relative; z-index:1; }
+  .rf-paquete-icono{ font-size:22px; margin-bottom:6px; }
+  .rf-paquete-cant{ font-family:'Anton', sans-serif; font-size:16px; letter-spacing:0.5px; color:var(--white); }
+  .rf-paquete-precio{ font-size:13px; color:var(--yellow); font-weight:600; margin-top:4px; }
 
-  /* ---------- historial, estilo "ticket" ---------- */
+  .rf-uid-note{ font-size:11.5px; color:var(--grey); line-height:1.5; margin-top:6px; }
+
+  /* ---------- verificación de cuenta al escribir el UID ---------- */
+  .rf-uid-check{
+    font-size:12.5px;
+    line-height:1.5;
+    margin-top:8px;
+    display:none;
+    align-items:center;
+    gap:6px;
+  }
+  .rf-uid-check-cargando{ color:var(--grey); }
+  .rf-uid-check-ok{ color:var(--green); font-weight:600; }
+  .rf-uid-check-error{ color:var(--red-light); }
+
+  .rf-recargar-btn[disabled]{ opacity:0.5; cursor:not-allowed; }
+
+  /* ---------- historial ---------- */
   .rf-historial{
     margin-top:34px;
     padding-top:24px;
@@ -135,27 +71,17 @@
     display:flex;
     justify-content:space-between;
     align-items:center;
-    gap:4px;
-    background:var(--panel-2);
+    gap:10px;
+    background:rgba(255,255,255,0.03);
     border:1px solid rgba(255,255,255,0.07);
-    border-left:3px solid rgba(255,255,255,0.15);
     border-radius:12px;
     padding:12px 14px;
-    margin-bottom:10px;
+    margin-bottom:8px;
     font-size:13px;
   }
-  .rf-hist-item-completado{ border-left-color:var(--green); }
-  .rf-hist-item-procesando{ border-left-color:var(--yellow); }
-  .rf-hist-item-fallido{ border-left-color:var(--red-light); }
   .rf-hist-info{ line-height:1.5; }
-  .rf-hist-info > div:first-child{ display:flex; align-items:center; gap:5px; }
   .rf-hist-uid{ color:var(--grey); font-size:11.5px; }
-  .rf-hist-divider{
-    align-self:stretch; width:1px; margin:0 6px; flex:none;
-    background-image:repeating-linear-gradient(to bottom, rgba(255,255,255,0.16) 0 4px, transparent 4px 9px);
-  }
   .rf-hist-pill{
-    display:inline-flex; align-items:center; gap:4px;
     font-size:10.5px;
     font-weight:700;
     letter-spacing:0.4px;
@@ -164,29 +90,16 @@
     border-radius:999px;
     flex:none;
   }
-  .rf-hist-pill svg{ width:11px; height:11px; flex:none; }
   .rf-hist-pill-completado{ background:rgba(52,199,89,0.12); color:var(--green); border:1px solid rgba(52,199,89,0.35); }
   .rf-hist-pill-procesando{ background:rgba(245,197,66,0.12); color:var(--yellow); border:1px solid rgba(245,197,66,0.35); }
   .rf-hist-pill-fallido{ background:rgba(225,6,0,0.12); color:var(--red-light); border:1px solid rgba(225,6,0,0.35); }
 
   /* ---------- sin cuenta ---------- */
-  .rf-no-logueado{ text-align:center; padding:24px 10px 6px; }
-  .rf-no-logueado-icon{ width:52px; height:52px; margin:0 auto 16px; filter:drop-shadow(0 6px 14px rgba(225,6,0,0.3)); }
+  .rf-no-logueado{ text-align:center; padding:20px 0 6px; }
   .rf-no-logueado p{ color:var(--grey); font-size:13.5px; margin-bottom:18px; }
 </style>
 </head>
 <body>
-
-  <!-- gradiente compartido por todos los íconos de gema de esta página -->
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <defs>
-      <linearGradient id="rfGemGrad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" style="stop-color:var(--yellow)"/>
-        <stop offset="50%" style="stop-color:var(--red-light)"/>
-        <stop offset="100%" style="stop-color:var(--red)"/>
-      </linearGradient>
-    </defs>
-  </svg>
 
   <div class="topbar">
     <a class="back-btn" href="index.html">← Volver</a>
@@ -194,44 +107,12 @@
   </div>
 
   <div class="page-wrap">
-    <div class="card" style="max-width:680px;">
-
-      <div class="rf-hero">
-        <div class="rf-eyebrow">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7.5L12 3 3 7.5l9 4.5 9-4.5z"/><path d="M3 7.5v9l9 4.5 9-4.5v-9"/></svg>
-          Free Fire · recarga automática
-        </div>
-        <div class="rf-hero-visual" aria-hidden="true">
-          <div class="rf-hero-glow"></div>
-          <div class="rf-hero-embers">
-            <span style="left:14%; animation-delay:0s; --ex:7px;"></span>
-            <span style="left:32%; animation-delay:.7s; --ex:-9px;"></span>
-            <span style="left:50%; animation-delay:1.3s; --ex:3px;"></span>
-            <span style="left:62%; animation-delay:.3s; --ex:-5px;"></span>
-            <span style="left:76%; animation-delay:1.7s; --ex:10px;"></span>
-            <span style="left:88%; animation-delay:1s; --ex:-7px;"></span>
-          </div>
-          <div class="rf-hero-gem">
-            <svg viewBox="0 0 24 24">
-              <path d="M4 8L12 2L20 8L12 22L4 8Z" fill="url(#rfGemGrad)"/>
-              <path d="M8.2 8L12 2L15.8 8H8.2Z" fill="rgba(255,255,255,0.3)"/>
-              <path d="M4 8H8.2L12 22L4 8Z" fill="rgba(0,0,0,0.12)"/>
-              <path d="M20 8H15.8L12 22L20 8Z" fill="rgba(0,0,0,0.06)"/>
-              <path d="M8.2 8H15.8L12 22L8.2 8Z" fill="rgba(0,0,0,0.1)"/>
-            </svg>
-          </div>
-        </div>
-        <h2>Recargar <span>diamantes</span></h2>
-        <p class="sub" style="margin-bottom:6px;">Elegí el paquete, ingresá tu UID de Free Fire y confirmá — se paga con tu saldo y la recarga llega sola, sin esperar a nadie.</p>
-      </div>
+    <div class="card" style="max-width:640px;">
+      <h2>Recargar <span>diamantes</span></h2>
+      <p class="sub">Elegí el paquete, ingresá tu UID de Free Fire y confirmá — se paga con tu saldo y la recarga la hacemos automática.</p>
 
       <!-- SIN CUENTA -->
       <div class="rf-no-logueado" id="rf-no-logueado" style="display:none;">
-        <svg viewBox="0 0 24 24" class="rf-no-logueado-icon" aria-hidden="true">
-          <path d="M4 8L12 2L20 8L12 22L4 8Z" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.18)" stroke-width="0.6"/>
-          <rect x="9" y="10.4" width="6" height="5" rx="1" fill="none" stroke="var(--grey)" stroke-width="1.3"/>
-          <path d="M10 10.4V9a2 2 0 0 1 4 0v1.4" fill="none" stroke="var(--grey)" stroke-width="1.3"/>
-        </svg>
         <p>Necesitás una cuenta con saldo para recargar diamantes.</p>
         <a class="btn btn-primary" style="width:100%; display:block; text-align:center;" href="login.html">Iniciar sesión</a>
       </div>
@@ -240,10 +121,8 @@
       <div id="rf-form-wrap" style="display:none;">
         <div class="field">
           <label for="rf-uid">UID de Free Fire</label>
-          <div class="rf-input-wrap">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.6"/><line x1="12" y1="2.2" x2="12" y2="5.6"/><line x1="12" y1="18.4" x2="12" y2="21.8"/><line x1="2.2" y1="12" x2="5.6" y2="12"/><line x1="18.4" y1="12" x2="21.8" y2="12"/></svg>
-            <input id="rf-uid" type="text" inputmode="numeric" placeholder="Ej: 123456789">
-          </div>
+          <input id="rf-uid" type="text" inputmode="numeric" placeholder="Ej: 123456789">
+          <div class="rf-uid-check" id="rf-uid-check"></div>
           <span class="rf-uid-note">Lo encontrás tocando tu avatar dentro del juego, abajo a la izquierda de la pantalla. Revisalo bien: una vez confirmada, la recarga no se puede deshacer.</span>
         </div>
 
@@ -296,34 +175,6 @@
       { serviceId: 547, diamantes: 6160, precio: 36.80 },
     ];
 
-    // el paquete con mejor relación diamantes/precio se marca con la
-    // cinta "Mejor valor" en su tarjeta — se calcula solo, no hay que
-    // tocar esto si cambiás precios arriba.
-    const MEJOR_VALOR_SERVICE_ID = PAQUETES.reduce((mejor, p) =>
-      (p.diamantes / p.precio) > (mejor.diamantes / mejor.precio) ? p : mejor
-    ).serviceId;
-
-    // ícono de gema reutilizable (SVG propio, no emoji) para las tarjetas
-    // de paquete y el historial. Usa el gradiente definido una sola vez
-    // arriba del todo de la página (id="rfGemGrad").
-    function iconoGema(clase){
-      return `<svg viewBox="0 0 24 24" class="${clase || ''}" aria-hidden="true">
-        <path d="M4 8L12 2L20 8L12 22L4 8Z" fill="url(#rfGemGrad)"/>
-        <path d="M8.2 8L12 2L15.8 8H8.2Z" fill="rgba(255,255,255,0.3)"/>
-        <path d="M4 8H8.2L12 22L4 8Z" fill="rgba(0,0,0,0.12)"/>
-        <path d="M20 8H15.8L12 22L20 8Z" fill="rgba(0,0,0,0.06)"/>
-        <path d="M8.2 8H15.8L12 22L8.2 8Z" fill="rgba(0,0,0,0.1)"/>
-      </svg>`;
-    }
-
-    // íconos de estado del historial (usan currentColor, así que heredan
-    // el color de cada pill sin configurar nada aparte).
-    const ICONOS_ESTADO = {
-      completado: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
-      procesando: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
-      fallido: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
-    };
-
     function formatearPrecio(n){
       return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
@@ -370,8 +221,7 @@
       const grid = document.getElementById('rf-paquetes-grid');
       grid.innerHTML = PAQUETES.map(p => `
         <div class="rf-paquete" data-service-id="${p.serviceId}">
-          ${p.serviceId === MEJOR_VALOR_SERVICE_ID ? '<span class="rf-ribbon">Mejor valor</span>' : ''}
-          <div class="rf-paquete-icono">${iconoGema()}</div>
+          <div class="rf-paquete-icono">💎</div>
           <div class="rf-paquete-cant">${p.diamantes}</div>
           <div class="rf-paquete-precio">${formatearPrecio(p.precio)}</div>
         </div>
@@ -395,6 +245,17 @@
         btn.textContent = 'Elegí un paquete';
         return;
       }
+      if(uidVerificando){
+        btn.disabled = true;
+        btn.textContent = 'Verificando cuenta…';
+        return;
+      }
+      const uidActual = document.getElementById('rf-uid').value.trim();
+      if(!uidVerificado || uidVerificado !== uidActual){
+        btn.disabled = true;
+        btn.textContent = 'Ingresá un UID válido';
+        return;
+      }
       btn.disabled = false;
       btn.textContent = `Recargar ${paqueteSeleccionado.diamantes} 💎 por ${formatearPrecio(paqueteSeleccionado.precio)}`;
     }
@@ -402,6 +263,67 @@
     function mostrarError(texto){
       document.getElementById('rf-error').textContent = texto;
     }
+
+    /* ---------- verificación de cuenta al escribir el UID ---------- */
+    const uidCheckEl = document.getElementById('rf-uid-check');
+    let uidVerificado = null;   // UID que ya se confirmó como válido
+    let uidVerificando = false;
+    let uidCheckTimeout = null;
+
+    function pintarUidCheck(estado, texto){
+      uidCheckEl.style.display = estado ? 'flex' : 'none';
+      uidCheckEl.className = 'rf-uid-check' + (estado ? ' rf-uid-check-' + estado : '');
+      uidCheckEl.textContent = texto || '';
+    }
+
+    async function verificarUid(uid){
+      uidVerificando = true;
+      pintarUidCheck('cargando', 'Verificando cuenta…');
+      try{
+        const res = await fetch(FLASHTOPUP_WORKER_URL + '/validar-uid', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Site-Key': FLASHTOPUP_SITE_KEY },
+          body: JSON.stringify({ uid })
+        });
+        const data = await res.json();
+
+        // el UID pudo haber cambiado mientras esperábamos la respuesta
+        if(document.getElementById('rf-uid').value.trim() !== uid) return;
+
+        if(data.ok && data.valido){
+          uidVerificado = uid;
+          pintarUidCheck('ok', '✓ Cuenta encontrada: ' + (data.nombreCuenta || '(sin nombre)'));
+        }else{
+          uidVerificado = null;
+          pintarUidCheck('error', '✕ No se encontró esa cuenta. Revisá el UID.');
+        }
+      }catch(err){
+        console.error('Error al verificar el UID:', err);
+        if(document.getElementById('rf-uid').value.trim() !== uid) return;
+        // si falla la verificación (red caída, etc.) no se bloquea la
+        // recarga entera: se deja pasar sin el chequeo, como antes.
+        uidVerificado = uid;
+        pintarUidCheck('', '');
+      }finally{
+        uidVerificando = false;
+        actualizarBoton();
+      }
+    }
+
+    document.getElementById('rf-uid').addEventListener('input', (e) => {
+      const uid = e.target.value.trim();
+      uidVerificado = null;
+      clearTimeout(uidCheckTimeout);
+
+      if(!/^[0-9]{4,15}$/.test(uid)){
+        pintarUidCheck('', '');
+        actualizarBoton();
+        return;
+      }
+
+      uidCheckTimeout = setTimeout(() => verificarUid(uid), 600);
+      actualizarBoton();
+    });
 
     /* ---------- reintegrar saldo si algo falla ---------- */
     async function reintegrarSaldo(usuarioActual, monto, pedidoRef, motivo){
@@ -592,34 +514,6 @@
       }catch(e){ return ''; }
     }
 
-    // Le vuelve a preguntar al worker por el estado real de un pedido que
-    // en Firestore todavía figura como "creando"/"procesando". Esto es lo
-    // que faltaba: el polling en vivo (iniciarPolling) solo corre 1 minuto
-    // mientras la pestaña está abierta, así que si la recarga se completó
-    // después de eso (o con la página cerrada), Firestore se quedaba con
-    // el último estado guardado para siempre. Ahora, cada vez que se abre
-    // el historial, se re-consulta y se actualiza antes de mostrarlo.
-    async function reconsultarPedidoPendiente(id, p){
-      try{
-        const res = await fetch(FLASHTOPUP_WORKER_URL + '/consultar-orden', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Site-Key': FLASHTOPUP_SITE_KEY },
-          body: JSON.stringify(p.orderId ? { orderId: p.orderId } : { referenceId: id })
-        });
-        const data = await res.json();
-        if(!data.ok) return p.estado; // seguimos mostrando lo que había, sin romper nada
-
-        const estadoActualizado = mapearEstado(data.estado);
-        if(estadoActualizado !== p.estado){
-          await updateDoc(doc(db, 'recargasDiamantes', id), { estado: estadoActualizado });
-        }
-        return estadoActualizado;
-      }catch(err){
-        console.error('Error al reconsultar pedido pendiente:', id, err);
-        return p.estado; // sin internet o el worker no respondió: no rompemos el historial
-      }
-    }
-
     async function cargarHistorial(){
       if(!usuario) return;
       const lista = document.getElementById('rf-historial-list');
@@ -635,28 +529,17 @@
           lista.innerHTML = '<div class="empty-state">Todavía no hiciste ninguna recarga.</div>';
           return;
         }
-
-        // primero se recalcula el estado real de las pendientes (en paralelo),
-        // y recién con eso ya corregido se arma el HTML del historial.
-        const pedidos = await Promise.all(snap.docs.map(async (d) => {
+        lista.innerHTML = snap.docs.map(d => {
           const p = d.data();
-          let estado = ESTADO_LABEL[p.estado] ? p.estado : 'procesando';
-          if(estado === 'creando' || estado === 'procesando'){
-            estado = await reconsultarPedidoPendiente(d.id, p);
-          }
-          return { p, estado };
-        }));
-
-        lista.innerHTML = pedidos.map(({ p, estado }) => {
+          const estado = ESTADO_LABEL[p.estado] ? p.estado : 'procesando';
           const claseEstado = estado === 'creando' ? 'procesando' : estado;
           return `
-            <div class="rf-hist-item rf-hist-item-${claseEstado}">
+            <div class="rf-hist-item">
               <div class="rf-hist-info">
-                <div>${iconoGema('rf-gem-icon-sm')} ${p.diamantes} · ${formatearPrecio(p.monto)}</div>
+                <div>${p.diamantes} 💎 · ${formatearPrecio(p.monto)}</div>
                 <div class="rf-hist-uid">UID ${p.uid} · ${formatearFecha(p.fecha)}</div>
               </div>
-              <div class="rf-hist-divider"></div>
-              <span class="rf-hist-pill rf-hist-pill-${claseEstado}">${ICONOS_ESTADO[claseEstado] || ''}${ESTADO_LABEL[estado] || 'Procesando'}</span>
+              <span class="rf-hist-pill rf-hist-pill-${claseEstado}">${ESTADO_LABEL[p.estado] || 'Procesando'}</span>
             </div>
           `;
         }).join('');
