@@ -10,76 +10,220 @@
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=10">
 <style>
+  /* ============================================================
+     RECARGAR DIAMANTES — diseño nuevo, rojo y negro.
+     Todo lo de acá abajo es solo visual: los ids que usa el JS
+     (rf-uid, rf-paquetes-grid, rf-recargar-btn, etc.) siguen
+     siendo los mismos, así que la lógica no se toca.
+     ============================================================ */
+
+  .rfd-wrap{ max-width:640px; padding-top:26px; }
+
+  /* ---------- hero de arriba ---------- */
+  .rfd-hero{ text-align:center; margin-bottom:22px; }
+  .rfd-hero-gem{
+    width:64px; height:64px;
+    margin:0 auto 14px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:30px;
+    border-radius:20px;
+    background:radial-gradient(circle at 30% 25%, rgba(255,90,60,0.35), rgba(225,6,0,0.08) 60%, transparent 75%),
+               linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+    border:1px solid rgba(225,6,0,0.4);
+    box-shadow:0 0 0 1px rgba(225,6,0,0.15), 0 10px 30px rgba(225,6,0,0.25);
+  }
+  .rfd-title{
+    font-family:'Anton', sans-serif;
+    font-size:clamp(1.6rem, 6vw, 2.1rem);
+    letter-spacing:0.5px;
+    color:var(--white);
+    margin-bottom:8px;
+  }
+  .rfd-title span{ color:var(--red-light); }
+  .rfd-sub{ color:var(--grey); font-size:13.5px; line-height:1.6; max-width:440px; margin:0 auto; }
+
+  /* ---------- tarjeta contenedora ---------- */
+  .rfd-card{
+    background:linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015));
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:22px;
+    padding:26px 22px 10px;
+    position:relative;
+    overflow:hidden;
+  }
+  .rfd-card::before{
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg, transparent, var(--red-light), transparent);
+    opacity:0.8;
+  }
+
+  /* ---------- pasos ---------- */
+  .rfd-step{ margin-bottom:26px; }
+  .rfd-step-head{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Anton', sans-serif;
+    font-size:13px;
+    letter-spacing:0.8px;
+    text-transform:uppercase;
+    color:var(--white);
+    margin-bottom:14px;
+  }
+  .rfd-step-num{
+    width:24px; height:24px;
+    flex:none;
+    border-radius:50%;
+    background:var(--red);
+    color:var(--white);
+    font-size:12px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 12px rgba(225,6,0,0.5);
+  }
+
+  /* ---------- input de UID ---------- */
+  .rfd-uid-field{ position:relative; }
+  .rfd-uid-field input{ padding-left:42px !important; }
+  .rfd-uid-icon{
+    position:absolute;
+    left:14px; top:50%; transform:translateY(-50%);
+    width:18px; height:18px;
+    color:var(--red-light);
+    pointer-events:none;
+  }
+  .rfd-uid-icon svg{ width:100%; height:100%; }
+
+  .rf-uid-note{ font-size:11.5px; color:var(--grey); line-height:1.5; margin-top:8px; }
+
+  /* ---------- verificación de cuenta al escribir el UID ---------- */
+  .rf-uid-check{
+    font-size:12.5px;
+    font-weight:600;
+    line-height:1.4;
+    margin-top:10px;
+    padding:9px 12px;
+    border-radius:11px;
+    display:none;
+    align-items:center;
+    gap:8px;
+  }
+  .rf-uid-check-cargando{
+    color:var(--grey);
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.08);
+  }
+  .rf-uid-check-ok{
+    color:var(--green);
+    background:rgba(46,204,113,0.08);
+    border:1px solid rgba(46,204,113,0.3);
+  }
+  .rf-uid-check-error{
+    color:var(--red-light);
+    background:rgba(225,6,0,0.08);
+    border:1px solid rgba(225,6,0,0.3);
+  }
+
   /* ---------- grilla de paquetes de diamantes ---------- */
   .rf-paquetes-grid{
     display:grid;
     grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));
     gap:12px;
-    margin:22px 0 6px;
   }
   .rf-paquete{
-    background:rgba(255,255,255,0.03);
-    border:1.5px solid rgba(255,255,255,0.08);
-    border-radius:14px;
-    padding:16px 12px;
+    position:relative;
+    background:linear-gradient(160deg, rgba(255,255,255,0.045), rgba(255,255,255,0.01));
+    border:1.5px solid rgba(255,255,255,0.09);
+    border-radius:16px;
+    padding:20px 12px 16px;
     text-align:center;
     cursor:pointer;
-    transition:border-color .18s ease, background .18s ease, transform .18s ease;
+    transition:border-color .18s ease, background .18s ease, transform .18s ease, box-shadow .18s ease;
   }
-  .rf-paquete:hover{ transform:translateY(-2px); border-color:rgba(255,140,40,0.4); }
+  .rf-paquete:hover{
+    transform:translateY(-3px);
+    border-color:rgba(225,6,0,0.45);
+  }
   .rf-paquete.activo{
     border-color:var(--red-light);
-    background:rgba(225,6,0,0.1);
-    box-shadow:0 0 0 1px rgba(255,59,48,0.35), 0 0 18px rgba(225,6,0,0.25);
+    background:linear-gradient(160deg, rgba(225,6,0,0.16), rgba(225,6,0,0.04));
+    box-shadow:0 0 0 1px rgba(255,59,48,0.4), 0 10px 24px rgba(225,6,0,0.3);
   }
-  .rf-paquete-icono{ font-size:22px; margin-bottom:6px; }
-  .rf-paquete-cant{ font-family:'Anton', sans-serif; font-size:16px; letter-spacing:0.5px; color:var(--white); }
-  .rf-paquete-precio{ font-size:13px; color:var(--yellow); font-weight:600; margin-top:4px; }
-
-  .rf-uid-note{ font-size:11.5px; color:var(--grey); line-height:1.5; margin-top:6px; }
-
-  /* ---------- verificación de cuenta al escribir el UID ---------- */
-  .rf-uid-check{
-    font-size:12.5px;
-    line-height:1.5;
-    margin-top:8px;
-    display:none;
-    align-items:center;
-    gap:6px;
+  .rf-paquete-badge{
+    position:absolute;
+    top:-9px; left:50%; transform:translateX(-50%);
+    background:var(--red-light);
+    color:var(--white);
+    font-size:9px;
+    font-weight:800;
+    letter-spacing:0.4px;
+    text-transform:uppercase;
+    padding:3px 9px;
+    border-radius:999px;
+    box-shadow:0 4px 10px rgba(225,6,0,0.5);
+    white-space:nowrap;
   }
-  .rf-uid-check-cargando{ color:var(--grey); }
-  .rf-uid-check-ok{ color:var(--green); font-weight:600; }
-  .rf-uid-check-error{ color:var(--red-light); }
+  .rf-paquete-icono{
+    width:38px; height:38px;
+    margin:0 auto 8px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:19px;
+    border-radius:11px;
+    background:radial-gradient(circle at 35% 30%, rgba(255,90,60,0.4), rgba(225,6,0,0.06) 65%, transparent 78%);
+  }
+  .rf-paquete-cant{ font-family:'Anton', sans-serif; font-size:17px; letter-spacing:0.5px; color:var(--white); }
+  .rf-paquete-precio{ font-size:12.5px; color:var(--yellow); font-weight:600; margin-top:5px; }
 
+  /* ---------- barra de confirmación (sticky) ---------- */
+  .rfd-cta-bar{
+    position:sticky;
+    bottom:0;
+    background:linear-gradient(180deg, transparent, var(--black) 35%);
+    padding:20px 0 8px;
+    margin-top:6px;
+  }
   .rf-recargar-btn[disabled]{ opacity:0.5; cursor:not-allowed; }
 
   /* ---------- historial ---------- */
   .rf-historial{
-    margin-top:34px;
-    padding-top:24px;
+    margin-top:8px;
+    padding-top:22px;
     border-top:1px solid rgba(255,255,255,0.08);
   }
   .rf-historial h3{
     font-family:'Anton', sans-serif;
-    font-size:14px;
-    letter-spacing:1px;
+    font-size:13px;
+    letter-spacing:1.2px;
     color:var(--red-light);
     text-transform:uppercase;
     margin-bottom:14px;
   }
   .rf-hist-item{
     display:flex;
-    justify-content:space-between;
     align-items:center;
-    gap:10px;
+    gap:12px;
     background:rgba(255,255,255,0.03);
     border:1px solid rgba(255,255,255,0.07);
+    border-left:3px solid rgba(255,255,255,0.15);
     border-radius:12px;
     padding:12px 14px;
     margin-bottom:8px;
     font-size:13px;
   }
-  .rf-hist-info{ line-height:1.5; }
+  .rf-hist-item-completado{ border-left-color:var(--green); }
+  .rf-hist-item-procesando{ border-left-color:var(--yellow); }
+  .rf-hist-item-fallido{ border-left-color:var(--red-light); }
+  .rf-hist-icon{
+    flex:none;
+    width:30px; height:30px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:700;
+  }
+  .rf-hist-item-completado .rf-hist-icon{ background:rgba(46,204,113,0.12); color:var(--green); }
+  .rf-hist-item-procesando .rf-hist-icon{ background:rgba(245,197,66,0.12); color:var(--yellow); }
+  .rf-hist-item-fallido .rf-hist-icon{ background:rgba(225,6,0,0.12); color:var(--red-light); }
+  .rf-hist-info{ line-height:1.5; flex:1; }
+  .rf-hist-cant{ color:var(--white); font-weight:600; }
+  .rf-hist-monto{ color:var(--yellow); font-weight:600; }
   .rf-hist-uid{ color:var(--grey); font-size:11.5px; }
   .rf-hist-pill{
     font-size:10.5px;
@@ -95,8 +239,22 @@
   .rf-hist-pill-fallido{ background:rgba(225,6,0,0.12); color:var(--red-light); border:1px solid rgba(225,6,0,0.35); }
 
   /* ---------- sin cuenta ---------- */
-  .rf-no-logueado{ text-align:center; padding:20px 0 6px; }
+  .rf-no-logueado{ text-align:center; padding:24px 0 8px; }
+  .rf-no-logueado-icon{
+    width:52px; height:52px;
+    margin:0 auto 16px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px;
+    background:rgba(225,6,0,0.1);
+    border:1px solid rgba(225,6,0,0.35);
+  }
   .rf-no-logueado p{ color:var(--grey); font-size:13.5px; margin-bottom:18px; }
+
+  @media (max-width:480px){
+    .rfd-card{ padding:22px 16px 6px; border-radius:18px; }
+    .rf-paquetes-grid{ grid-template-columns:repeat(2, 1fr); }
+  }
 </style>
 </head>
 <body>
@@ -106,31 +264,49 @@
     <span class="brandmark">XITERKING</span>
   </div>
 
-  <div class="page-wrap">
-    <div class="card" style="max-width:640px;">
-      <h2>Recargar <span>diamantes</span></h2>
-      <p class="sub">Elegí el paquete, ingresá tu UID de Free Fire y confirmá — se paga con tu saldo y la recarga la hacemos automática.</p>
+  <div class="page-wrap rfd-wrap">
+
+    <div class="rfd-hero">
+      <div class="rfd-hero-gem">💎</div>
+      <h1 class="rfd-title">Recargar <span>diamantes</span></h1>
+      <p class="rfd-sub">Elegí tu paquete, confirmamos tu cuenta de Free Fire y la recarga se procesa sola con tu saldo.</p>
+    </div>
+
+    <div class="rfd-card">
 
       <!-- SIN CUENTA -->
       <div class="rf-no-logueado" id="rf-no-logueado" style="display:none;">
+        <div class="rf-no-logueado-icon">💎</div>
         <p>Necesitás una cuenta con saldo para recargar diamantes.</p>
         <a class="btn btn-primary" style="width:100%; display:block; text-align:center;" href="login.html">Iniciar sesión</a>
       </div>
 
       <!-- FORMULARIO -->
       <div id="rf-form-wrap" style="display:none;">
-        <div class="field">
-          <label for="rf-uid">UID de Free Fire</label>
-          <input id="rf-uid" type="text" inputmode="numeric" placeholder="Ej: 123456789">
-          <div class="rf-uid-check" id="rf-uid-check"></div>
-          <span class="rf-uid-note">Lo encontrás tocando tu avatar dentro del juego, abajo a la izquierda de la pantalla. Revisalo bien: una vez confirmada, la recarga no se puede deshacer.</span>
+
+        <div class="rfd-step">
+          <div class="rfd-step-head"><span class="rfd-step-num">1</span> Tu cuenta de Free Fire</div>
+          <div class="field rfd-uid-field">
+            <label for="rf-uid">UID de Free Fire</label>
+            <span class="rfd-uid-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.3" fill="currentColor" stroke="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            </span>
+            <input id="rf-uid" type="text" inputmode="numeric" placeholder="Ej: 123456789">
+            <div class="rf-uid-check" id="rf-uid-check"></div>
+            <span class="rf-uid-note">Lo encontrás tocando tu avatar dentro del juego, abajo a la izquierda de la pantalla. Revisalo bien: una vez confirmada, la recarga no se puede deshacer.</span>
+          </div>
         </div>
 
-        <div class="rf-paquetes-grid" id="rf-paquetes-grid"></div>
+        <div class="rfd-step" style="margin-bottom:6px;">
+          <div class="rfd-step-head"><span class="rfd-step-num">2</span> Elegí tu paquete</div>
+          <div class="rf-paquetes-grid" id="rf-paquetes-grid"></div>
+        </div>
 
         <div class="form-error" id="rf-error"></div>
 
-        <button class="btn btn-primary rf-recargar-btn" style="width:100%; margin-top:14px;" id="rf-recargar-btn" disabled>Elegí un paquete</button>
+        <div class="rfd-cta-bar">
+          <button class="btn btn-primary rf-recargar-btn" style="width:100%;" id="rf-recargar-btn" disabled>Elegí un paquete</button>
+        </div>
       </div>
 
       <!-- HISTORIAL -->
@@ -219,8 +395,10 @@
 
     function pintarPaquetes(){
       const grid = document.getElementById('rf-paquetes-grid');
+      const maxDiamantes = Math.max(...PAQUETES.map(p => p.diamantes));
       grid.innerHTML = PAQUETES.map(p => `
         <div class="rf-paquete" data-service-id="${p.serviceId}">
+          ${p.diamantes === maxDiamantes ? '<span class="rf-paquete-badge">Mejor valor</span>' : ''}
           <div class="rf-paquete-icono">💎</div>
           <div class="rf-paquete-cant">${p.diamantes}</div>
           <div class="rf-paquete-precio">${formatearPrecio(p.precio)}</div>
@@ -529,14 +707,16 @@
           lista.innerHTML = '<div class="empty-state">Todavía no hiciste ninguna recarga.</div>';
           return;
         }
+        const ICONO_ESTADO = { completado: '✓', procesando: '⏳', fallido: '✕' };
         lista.innerHTML = snap.docs.map(d => {
           const p = d.data();
           const estado = ESTADO_LABEL[p.estado] ? p.estado : 'procesando';
           const claseEstado = estado === 'creando' ? 'procesando' : estado;
           return `
-            <div class="rf-hist-item">
+            <div class="rf-hist-item rf-hist-item-${claseEstado}">
+              <div class="rf-hist-icon">${ICONO_ESTADO[claseEstado] || '⏳'}</div>
               <div class="rf-hist-info">
-                <div>${p.diamantes} 💎 · ${formatearPrecio(p.monto)}</div>
+                <div class="rf-hist-cant">${p.diamantes} 💎 · <span class="rf-hist-monto">${formatearPrecio(p.monto)}</span></div>
                 <div class="rf-hist-uid">UID ${p.uid} · ${formatearFecha(p.fecha)}</div>
               </div>
               <span class="rf-hist-pill rf-hist-pill-${claseEstado}">${ESTADO_LABEL[p.estado] || 'Procesando'}</span>
