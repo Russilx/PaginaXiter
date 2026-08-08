@@ -38,20 +38,6 @@
 
   .rf-uid-note{ font-size:11.5px; color:var(--grey); line-height:1.5; margin-top:6px; }
 
-  .rf-uid-estado{
-    font-size:12.5px;
-    font-weight:600;
-    margin-top:8px;
-    padding:8px 12px;
-    border-radius:10px;
-    display:flex;
-    align-items:center;
-    gap:7px;
-  }
-  .rf-uid-estado-ok{ background:rgba(52,199,89,0.1); color:var(--green); border:1px solid rgba(52,199,89,0.3); }
-  .rf-uid-estado-error{ background:rgba(225,6,0,0.1); color:var(--red-light); border:1px solid rgba(225,6,0,0.3); }
-  .rf-uid-estado-cargando{ background:rgba(255,255,255,0.04); color:var(--grey); border:1px solid rgba(255,255,255,0.08); }
-
   .rf-recargar-btn[disabled]{ opacity:0.5; cursor:not-allowed; }
 
   /* ---------- historial ---------- */
@@ -124,7 +110,6 @@
           <label for="rf-uid">UID de Free Fire</label>
           <input id="rf-uid" type="text" inputmode="numeric" placeholder="Ej: 123456789">
           <span class="rf-uid-note">Lo encontrás tocando tu avatar dentro del juego, abajo a la izquierda de la pantalla. Revisalo bien: una vez confirmada, la recarga no se puede deshacer.</span>
-          <div id="rf-uid-estado" class="rf-uid-estado" style="display:none;"></div>
         </div>
 
         <div class="rf-paquetes-grid" id="rf-paquetes-grid"></div>
@@ -241,15 +226,9 @@
 
     function actualizarBoton(){
       const btn = document.getElementById('rf-recargar-btn');
-      const uid = document.getElementById('rf-uid').value.trim();
       if(!paqueteSeleccionado){
         btn.disabled = true;
         btn.textContent = 'Elegí un paquete';
-        return;
-      }
-      if(!uidVerificado || uidVerificado !== uid){
-        btn.disabled = true;
-        btn.textContent = 'Verificá tu UID primero';
         return;
       }
       btn.disabled = false;
@@ -259,70 +238,6 @@
     function mostrarError(texto){
       document.getElementById('rf-error').textContent = texto;
     }
-
-    /* ---------- verificación del UID (nombre de la cuenta) ---------- */
-    let uidVerificado = null; // UID que ya se confirmó como válido, o null
-
-    function pintarEstadoUid(tipo, texto){
-      const el = document.getElementById('rf-uid-estado');
-      el.className = 'rf-uid-estado rf-uid-estado-' + tipo;
-      el.textContent = texto;
-      el.style.display = 'flex';
-    }
-    function ocultarEstadoUid(){
-      document.getElementById('rf-uid-estado').style.display = 'none';
-    }
-
-    async function verificarUid(uid){
-      if(!/^[0-9]{4,15}$/.test(uid)){
-        uidVerificado = null;
-        ocultarEstadoUid();
-        actualizarBoton();
-        return;
-      }
-      pintarEstadoUid('cargando', 'Buscando la cuenta…');
-      uidVerificado = null;
-      actualizarBoton();
-
-      try{
-        const res = await fetch(FLASHTOPUP_WORKER_URL + '/verificar-uid', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Site-Key': FLASHTOPUP_SITE_KEY },
-          body: JSON.stringify({ uid })
-        });
-        const data = await res.json();
-
-        // el UID pudo haber cambiado mientras esperábamos la respuesta
-        if(document.getElementById('rf-uid').value.trim() !== uid) return;
-
-        if(data.ok && data.nombre){
-          uidVerificado = uid;
-          pintarEstadoUid('ok', `✓ Cuenta encontrada: ${data.nombre}`);
-        }else{
-          uidVerificado = null;
-          pintarEstadoUid('error', 'No encontramos ninguna cuenta con ese UID. Revisalo bien antes de continuar.');
-        }
-      }catch(err){
-        console.error('Error al verificar el UID:', err);
-        if(document.getElementById('rf-uid').value.trim() !== uid) return;
-        uidVerificado = null;
-        pintarEstadoUid('error', 'No se pudo verificar el UID ahora. Revisalo bien antes de continuar.');
-      }
-      actualizarBoton();
-    }
-
-    let uidDebounceTimeout;
-    document.getElementById('rf-uid').addEventListener('input', (e) => {
-      const uid = e.target.value.trim();
-      clearTimeout(uidDebounceTimeout);
-      if(!uid){
-        uidVerificado = null;
-        ocultarEstadoUid();
-        actualizarBoton();
-        return;
-      }
-      uidDebounceTimeout = setTimeout(() => verificarUid(uid), 600);
-    });
 
     /* ---------- reintegrar saldo si algo falla ---------- */
     async function reintegrarSaldo(usuarioActual, monto, pedidoRef, motivo){
@@ -399,10 +314,6 @@
       }
       if(!/^[0-9]{4,15}$/.test(uid)){
         mostrarError('El UID de Free Fire son solo números (revisalo dentro del juego).');
-        return;
-      }
-      if(uidVerificado !== uid){
-        mostrarError('Esperá a que se confirme el nombre de la cuenta antes de recargar.');
         return;
       }
 
@@ -502,8 +413,6 @@
         btn.disabled = false;
         actualizarBoton();
         uidInput.value = '';
-        uidVerificado = null;
-        ocultarEstadoUid();
       }
     }
     document.getElementById('rf-recargar-btn').addEventListener('click', confirmarRecarga);
@@ -517,6 +426,34 @@
         const d = fecha.toDate ? fecha.toDate() : new Date(fecha);
         return d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
       }catch(e){ return ''; }
+    }
+
+    // Le vuelve a preguntar al worker por el estado real de un pedido que
+    // en Firestore todavía figura como "creando"/"procesando". Esto es lo
+    // que faltaba: el polling en vivo (iniciarPolling) solo corre 1 minuto
+    // mientras la pestaña está abierta, así que si la recarga se completó
+    // después de eso (o con la página cerrada), Firestore se quedaba con
+    // el último estado guardado para siempre. Ahora, cada vez que se abre
+    // el historial, se re-consulta y se actualiza antes de mostrarlo.
+    async function reconsultarPedidoPendiente(id, p){
+      try{
+        const res = await fetch(FLASHTOPUP_WORKER_URL + '/consultar-orden', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Site-Key': FLASHTOPUP_SITE_KEY },
+          body: JSON.stringify(p.orderId ? { orderId: p.orderId } : { referenceId: id })
+        });
+        const data = await res.json();
+        if(!data.ok) return p.estado; // seguimos mostrando lo que había, sin romper nada
+
+        const estadoActualizado = mapearEstado(data.estado);
+        if(estadoActualizado !== p.estado){
+          await updateDoc(doc(db, 'recargasDiamantes', id), { estado: estadoActualizado });
+        }
+        return estadoActualizado;
+      }catch(err){
+        console.error('Error al reconsultar pedido pendiente:', id, err);
+        return p.estado; // sin internet o el worker no respondió: no rompemos el historial
+      }
     }
 
     async function cargarHistorial(){
@@ -534,9 +471,19 @@
           lista.innerHTML = '<div class="empty-state">Todavía no hiciste ninguna recarga.</div>';
           return;
         }
-        lista.innerHTML = snap.docs.map(d => {
+
+        // primero se recalcula el estado real de las pendientes (en paralelo),
+        // y recién con eso ya corregido se arma el HTML del historial.
+        const pedidos = await Promise.all(snap.docs.map(async (d) => {
           const p = d.data();
-          const estado = ESTADO_LABEL[p.estado] ? p.estado : 'procesando';
+          let estado = ESTADO_LABEL[p.estado] ? p.estado : 'procesando';
+          if(estado === 'creando' || estado === 'procesando'){
+            estado = await reconsultarPedidoPendiente(d.id, p);
+          }
+          return { p, estado };
+        }));
+
+        lista.innerHTML = pedidos.map(({ p, estado }) => {
           const claseEstado = estado === 'creando' ? 'procesando' : estado;
           return `
             <div class="rf-hist-item">
@@ -544,7 +491,7 @@
                 <div>${p.diamantes} 💎 · ${formatearPrecio(p.monto)}</div>
                 <div class="rf-hist-uid">UID ${p.uid} · ${formatearFecha(p.fecha)}</div>
               </div>
-              <span class="rf-hist-pill rf-hist-pill-${claseEstado}">${ESTADO_LABEL[p.estado] || 'Procesando'}</span>
+              <span class="rf-hist-pill rf-hist-pill-${claseEstado}">${ESTADO_LABEL[estado] || 'Procesando'}</span>
             </div>
           `;
         }).join('');
