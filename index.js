@@ -52,16 +52,18 @@
 const MODO_SANDBOX = true;
 
 // IDs de servicio de FlashTopup para los paquetes de diamantes de
-// Free Fire (los mismos que ves en tu panel de FlashTopup, pestaña
-// "Productos y precios"). Si FlashTopup les cambia el ID en algún
-// momento, se actualiza acá nomás.
+// Free Fire. "id" es el número que se ve en el panel de FlashTopup
+// (y el que usa tu frontend para elegir el paquete). "code" es el
+// service_code REAL que pide la API para crear la orden — no es lo
+// mismo que el id, y hay que sacarlo tal cual del catálogo (GET
+// /services), no armarlo a mano. Sacado del catálogo el 2026-07-15.
 const PAQUETES_FREE_FIRE = {
-  542: 110,
-  543: 341,
-  544: 572,
-  545: 1166,
-  546: 2398,
-  547: 6160,
+  542: { diamantes: 110, code: 'TOPUP_FREE_FIRE_LATAM_15_110_DIAMONDS_542' },
+  543: { diamantes: 341, code: 'TOPUP_FREE_FIRE_LATAM_15_341_DIAMONDS_543' },
+  544: { diamantes: 572, code: 'TOPUP_FREE_FIRE_LATAM_15_572_DIAMONDS_544' },
+  545: { diamantes: 1166, code: 'TOPUP_FREE_FIRE_LATAM_15_1166_DIAMONDS_545' },
+  546: { diamantes: 2398, code: 'TOPUP_FREE_FIRE_LATAM_15_2398_DIAMONDS_546' },
+  547: { diamantes: 6160, code: 'TOPUP_FREE_FIRE_LATAM_15_6160_DIAMONDS_547' },
 };
 
 // Código de "validación" del PRODUCTO Free Fire en FlashTopup (distinto
@@ -69,7 +71,14 @@ const PAQUETES_FREE_FIRE = {
 // buscás en tu panel de FlashTopup, en la ficha del juego Free Fire —
 // es el mismo tipo de código que en su doc de ejemplo usa "mlbb" para
 // Mobile Legends. Reemplazá el texto de abajo por el tuyo.
-const VALIDATION_CODE_FREE_FIRE = 'PONE_ACA_TU_CODIGO_DE_VALIDACION';
+const VALIDATION_CODE_FREE_FIRE = 'freefire_latam';
+
+// Código del PRODUCTO (juego + región) en el catálogo de FlashTopup.
+// Los paquetes de PAQUETES_FREE_FIRE (542, 543, etc.) viven adentro de
+// este producto puntual — sin este dato, FlashTopup no los encuentra
+// (por eso tirab SERVICE_NOT_FOUND). Visto en el panel de FlashTopup,
+// "Free Fire LATAM" (ID 15).
+const PRODUCT_CODE_FREE_FIRE = 'TOPUP_FREE_FIRE_LATAM_15';
 
 const FT_HOST = 'https://api.flashtopup.com';
 
@@ -164,6 +173,29 @@ export default {
       return new Response(null, { status: 204, headers: cors });
     }
 
+    // ---------- GET /debug-servicios ----------
+    // SOLO PARA DIAGNÓSTICO — TEMPORAL. Pide a FlashTopup el catálogo real
+    // de servicios (respetando el header de sandbox si MODO_SANDBOX está
+    // en true) para comparar contra los service_code hardcodeados en
+    // PAQUETES_FREE_FIRE. Protegido igual que el resto con X-Site-Key.
+    // Sacá esta ruta del worker una vez que termines de diagnosticar.
+    if (request.method === 'GET' && url.pathname === '/debug-servicios') {
+      if (!siteKeyValida(request, env)) {
+        return jsonResponse({ ok: false, motivo: 'NO_AUTORIZADO' }, 401, cors);
+      }
+
+      const { httpStatus, data } = await llamarFlashTopup(
+        env, 'GET', '/api/reseller/v2/services', 'product_code=' + encodeURIComponent(PRODUCT_CODE_FREE_FIRE), null
+      );
+
+      return jsonResponse({
+        ok: true,
+        modoSandbox: MODO_SANDBOX,
+        httpStatusDeFlashTopup: httpStatus,
+        respuestaCompleta: data,
+      }, 200, cors);
+    }
+
     if (request.method !== 'POST') {
       return jsonResponse({ ok: false, motivo: 'METODO_NO_PERMITIDO' }, 405, cors);
     }
@@ -191,9 +223,9 @@ export default {
 
       const checkBody = {
         user_id: uid.trim(),
-        // Free Fire no tiene server_id (a diferencia de otros juegos
-        // como Mobile Legends), se manda vacío.
-        server_id: '',
+        // este producto puntual de Free Fire (LATAM) no pide server_id,
+        // así que no lo mandamos (la API lo rechaza si no está en "fields").
+        product_code: PRODUCT_CODE_FREE_FIRE,
         validation_code: VALIDATION_CODE_FREE_FIRE,
       };
 
@@ -204,19 +236,23 @@ export default {
       if (!data) {
         return jsonResponse({ ok: false, motivo: 'RESPUESTA_INVALIDA_DE_FLASHTOPUP' }, 502, cors);
       }
-      if (!data.exito) {
+      // OJO: FlashTopup devuelve "success" / "data" / "error.code" /
+      // "error.message" (en inglés) — no "exito" / "datos" / "codigo" /
+      // "mensaje" como se asumía antes. Esa era la causa de que TODO se
+      // tratara como error sin importar lo que respondiera FlashTopup.
+      if (!data.success) {
         return jsonResponse({
           ok: false,
-          motivo: data.error?.codigo || 'ERROR_DESCONOCIDO',
-          mensaje: data.error?.mensaje || '',
+          motivo: data.error?.code || 'ERROR_DESCONOCIDO',
+          mensaje: data.error?.message || '',
         }, httpStatus, cors);
       }
 
-      const datos = data.datos || {};
+      const datos = data.data || {};
       return jsonResponse({
         ok: true,
-        valido: datos['válido'] !== false,
-        nombreCuenta: datos['nombre_de_cuenta'] || '',
+        valido: (datos.valid ?? datos['válido']) !== false,
+        nombreCuenta: datos.account_name || datos['nombre_de_cuenta'] || datos.username || '',
       }, 200, cors);
     }
 
@@ -236,7 +272,7 @@ export default {
       }
 
       const ordenBody = {
-        service_code: serviceId.toString(),
+        service_code: PAQUETES_FREE_FIRE[serviceId].code,
         reference_id: referenceId,
         cantidad: 1,
         user_id: uid.trim(),
@@ -255,20 +291,25 @@ export default {
       if (!data) {
         return jsonResponse({ ok: false, motivo: 'RESPUESTA_INVALIDA_DE_FLASHTOPUP' }, 502, cors);
       }
-      if (!data.exito) {
+      // mismo fix que en /validar-uid: FlashTopup responde en inglés
+      // (success / data / error.code / error.message).
+      if (!data.success) {
         return jsonResponse({
           ok: false,
-          motivo: data.error?.codigo || 'ERROR_DESCONOCIDO',
-          mensaje: data.error?.mensaje || '',
+          motivo: data.error?.code || 'ERROR_DESCONOCIDO',
+          mensaje: data.error?.message || '',
           detalle: data.error || null,
+          // TEMPORAL — para diagnosticar. Sacar después.
+          bodyEnviado: ordenBody,
         }, httpStatus, cors);
       }
 
+      const datosOrden = data.data || {};
       return jsonResponse({
         ok: true,
-        orderId: data.datos.order_id,
-        estado: data.datos.estado || data.datos.order_status,
-        diamantes: PAQUETES_FREE_FIRE[serviceId],
+        orderId: datosOrden.order_id ?? datosOrden.orderId,
+        estado: datosOrden.status ?? datosOrden.estado ?? datosOrden.order_status,
+        diamantes: PAQUETES_FREE_FIRE[serviceId].diamantes,
       }, 200, cors);
     }
 
@@ -291,19 +332,20 @@ export default {
       if (!data) {
         return jsonResponse({ ok: false, motivo: 'RESPUESTA_INVALIDA_DE_FLASHTOPUP' }, 502, cors);
       }
-      if (!data.exito) {
+      if (!data.success) {
         return jsonResponse({
           ok: false,
-          motivo: data.error?.codigo || 'ERROR_DESCONOCIDO',
-          mensaje: data.error?.mensaje || '',
+          motivo: data.error?.code || 'ERROR_DESCONOCIDO',
+          mensaje: data.error?.message || '',
         }, httpStatus, cors);
       }
 
+      const datosConsulta = data.data || {};
       return jsonResponse({
         ok: true,
-        orderId: data.datos.order_id,
-        estado: data.datos.estado || data.datos.order_status,
-        nota: data.datos.nota || '',
+        orderId: datosConsulta.order_id ?? datosConsulta.orderId,
+        estado: datosConsulta.status ?? datosConsulta.estado ?? datosConsulta.order_status,
+        nota: datosConsulta.note ?? datosConsulta.nota ?? '',
       }, 200, cors);
     }
 
