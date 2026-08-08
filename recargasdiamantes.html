@@ -17,7 +17,7 @@
      siendo los mismos, así que la lógica no se toca.
      ============================================================ */
 
-  .rfd-wrap{ max-width:640px; padding-top:26px; }
+  .rfd-wrap{ max-width:640px; padding-top:26px; margin-left:auto; margin-right:auto; flex-direction:column; }
 
   /* ---------- hero de arriba ---------- */
   .rfd-hero{ text-align:center; margin-bottom:22px; }
@@ -335,13 +335,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ============================================================
-    // PAQUETES DE DIAMANTES — acá se edita el precio de venta (en
-    // USDT, tu saldo) de cada paquete. El "serviceId" es el ID que
-    // ves en tu panel de FlashTopup (pestaña "Productos y precios").
-    // Dejé un margen de ejemplo sobre "tu precio" de FlashTopup —
-    // ajustalo a lo que quieras cobrar vos.
-    // ============================================================
     const PAQUETES = [
       { serviceId: 542, diamantes: 110,  precio: 0.77 },
       { serviceId: 543, diamantes: 341,  precio: 2.30 },
@@ -355,7 +348,6 @@
       return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    /* ---------- cartel / modal ---------- */
     function mostrarCartel(mensaje, tipo){
       const overlay = document.getElementById('modal-overlay');
       const icon = document.getElementById('modal-icon');
@@ -372,7 +364,6 @@
       if(e.target.id === 'modal-overlay') document.getElementById('modal-overlay').style.display = 'none';
     });
 
-    /* ---------- sesión ---------- */
     function obtenerUsuario(){
       const raw = sessionStorage.getItem('xiterking_user');
       if(!raw) return null;
@@ -390,7 +381,6 @@
       document.getElementById('rf-no-logueado').style.display = 'block';
     }
 
-    /* ---------- pintar paquetes ---------- */
     let paqueteSeleccionado = null;
 
     function pintarPaquetes(){
@@ -442,9 +432,8 @@
       document.getElementById('rf-error').textContent = texto;
     }
 
-    /* ---------- verificación de cuenta al escribir el UID ---------- */
     const uidCheckEl = document.getElementById('rf-uid-check');
-    let uidVerificado = null;   // UID que ya se confirmó como válido
+    let uidVerificado = null;
     let uidVerificando = false;
     let uidCheckTimeout = null;
 
@@ -465,7 +454,6 @@
         });
         const data = await res.json();
 
-        // el UID pudo haber cambiado mientras esperábamos la respuesta
         if(document.getElementById('rf-uid').value.trim() !== uid) return;
 
         if(data.ok && data.valido){
@@ -478,8 +466,6 @@
       }catch(err){
         console.error('Error al verificar el UID:', err);
         if(document.getElementById('rf-uid').value.trim() !== uid) return;
-        // si falla la verificación (red caída, etc.) no se bloquea la
-        // recarga entera: se deja pasar sin el chequeo, como antes.
         uidVerificado = uid;
         pintarUidCheck('', '');
       }finally{
@@ -503,7 +489,6 @@
       actualizarBoton();
     });
 
-    /* ---------- reintegrar saldo si algo falla ---------- */
     async function reintegrarSaldo(usuarioActual, monto, pedidoRef, motivo){
       const userRef = doc(db, "registros", usuarioActual.id);
       const nuevoSaldo = await runTransaction(db, async (t) => {
@@ -526,10 +511,9 @@
       return 'procesando';
     }
 
-    /* ---------- consulta periódica mientras la orden sigue "procesando" ---------- */
     function iniciarPolling(pedidoRef, orderId, paquete, usuarioActual){
       let intentos = 0;
-      const MAX_INTENTOS = 15; // ~15 x 4s = 1 minuto probando
+      const MAX_INTENTOS = 15;
 
       const intervalo = setInterval(async () => {
         intentos++;
@@ -564,7 +548,6 @@
       }, 4000);
     }
 
-    /* ---------- confirmar recarga ---------- */
     async function confirmarRecarga(){
       if(!paqueteSeleccionado) return;
 
@@ -596,9 +579,6 @@
       const userRef = doc(db, "registros", usuario.id);
       const pedidoRef = doc(db, "recargasDiamantes", referenceId);
 
-      // 1) se descuenta el saldo y se deja registrado el pedido en
-      // Firestore ANTES de llamarlo al worker, igual que se hace con
-      // las compras de productos.
       let saldoNuevo;
       try{
         const resultado = await runTransaction(db, async (t) => {
@@ -638,7 +618,6 @@
       guardarUsuario(usuario);
       cargarHistorial();
 
-      // 2) recién ahora se le pide al worker que haga la recarga real
       try{
         const res = await fetch(FLASHTOPUP_WORKER_URL + '/crear-orden', {
           method: 'POST',
@@ -681,7 +660,6 @@
     }
     document.getElementById('rf-recargar-btn').addEventListener('click', confirmarRecarga);
 
-    /* ---------- historial de recargas del usuario ---------- */
     const ESTADO_LABEL = { completado: 'Completado', procesando: 'Procesando', fallido: 'Fallido', creando: 'Procesando' };
 
     function formatearFecha(fecha){
