@@ -12,12 +12,12 @@
 // ============================================================
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyAuTLtCDO_bXB9OnUSLx-yn5SmFt2DvS5g",
-  authDomain: "xiterking-store.firebaseapp.com",
-  projectId: "xiterking-store",
-  storageBucket: "xiterking-store.firebasestorage.app",
-  messagingSenderId: "230185855155",
-  appId: "1:230185855155:web:e7fb6d00a0be3de73628c6"
+  apiKey: "AIzaSyDBp_z1tTLo1uGnCjlNGtTmmY8zD5zTyRU",
+  authDomain: "xiterking-store-83624.firebaseapp.com",
+  projectId: "xiterking-store-83624",
+  storageBucket: "xiterking-store-83624.firebasestorage.app",
+  messagingSenderId: "345627054896",
+  appId: "1:345627054896:web:5171ff700efa067f0e6ef5"
 };
 
 // Clave para entrar al panel de administración (cambiala).
@@ -86,7 +86,7 @@ export const DATOS_RECARGA = {
 // cambie el dólar.
 // ============================================================
 export const TASAS_RECARGA = {
-  transferencia: 1585,  // 1 USDT = 1520 pesos argentinos
+  transferencia: 1520,  // 1 USDT = 1520 pesos argentinos
   paypal: 1,             // 1 USDT = 1 USDT
   binance: 1              // 1 USDT = 1 USDT
 };
