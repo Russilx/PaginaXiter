@@ -86,7 +86,7 @@ export const DATOS_RECARGA = {
 // cambie el dólar.
 // ============================================================
 export const TASAS_RECARGA = {
-  transferencia: 1520,  // 1 USDT = 1520 pesos argentinos
+  transferencia: 1585,  // 1 USDT = 1520 pesos argentinos
   paypal: 1,             // 1 USDT = 1 USDT
   binance: 1              // 1 USDT = 1 USDT
 };
