@@ -86,7 +86,7 @@ export const DATOS_RECARGA = {
 // cambie el dólar.
 // ============================================================
 export const TASAS_RECARGA = {
-  transferencia: 1520,  // 1 USDT = 1520 pesos argentinos
+  transferencia: 1585,  // 1 USDT = 1520 pesos argentinos
   paypal: 1,             // 1 USDT = 1 USDT
   binance: 1              // 1 USDT = 1 USDT
 };
@@ -131,5 +131,5 @@ export const IMGBB_API_KEY = "3ab45368d9e1341556fc9313a5c8c807";
 //    que ver con FlashTopup) y tiene que ser IDÉNTICA a la que
 //    cargaste como variable de entorno "SITE_KEY" en el worker.
 // ============================================================
-export const FLASHTOPUP_WORKER_URL = "https://flashtopup-proxy.xiterking.workers.dev";
-export const FLASHTOPUP_SITE_KEY = "xk_9f3a7d2e1c8b4f6a0d5e2c9b7a1f4e8d";
+export const FLASHTOPUP_WORKER_URL = "https://flashtopup-proxy.xiterkingstore.workers.dev";
+export const FLASHTOPUP_SITE_KEY = "e024d865-1779-4723-9d8b-529941fddd9c";
