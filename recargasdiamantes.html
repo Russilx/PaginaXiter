@@ -278,9 +278,14 @@
       <!-- SIN CUENTA -->
       <div class="rf-no-logueado" id="rf-no-logueado" style="display:none;">
         <div class="rf-no-logueado-icon">💎</div>
-        <p>Necesitás una cuenta con saldo para recargar diamantes.</p>
-        <a class="btn btn-primary" style="width:100%; display:block; text-align:center;" href="login.html">Iniciar sesión</a>
-        <div class="alt-link" style="margin-top:12px;">¿Todavía no tenés cuenta? <a href="registro.html">Registrate</a></div>
+        <p id="rf-no-logueado-texto">Necesitás una cuenta de Recarga de Diamantes (con su propio saldo en USDT) para recargar diamantes.</p>
+        <a class="btn btn-primary" style="width:100%; display:block; text-align:center;" id="rf-no-logueado-btn" href="diamantes-login.html">Iniciar sesión</a>
+      </div>
+
+      <!-- SALDO -->
+      <div class="rf-no-logueado" id="rf-saldo-bar" style="display:none; padding:0 0 18px; text-align:left;">
+        <div class="dato-row"><span>Tu saldo</span><strong id="rf-saldo-valor"></strong></div>
+        <a class="alt-link" href="recargar-saldo-diamantes.html">Recargar saldo →</a>
       </div>
 
       <!-- FORMULARIO -->
@@ -373,12 +378,22 @@
     }
     function guardarUsuario(usuario){
       sessionStorage.setItem('xiterking_user', JSON.stringify(usuario));
+      const saldoEl = document.getElementById('rf-saldo-valor');
+      if(saldoEl) saldoEl.textContent = formatearPrecio(usuario.saldo);
     }
 
+    // esta página es solo para cuentas de Recarga de Diamantes, con su
+    // propio saldo en USDT — separadas de la tienda y de los bots.
     let usuario = obtenerUsuario();
+    if(usuario && usuario.tipo !== 'diamantes'){
+      usuario = null;
+      document.getElementById('rf-no-logueado-texto').textContent = 'Esa sesión es de otra cuenta (tienda o bots). Iniciá sesión con tu cuenta de Recarga de Diamantes.';
+    }
     if(usuario){
       document.getElementById('rf-form-wrap').style.display = 'block';
       document.getElementById('rf-historial-wrap').style.display = 'block';
+      document.getElementById('rf-saldo-bar').style.display = 'block';
+      document.getElementById('rf-saldo-valor').textContent = formatearPrecio(usuario.saldo);
     }else{
       document.getElementById('rf-no-logueado').style.display = 'block';
     }
@@ -567,8 +582,8 @@
       }
 
       usuario = obtenerUsuario();
-      if(!usuario){
-        window.location.href = 'login.html';
+      if(!usuario || usuario.tipo !== 'diamantes'){
+        window.location.href = 'diamantes-login.html';
         return;
       }
 
