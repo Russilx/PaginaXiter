@@ -95,6 +95,34 @@
 
   .rf-uid-note{ font-size:11.5px; color:var(--grey); line-height:1.5; margin-top:8px; }
 
+  /* ---------- UIDs guardados de recargas anteriores ---------- */
+  .rf-uid-guardados{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .rf-uid-chip{
+    font-size:12px;
+    font-weight:600;
+    color:var(--white);
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:999px;
+    padding:6px 12px;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .rf-uid-chip:hover{
+    border-color:rgba(225,6,0,0.45);
+    background:rgba(225,6,0,0.08);
+  }
+  .rf-uid-chip.activo{
+    border-color:var(--red-light);
+    background:rgba(225,6,0,0.14);
+    color:var(--red-light);
+  }
+
   /* ---------- verificación de cuenta al escribir el UID ---------- */
   .rf-uid-check{
     font-size:12.5px;
@@ -294,6 +322,7 @@
             <span class="rfd-uid-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.3" fill="currentColor" stroke="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
             </span>
+            <div class="rf-uid-guardados" id="rf-uid-guardados" style="display:none;"></div>
             <input id="rf-uid" type="text" inputmode="numeric" placeholder="Ej: 123456789">
             <div class="rf-uid-check" id="rf-uid-check"></div>
             <span class="rf-uid-note">Lo encontrás tocando tu avatar dentro del juego, abajo a la izquierda de la pantalla. Revisalo bien: una vez confirmada, la recarga no se puede deshacer.</span>
@@ -332,7 +361,7 @@
   <script type="module">
     import { firebaseConfig, FLASHTOPUP_WORKER_URL, FLASHTOPUP_SITE_KEY } from './firebase-config.js';
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, updateDoc, runTransaction, collection, query, where, orderBy, limit, getDocs, serverTimestamp }
+    import { getFirestore, doc, getDoc, updateDoc, runTransaction, collection, query, where, orderBy, limit, getDocs, serverTimestamp, arrayUnion }
       from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
     const app = initializeApp(firebaseConfig);
@@ -414,6 +443,35 @@
     }else{
       document.getElementById('rf-no-logueado').style.display = 'block';
     }
+
+    // ---------- UIDs de Free Fire guardados de recargas anteriores ----------
+    // se guardan en el documento del usuario (colección "registros", campo
+    // "uidsFreeFire") apenas se confirma una recarga, así la próxima vez no
+    // hace falta escribirlo ni verificarlo de nuevo.
+    function pintarUidsGuardados(){
+      const cont = document.getElementById('rf-uid-guardados');
+      const uids = (usuario && Array.isArray(usuario.uidsFreeFire)) ? usuario.uidsFreeFire : [];
+      if(!uids.length){
+        cont.style.display = 'none';
+        cont.innerHTML = '';
+        return;
+      }
+      cont.style.display = 'flex';
+      cont.innerHTML = uids.map(u => `<span class="rf-uid-chip" data-uid="${escapeHtml(u)}">${escapeHtml(u)}</span>`).join('');
+      cont.querySelectorAll('.rf-uid-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const uid = chip.dataset.uid;
+          const input = document.getElementById('rf-uid');
+          input.value = uid;
+          cont.querySelectorAll('.rf-uid-chip').forEach(c => c.classList.remove('activo'));
+          chip.classList.add('activo');
+          uidVerificado = null;
+          clearTimeout(uidCheckTimeout);
+          verificarUid(uid);
+        });
+      });
+    }
+    if(usuario) pintarUidsGuardados();
 
     let paqueteSeleccionado = null;
 
@@ -622,7 +680,10 @@
           const saldoActual = snap.data().saldo || 0;
           if(saldoActual < paqueteSeleccionado.precio) throw new Error('SIN_SALDO');
 
-          t.update(userRef, { saldo: saldoActual - paqueteSeleccionado.precio });
+          t.update(userRef, {
+            saldo: saldoActual - paqueteSeleccionado.precio,
+            uidsFreeFire: arrayUnion(uid)
+          });
           t.set(pedidoRef, {
             usuarioId: usuario.id,
             usuarioNombre: usuario.nombre,
@@ -650,8 +711,11 @@
       }
 
       usuario.saldo = saldoNuevo;
+      if(!Array.isArray(usuario.uidsFreeFire)) usuario.uidsFreeFire = [];
+      if(!usuario.uidsFreeFire.includes(uid)) usuario.uidsFreeFire.push(uid);
       guardarUsuario(usuario);
       pintarCuenta();
+      pintarUidsGuardados();
       cargarHistorial();
 
       try{
