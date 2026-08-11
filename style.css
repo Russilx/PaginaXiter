@@ -424,6 +424,61 @@ html,body{
 }
 .back-btn:hover{ color:var(--white); }
 
+/* ---------- topbar con info de cuenta al lado (ej. recargar diamantes) ----------
+   El .topbar de siempre está pensado solo para "Volver" + marca centrada,
+   con el botón de volver posicionado absoluto. Cuando además hay que
+   mostrarle a alguien logueado su saldo/cuenta (topbar-account), esa
+   combinación no entra en pantallas chicas y todo se pisaba. Estas clases
+   nuevas arman dos filas en mobile en vez de forzar todo en una sola línea. */
+.topbar-con-cuenta{
+  flex-wrap:wrap;
+  justify-content:space-between;
+  gap:10px 16px;
+}
+.topbar-con-cuenta-fila1{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.back-btn-inline{
+  background:none;
+  border:none;
+  color:var(--grey);
+  font-size:13px;
+  letter-spacing:0.5px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  transition:color .2s ease;
+  text-decoration:none;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.back-btn-inline:hover{ color:var(--white); }
+
+@media (max-width:600px){
+  .topbar-con-cuenta{
+    justify-content:center;
+    padding:16px 16px 0;
+  }
+  .topbar-con-cuenta-fila1{
+    order:1;
+    width:100%;
+    justify-content:space-between;
+  }
+  .topbar-con-cuenta .topbar-account{
+    order:2;
+    width:100%;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+}
+@media (max-width:380px){
+  .topbar-con-cuenta .account-name{ max-width:70px; }
+  .topbar-con-cuenta .brandmark{ display:none; } /* con poco espacio, prioridad al saldo/cuenta */
+}
+
 /* ---------- topbar principal (home): logo, buscador, cuenta ---------- */
 .topbar-main{
   justify-content:space-between;
