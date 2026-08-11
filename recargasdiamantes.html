@@ -263,6 +263,7 @@
   <div class="topbar">
     <a class="back-btn" href="index.html">← Volver</a>
     <span class="brandmark">XITERKING</span>
+    <div class="topbar-account" id="topbar-account"></div>
   </div>
 
   <div class="page-wrap rfd-wrap">
@@ -375,7 +376,38 @@
       sessionStorage.setItem('xiterking_diamantes_user', JSON.stringify(usuario));
     }
 
+    function escapeHtml(texto){
+      const div = document.createElement('div');
+      div.textContent = texto == null ? '' : String(texto);
+      return div.innerHTML;
+    }
+
+    function pintarCuenta(){
+      const el = document.getElementById('topbar-account');
+      if(!usuario){
+        el.innerHTML = `
+          <a class="pill-btn pill-outline" href="diamantes-login.html">Iniciar sesión</a>
+          <a class="pill-btn pill-solid" href="registro.html?origen=diamantes">Registrate</a>
+        `;
+        return;
+      }
+      const inicial = (usuario.nombre || '?').trim().charAt(0).toUpperCase();
+      el.innerHTML = `
+        <span class="saldo-chip">SALDO: ${formatearPrecio(usuario.saldo)}</span>
+        <div class="account-chip">
+          <span class="account-avatar">${escapeHtml(inicial)}</span>
+          <span class="account-name">${escapeHtml(usuario.nombre)}</span>
+          <button class="account-logout" id="dia-logout-btn">Cerrar sesión</button>
+        </div>
+      `;
+      document.getElementById('dia-logout-btn').addEventListener('click', () => {
+        sessionStorage.removeItem('xiterking_diamantes_user');
+        window.location.href = 'diamantes-login.html';
+      });
+    }
+
     let usuario = obtenerUsuario();
+    pintarCuenta();
     if(usuario){
       document.getElementById('rf-form-wrap').style.display = 'block';
       document.getElementById('rf-historial-wrap').style.display = 'block';
@@ -503,6 +535,7 @@
       });
       usuarioActual.saldo = nuevoSaldo;
       guardarUsuario(usuarioActual);
+      pintarCuenta();
       return nuevoSaldo;
     }
 
@@ -618,6 +651,7 @@
 
       usuario.saldo = saldoNuevo;
       guardarUsuario(usuario);
+      pintarCuenta();
       cargarHistorial();
 
       try{
