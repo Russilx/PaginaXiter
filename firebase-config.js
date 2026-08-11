@@ -151,4 +151,4 @@ export const FLASHTOPUP_SITE_KEY = "e024d865-1779-4723-9d8b-529941fddd9c";
 //    cargaste como variable de entorno "SITE_KEY" en ese worker.
 // ============================================================
 export const MERCADOPAGO_WORKER_URL = "https://mercadopago-proxy.xiterkingstore.workers.dev";
-export const MERCADOPAGO_SITE_KEY = "uuidgenerator";
+export const MERCADOPAGO_SITE_KEY = "e024d865-1779-4723-9d8b-529941fddd9c";
