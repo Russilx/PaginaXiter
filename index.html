@@ -550,8 +550,21 @@
       return '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    // Esta página (la tienda) solo debe reconocer sesiones de cuentas
+    // tipo "tienda" — las cuentas de los bots de Discord o de Recarga de
+    // Diamantes tienen su propio saldo, separado, y no deben poder
+    // comprar acá ni ver su saldo mezclado con el de la tienda.
+    function obtenerUsuarioTienda(){
+      const raw = sessionStorage.getItem('xiterking_user');
+      if(!raw) return null;
+      let usuario;
+      try{ usuario = JSON.parse(raw); }catch(e){ return null; }
+      if(usuario.tipo && usuario.tipo !== 'tienda') return null;
+      return usuario;
+    }
+
     function estaLogueado(){
-      return !!sessionStorage.getItem('xiterking_user');
+      return !!obtenerUsuarioTienda();
     }
 
     // Usuario registrado (logueado) paga el precio socio/reventa;
@@ -980,9 +993,8 @@
         return;
       }
 
-      const raw = sessionStorage.getItem('xiterking_user');
-      let usuario;
-      try{ usuario = JSON.parse(raw); }catch(e){ sessionStorage.removeItem('xiterking_user'); pintarCuenta(); return; }
+      const usuario = obtenerUsuarioTienda();
+      if(!usuario){ pintarCuenta(); return; }
 
       btn.disabled = true;
       const textoOriginal = btn.textContent;
@@ -1211,10 +1223,8 @@
 
     /* ---------- mis compras ---------- */
     async function verMisCompras(){
-      const raw = sessionStorage.getItem('xiterking_user');
-      if(!raw) return;
-      let usuario;
-      try{ usuario = JSON.parse(raw); }catch(e){ return; }
+      const usuario = obtenerUsuarioTienda();
+      if(!usuario) return;
 
       const overlay = document.getElementById('historial-overlay');
       const listEl = document.getElementById('historial-list');
@@ -1290,9 +1300,9 @@
     function pintarCuenta(){
       const el = document.getElementById('topbar-account');
       const homeActions = document.getElementById('home-actions');
-      const raw = sessionStorage.getItem('xiterking_user');
+      const u = obtenerUsuarioTienda();
 
-      if(!raw){
+      if(!u){
         homeActions.style.display = '';
         el.innerHTML = `
           <button class="cart-btn" id="cart-btn" type="button" aria-label="Carrito">
@@ -1309,41 +1319,31 @@
 
       homeActions.style.display = 'none';
 
-      try{
-        const u = JSON.parse(raw);
-        const inicial = (u.nombre || '?').trim().charAt(0).toUpperCase();
-        el.innerHTML = `
-          <span class="saldo-chip">SALDO: ${formatearPrecio(u.saldo)}</span>
-          <a class="pill-btn pill-outline" href="recarga.html">Recargar</a>
-          <button class="pill-btn pill-outline" id="mis-compras-btn" type="button">Mis compras</button>
-          <div class="account-chip">
-            <span class="account-avatar">${escapeHtml(inicial)}</span>
-            <span class="account-name">${escapeHtml(u.nombre)}</span>
-            <button class="account-logout" id="logout-btn">Despenetrar</button>
-          </div>
-        `;
-        document.getElementById('mis-compras-btn').addEventListener('click', verMisCompras);
-        document.getElementById('logout-btn').addEventListener('click', () => {
-          sessionStorage.removeItem('xiterking_user');
-          pintarCuenta();
-          renderCatalogo(productos);
-        });
-      }catch(e){
+      const inicial = (u.nombre || '?').trim().charAt(0).toUpperCase();
+      el.innerHTML = `
+        <span class="saldo-chip">SALDO: ${formatearPrecio(u.saldo)}</span>
+        <a class="pill-btn pill-outline" href="recarga.html">Recargar</a>
+        <button class="pill-btn pill-outline" id="mis-compras-btn" type="button">Mis compras</button>
+        <div class="account-chip">
+          <span class="account-avatar">${escapeHtml(inicial)}</span>
+          <span class="account-name">${escapeHtml(u.nombre)}</span>
+          <button class="account-logout" id="logout-btn">Despenetrar</button>
+        </div>
+      `;
+      document.getElementById('mis-compras-btn').addEventListener('click', verMisCompras);
+      document.getElementById('logout-btn').addEventListener('click', () => {
         sessionStorage.removeItem('xiterking_user');
         pintarCuenta();
-      }
+        renderCatalogo(productos);
+      });
     }
 
     // Trae el saldo real desde Firestore (por si se lo cargaron/quitaron
     // desde el admin después de que esta persona inició sesión) y actualiza
     // tanto la pantalla como lo guardado en la sesión.
     async function refrescarSaldo(){
-      const raw = sessionStorage.getItem('xiterking_user');
-      if(!raw) return;
-
-      let usuario;
-      try{ usuario = JSON.parse(raw); }catch(e){ return; }
-      if(!usuario.id) return;
+      const usuario = obtenerUsuarioTienda();
+      if(!usuario || !usuario.id) return;
 
       try{
         const userSnap = await getDoc(doc(db, "registros", usuario.id));
