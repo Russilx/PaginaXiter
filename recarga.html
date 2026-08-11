@@ -37,6 +37,7 @@
           <button type="button" class="metodo-btn active" data-metodo="transferencia">Transferencia</button>
           <button type="button" class="metodo-btn" data-metodo="paypal">PayPal</button>
           <button type="button" class="metodo-btn" data-metodo="binance">Binance</button>
+          <button type="button" class="metodo-btn" data-metodo="mercadopago">Mercado Pago</button>
         </div>
 
         <div class="metodo-datos" id="datos-transferencia">
@@ -51,6 +52,9 @@
           <div class="dato-row"><span>ID Binance</span><strong id="db-id"></strong></div>
           <div class="dato-row"><span>Nombre Binance</span><strong id="db-email"></strong></div>
         </div>
+        <div class="metodo-datos" id="datos-mercadopago" style="display:none;">
+          <div class="dato-row"><span>&nbsp;</span><strong>Pagás y el saldo se acredita solo, al toque — no hace falta mandar comprobante.</strong></div>
+        </div>
 
         <div class="tasa-info" id="tasa-info"></div>
 
@@ -60,30 +64,35 @@
         </div>
         <div class="saldo-equivale" id="saldo-equivale"></div>
 
-        <div class="ayuda-foto">
-          <strong>Enviar el comprobante</strong>
-          Apretá el botón, se abre WhatsApp con el mensaje ya armado — ahí adjuntás la foto del comprobante y la mandás.
-        </div>
+        <!-- todo esto (comprobante por WhatsApp) es solo para los métodos
+             manuales; con Mercado Pago no hace falta nada de esto -->
+        <div id="bloque-manual">
+          <div class="ayuda-foto">
+            <strong>Enviar el comprobante</strong>
+            Apretá el botón, se abre WhatsApp con el mensaje ya armado — ahí adjuntás la foto del comprobante y la mandás.
+          </div>
 
-        <a class="btn btn-wsp" id="wsp-btn" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.5.1-.3-.1-1.1-.4-2.1-1.3-.8-.7-1.3-1.6-1.5-1.8-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.4.1-.2 0-.3 0-.5-.1-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.5h-.5c-.2 0-.5.1-.7.3-.3.3-1 1-1 2.3 0 1.3 1 2.6 1.1 2.8.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.6.2-1.1.2-1.3-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.3 5L2 22l5.2-1.4C8.6 21.5 10.3 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3C4 14.7 3.6 13.4 3.6 12c0-4.6 3.8-8.4 8.4-8.4s8.4 3.8 8.4 8.4-3.8 8.4-8.4 8.4z"/></svg>
-          Enviar comprobante por WhatsApp
-        </a>
+          <a class="btn btn-wsp" id="wsp-btn" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.5.1-.3-.1-1.1-.4-2.1-1.3-.8-.7-1.3-1.6-1.5-1.8-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.4.1-.2 0-.3 0-.5-.1-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.5h-.5c-.2 0-.5.1-.7.3-.3.3-1 1-1 2.3 0 1.3 1 2.6 1.1 2.8.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.6.2-1.1.2-1.3-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.3 5L2 22l5.2-1.4C8.6 21.5 10.3 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3C4 14.7 3.6 13.4 3.6 12c0-4.6 3.8-8.4 8.4-8.4s8.4 3.8 8.4 8.4-3.8 8.4-8.4 8.4z"/></svg>
+            Enviar comprobante por WhatsApp
+          </a>
 
-        <div class="field check-field">
-          <label class="prod-checkbox-label">
-            <input id="rec-confirmo" type="checkbox">
-            Ya mandé la foto del comprobante por WhatsApp
-          </label>
-        </div>
-        <div class="field">
-          <label for="rec-referencia">Número de operación (opcional)</label>
-          <input id="rec-referencia" type="text" placeholder="Ej: 000123456789">
+          <div class="field check-field">
+            <label class="prod-checkbox-label">
+              <input id="rec-confirmo" type="checkbox">
+              Ya mandé la foto del comprobante por WhatsApp
+            </label>
+          </div>
+          <div class="field">
+            <label for="rec-referencia">Número de operación (opcional)</label>
+            <input id="rec-referencia" type="text" placeholder="Ej: 000123456789">
+          </div>
         </div>
 
         <div class="form-error" id="rec-error"></div>
 
         <button class="btn btn-primary" style="width:100%;" id="rec-submit-btn">Enviar solicitud de recarga</button>
+        <button class="btn btn-primary" style="width:100%; display:none;" id="rec-mp-btn">Pagar con Mercado Pago</button>
       </div>
 
       <div id="recarga-success" class="success-box" style="display:none;">
@@ -97,7 +106,7 @@
   </div>
 
   <script type="module">
-    import { firebaseConfig, DATOS_RECARGA, TASAS_RECARGA, WHATSAPP_RECARGAS } from './firebase-config.js';
+    import { firebaseConfig, DATOS_RECARGA, TASAS_RECARGA, WHATSAPP_RECARGAS, MERCADOPAGO_WORKER_URL, MERCADOPAGO_SITE_KEY } from './firebase-config.js';
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
     import { getFirestore, collection, addDoc, serverTimestamp }
       from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -127,10 +136,20 @@
     const paneles = {
       transferencia: document.getElementById('datos-transferencia'),
       paypal: document.getElementById('datos-paypal'),
-      binance: document.getElementById('datos-binance')
+      binance: document.getElementById('datos-binance'),
+      mercadopago: document.getElementById('datos-mercadopago')
     };
-    const MONEDA_LABEL = { transferencia: 'pesos', paypal: 'USDT', binance: 'USDT' };
-    const MONEDA_SIMBOLO = { transferencia: '$', paypal: 'USDT ', binance: 'USDT ' };
+    const MONEDA_LABEL = { transferencia: 'pesos', paypal: 'USDT', binance: 'USDT', mercadopago: 'pesos' };
+    const MONEDA_SIMBOLO = { transferencia: '$', paypal: 'USDT ', binance: 'USDT ', mercadopago: '$' };
+
+    // con Mercado Pago no hay comprobante ni solicitud manual: se
+    // muestra el botón de pago y se esconde todo lo del flujo manual.
+    function actualizarModoPago(){
+      const esMP = metodoActual === 'mercadopago';
+      document.getElementById('bloque-manual').style.display = esMP ? 'none' : 'block';
+      document.getElementById('rec-submit-btn').style.display = esMP ? 'none' : 'block';
+      document.getElementById('rec-mp-btn').style.display = esMP ? 'block' : 'none';
+    }
 
     function montoALabel(){
       document.getElementById('rec-monto-label').textContent = `Monto transferido (en ${MONEDA_LABEL[metodoActual]})`;
@@ -177,6 +196,7 @@
         actualizarTasaInfo();
         actualizarEquivalencia();
         actualizarLinkWhatsapp(parseFloat(document.getElementById('rec-monto').value) || null);
+        actualizarModoPago();
       });
     });
 
@@ -185,6 +205,71 @@
     montoALabel();
     actualizarTasaInfo();
     actualizarLinkWhatsapp(null);
+    actualizarModoPago();
+
+    /* ---------- si volvemos del checkout de Mercado Pago ---------- */
+    const paramsUrl = new URLSearchParams(window.location.search);
+    const mpEstado = paramsUrl.get('mp');
+    if(mpEstado === 'exito'){
+      errorEl2Mostrar('✓ ¡Listo! Tu pago se está procesando — el saldo se acredita solo en cuanto Mercado Pago lo confirma (normalmente al instante).', false);
+    }else if(mpEstado === 'pendiente'){
+      errorEl2Mostrar('Tu pago quedó pendiente en Mercado Pago (ej. pago en efectivo). Se acredita solo apenas se apruebe.', false);
+    }else if(mpEstado === 'fallo'){
+      errorEl2Mostrar('El pago no se completó. Podés intentar de nuevo cuando quieras.', true);
+    }
+    function errorEl2Mostrar(texto, esError){
+      const el = document.getElementById('rec-error');
+      el.textContent = texto;
+      el.style.color = esError ? '' : 'var(--green)';
+    }
+
+    /* ---------- pagar con Mercado Pago ---------- */
+    const mpBtn = document.getElementById('rec-mp-btn');
+    mpBtn.addEventListener('click', async () => {
+      const monto = parseFloat(document.getElementById('rec-monto').value);
+      errorEl.textContent = '';
+
+      if(!monto || monto <= 0){
+        errorEl.textContent = 'Ingresá un monto válido.';
+        return;
+      }
+
+      const tasa = TASAS_RECARGA.mercadopago;
+      const montoSaldo = Math.round((monto / tasa) * 100) / 100;
+
+      mpBtn.disabled = true;
+      mpBtn.textContent = 'Generando link de pago…';
+
+      try{
+        const resp = await fetch(`${MERCADOPAGO_WORKER_URL}/crear-preferencia`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Site-Key': MERCADOPAGO_SITE_KEY },
+          body: JSON.stringify({
+            tipo: 'saldo',
+            usuarioId: usuario.id,
+            nombre: usuario.nombre,
+            email: usuario.email,
+            monto,
+            montoSaldo,
+            descripcion: 'Recarga de saldo — XITERKING STORE',
+            returnPath: '/recarga.html'
+          })
+        });
+        const datos = await resp.json();
+        if(!datos.ok || !datos.linkPago){
+          errorEl.textContent = 'No se pudo generar el pago. Probá de nuevo en un rato.';
+          mpBtn.disabled = false;
+          mpBtn.textContent = 'Pagar con Mercado Pago';
+          return;
+        }
+        window.location.href = datos.linkPago;
+      }catch(err){
+        console.error('Error al crear el pago de Mercado Pago:', err);
+        errorEl.textContent = 'Hubo un problema al conectar con Mercado Pago. Probá de nuevo.';
+        mpBtn.disabled = false;
+        mpBtn.textContent = 'Pagar con Mercado Pago';
+      }
+    });
 
     /* ---------- envío ---------- */
     const submitBtn = document.getElementById('rec-submit-btn');

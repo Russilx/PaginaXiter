@@ -89,7 +89,8 @@ export const DATOS_RECARGA = {
 export const TASAS_RECARGA = {
   transferencia: 1585,  // 1 USDT = 1520 pesos argentinos
   paypal: 1,             // 1 USDT = 1 USDT
-  binance: 1              // 1 USDT = 1 USDT
+  binance: 1,             // 1 USDT = 1 USDT
+  mercadopago: 1585       // 1 USDT = misma tasa que transferencia (pesos argentinos)
 };
 
 // ============================================================
@@ -134,3 +135,20 @@ export const IMGBB_API_KEY = "3ab45368d9e1341556fc9313a5c8c807";
 // ============================================================
 export const FLASHTOPUP_WORKER_URL = "https://flashtopup-proxy.xiterkingstore.workers.dev";
 export const FLASHTOPUP_SITE_KEY = "e024d865-1779-4723-9d8b-529941fddd9c";
+
+// ============================================================
+// MERCADO PAGO — pagos automáticos (saldo, productos, diamantes)
+// sin verificación manual. El Access Token de Mercado Pago NUNCA
+// va acá — vive únicamente en el Worker de Cloudflare
+// (ver worker/mercadopago-worker.js). Estas dos constantes son
+// solo para que tu sitio pueda hablarle a TU worker.
+// ------------------------------------------------------------
+// 1. Desplegá mercadopago-worker.js como Worker de Cloudflare
+//    (instrucciones completas en su propio encabezado) y copiá
+//    la URL que te da Cloudflare acá abajo.
+// 2. La SITE_KEY es una clave que vos mismo inventás (no tiene
+//    que ver con Mercado Pago) y tiene que ser IDÉNTICA a la que
+//    cargaste como variable de entorno "SITE_KEY" en ese worker.
+// ============================================================
+export const MERCADOPAGO_WORKER_URL = "https://mercadopago-proxy.xiterkingstore.workers.dev";
+export const MERCADOPAGO_SITE_KEY = "uuidgenerator";
