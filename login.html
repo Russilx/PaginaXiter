@@ -199,6 +199,11 @@
           resetBtn();
           return;
         }
+        if(registro.tipo === 'diamantes'){
+          errorEl.textContent = 'Esa cuenta es de Recarga de Diamantes. Iniciá sesión en diamantes-login.html.';
+          resetBtn();
+          return;
+        }
 
         if(registro.estado === 'pendiente'){
           errorEl.textContent = 'Tu cuenta todavía está pendiente de aprobación.';
@@ -226,6 +231,7 @@
           id: regDoc.id,
           nombre: registro.nombre,
           email: registro.email,
+          tipo: registro.tipo || 'tienda',
           saldo: registro.saldo || 0
         }));
       }catch(err){
