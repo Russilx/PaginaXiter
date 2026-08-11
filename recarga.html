@@ -93,6 +93,17 @@
 
         <button class="btn btn-primary" style="width:100%;" id="rec-submit-btn">Enviar solicitud de recarga</button>
         <button class="btn btn-primary" style="width:100%; display:none;" id="rec-mp-btn">Pagar con Mercado Pago</button>
+        <div style="text-align:center; margin-top:10px; display:none;" id="mp-qr-toggle-wrap">
+          <a href="#" id="mp-qr-toggle-link" style="font-size:12.5px; color:var(--grey); text-decoration:underline;">¿Preferís pagar escaneando un QR?</a>
+        </div>
+
+        <!-- QR del link de pago: aparece solo si el cliente toca el
+             link de arriba, en vez de que lo redirija directo -->
+        <div id="mp-qr-box" style="display:none; text-align:center; margin-top:18px;">
+          <p class="sub" style="margin-bottom:12px;">Escaneá este código con la cámara del celular para pagar.</p>
+          <img id="mp-qr-img" alt="Código QR para pagar con Mercado Pago" style="width:220px; height:220px; border-radius:12px; background:#fff; padding:10px;">
+          <a class="btn btn-secondary" style="width:100%; display:block; text-align:center; margin-top:14px;" id="mp-qr-link" target="_blank" rel="noopener">Abrir el link de pago igual</a>
+        </div>
       </div>
 
       <div id="recarga-success" class="success-box" style="display:none;">
@@ -149,6 +160,8 @@
       document.getElementById('bloque-manual').style.display = esMP ? 'none' : 'block';
       document.getElementById('rec-submit-btn').style.display = esMP ? 'none' : 'block';
       document.getElementById('rec-mp-btn').style.display = esMP ? 'block' : 'none';
+      document.getElementById('mp-qr-toggle-wrap').style.display = esMP ? 'block' : 'none';
+      document.getElementById('mp-qr-box').style.display = 'none';
     }
 
     function montoALabel(){
@@ -225,50 +238,81 @@
 
     /* ---------- pagar con Mercado Pago ---------- */
     const mpBtn = document.getElementById('rec-mp-btn');
-    mpBtn.addEventListener('click', async () => {
+    const mpQrToggleLink = document.getElementById('mp-qr-toggle-link');
+
+    // arma la preferencia de pago en el worker y devuelve el link.
+    // la llaman tanto el botón principal (redirige directo) como el
+    // link de "pagar con QR" (muestra el código en vez de redirigir).
+    async function crearPreferenciaMP(){
       const monto = parseFloat(document.getElementById('rec-monto').value);
       errorEl.textContent = '';
 
       if(!monto || monto <= 0){
         errorEl.textContent = 'Ingresá un monto válido.';
-        return;
+        return null;
       }
 
       const tasa = TASAS_RECARGA.mercadopago;
       const montoSaldo = Math.round((monto / tasa) * 100) / 100;
 
+      const resp = await fetch(`${MERCADOPAGO_WORKER_URL}/crear-preferencia`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Site-Key': MERCADOPAGO_SITE_KEY },
+        body: JSON.stringify({
+          tipo: 'saldo',
+          usuarioId: usuario.id,
+          nombre: usuario.nombre,
+          email: usuario.email,
+          monto,
+          montoSaldo,
+          descripcion: 'Recarga de saldo — XITERKING STORE',
+          returnPath: '/recarga.html'
+        })
+      });
+      const datos = await resp.json();
+      if(!datos.ok || !datos.linkPago){
+        errorEl.textContent = 'No se pudo generar el pago. Probá de nuevo en un rato.';
+        return null;
+      }
+      return datos.linkPago;
+    }
+
+    // botón principal: redirige directo al checkout de Mercado Pago.
+    mpBtn.addEventListener('click', async () => {
       mpBtn.disabled = true;
       mpBtn.textContent = 'Generando link de pago…';
-
       try{
-        const resp = await fetch(`${MERCADOPAGO_WORKER_URL}/crear-preferencia`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Site-Key': MERCADOPAGO_SITE_KEY },
-          body: JSON.stringify({
-            tipo: 'saldo',
-            usuarioId: usuario.id,
-            nombre: usuario.nombre,
-            email: usuario.email,
-            monto,
-            montoSaldo,
-            descripcion: 'Recarga de saldo — XITERKING STORE',
-            returnPath: '/recarga.html'
-          })
-        });
-        const datos = await resp.json();
-        if(!datos.ok || !datos.linkPago){
-          errorEl.textContent = 'No se pudo generar el pago. Probá de nuevo en un rato.';
-          mpBtn.disabled = false;
-          mpBtn.textContent = 'Pagar con Mercado Pago';
-          return;
+        const linkPago = await crearPreferenciaMP();
+        if(linkPago){
+          window.location.href = linkPago;
+          return; // se va de la página, no hace falta reactivar el botón
         }
-        window.location.href = datos.linkPago;
       }catch(err){
         console.error('Error al crear el pago de Mercado Pago:', err);
         errorEl.textContent = 'Hubo un problema al conectar con Mercado Pago. Probá de nuevo.';
-        mpBtn.disabled = false;
-        mpBtn.textContent = 'Pagar con Mercado Pago';
       }
+      mpBtn.disabled = false;
+      mpBtn.textContent = 'Pagar con Mercado Pago';
+    });
+
+    // link secundario: en vez de redirigir, muestra el QR del mismo link.
+    mpQrToggleLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const textoOriginal = mpQrToggleLink.textContent;
+      mpQrToggleLink.textContent = 'Generando QR…';
+      try{
+        const linkPago = await crearPreferenciaMP();
+        if(linkPago){
+          const qrImg = document.getElementById('mp-qr-img');
+          qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(linkPago)}`;
+          document.getElementById('mp-qr-link').href = linkPago;
+          document.getElementById('mp-qr-box').style.display = 'block';
+        }
+      }catch(err){
+        console.error('Error al crear el pago de Mercado Pago:', err);
+        errorEl.textContent = 'Hubo un problema al conectar con Mercado Pago. Probá de nuevo.';
+      }
+      mpQrToggleLink.textContent = textoOriginal;
     });
 
     /* ---------- envío ---------- */
