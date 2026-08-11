@@ -66,20 +66,10 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    /* ---------- origen del registro: "tienda" (login.html), "bot" (ticketbot.html), "ventas" (ventasbot-login.html) o "diamantes" (diamantes-login.html) ---------- */
+    /* ---------- origen del registro: "tienda" (login.html), "bot" (ticketbot.html) o "ventas" (ventasbot-login.html) ---------- */
     const params = new URLSearchParams(window.location.search);
     const origenParam = params.get('origen');
-    const origen = origenParam === 'bot' ? 'bot' : origenParam === 'ventas' ? 'ventas' : origenParam === 'diamantes' ? 'diamantes' : 'tienda';
-
-    if(origen === 'diamantes'){
-      document.getElementById('reg-titulo').innerHTML = 'Crear cuenta <span>de Recarga de Diamantes</span>';
-      document.getElementById('reg-subtitulo').textContent = 'Esta cuenta es solo para recargar diamantes de Free Fire, con su propio saldo en USDT — no incluye los beneficios de la tienda ni de los bots.';
-      document.getElementById('reg-login-link').textContent = 'Iniciá sesión';
-      document.getElementById('reg-login-link').href = 'diamantes-login.html';
-      document.getElementById('reg-success-texto').innerHTML = 'Tu cuenta quedó <strong>pendiente de aprobación</strong>. En cuanto el administrador la autorice, vas a poder ingresar y cargar saldo en USDT para recargar diamantes.';
-      document.getElementById('reg-success-btn').textContent = 'Ir a iniciar sesión';
-      document.getElementById('reg-success-btn').href = 'diamantes-login.html';
-    }
+    const origen = origenParam === 'bot' ? 'bot' : origenParam === 'ventas' ? 'ventas' : 'tienda';
 
     if(origen === 'bot'){
       document.getElementById('reg-titulo').innerHTML = 'Crear cuenta <span>del Bot de Tickets</span>';

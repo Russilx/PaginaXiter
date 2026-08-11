@@ -377,7 +377,7 @@
         <div class="admin-header">
           <h2>Panel de <span>saldos</span></h2>
         </div>
-        <p class="sub">Cargale saldo a cada usuario. Los bots de Discord (tickets y ventas) no manejan saldo, así que no aparecen acá — solo cuentas de la tienda y de Recarga de Diamantes, cada una con su saldo independiente.</p>
+        <p class="sub">Cargale saldo a cada usuario.</p>
 
         <div id="admin-saldo-list" class="admin-list">
           <div class="loading-row">Cargando usuarios…</div>
@@ -391,11 +391,6 @@
           <span class="admin-tag" id="recargas-pendientes-tag">0 pendientes</span>
         </div>
         <p class="sub">Confirmá que llegó la transferencia y aprobá para sumarle el saldo al usuario.</p>
-
-        <div class="admin-tabs" id="recargas-tipo-tabs">
-          <button class="admin-tab active" data-tipo="tienda">Tienda</button>
-          <button class="admin-tab" data-tipo="diamantes">Recarga de Diamantes</button>
-        </div>
 
         <div id="admin-recargas-list" class="admin-list">
           <div class="loading-row">Cargando recargas…</div>
@@ -1645,19 +1640,13 @@
         const q = query(collection(db, "registros"), orderBy("nombre"));
         const snapshot = await getDocs(q);
 
-        // Los bots (tickets/ventas) son solo cuentas de configuración del
-        // bot de Discord — no manejan saldo, así que no aparecen acá.
-        const registros = [];
-        snapshot.forEach(docSnap => {
-          const datos = docSnap.data();
-          if(datos.tipo === 'bot' || datos.tipo === 'ventas') return;
-          registros.push({ id: docSnap.id, ...datos });
-        });
-
-        if(registros.length === 0){
-          listEl.innerHTML = '<div class="empty-state">Todavía no hay usuarios registrados con saldo (tienda o Recarga de Diamantes).</div>';
+        if(snapshot.empty){
+          listEl.innerHTML = '<div class="empty-state">Todavía no hay usuarios registrados.</div>';
           return;
         }
+
+        const registros = [];
+        snapshot.forEach(docSnap => registros.push({ id: docSnap.id, ...docSnap.data() }));
 
         listEl.innerHTML = registros.map(r => renderSaldoCard(r)).join('');
 
@@ -1676,15 +1665,12 @@
     function renderSaldoCard(r){
       const statusClass = 'status-' + r.estado;
       const statusLabel = r.estado === 'pendiente' ? 'Pendiente' : (r.estado === 'aprobado' ? 'Aprobado' : 'Rechazado');
-      const tipo = r.tipo === 'bot' ? 'bot' : r.tipo === 'ventas' ? 'ventas' : r.tipo === 'diamantes' ? 'diamantes' : 'tienda';
-      const tipoLabel = tipo === 'bot' ? 'Bot de tickets' : tipo === 'ventas' ? 'Bot de ventas' : tipo === 'diamantes' ? 'Recarga de diamantes' : 'Tienda';
       return `
         <div class="reg-card">
           <div class="reg-top">
             <div>
               <div class="reg-name">${escapeHtml(r.nombre)}</div>
               <div class="reg-meta">${escapeHtml(r.email)}</div>
-              <span class="tipo-pill tipo-${tipo}">${tipoLabel}</span>
             </div>
             <span class="status-pill ${statusClass}">${statusLabel}</span>
           </div>
@@ -1703,68 +1689,40 @@
        ============================================================ */
     const METODO_LABEL = { transferencia: 'Transferencia', paypal: 'PayPal', binance: 'Binance' };
 
-    let recargasCache = [];
-    let recargasFiltroActual = 'tienda';
-
     async function cargarRecargas(){
       const listEl = document.getElementById('admin-recargas-list');
+      const tagEl = document.getElementById('recargas-pendientes-tag');
       listEl.innerHTML = '<div class="loading-row">Cargando recargas…</div>';
 
       try{
-        const [snapTienda, snapDiamantes] = await Promise.all([
-          getDocs(query(collection(db, "recargas"), orderBy("fecha", "desc"))),
-          getDocs(query(collection(db, "recargasSaldoDiamantes"), orderBy("fecha", "desc")))
-        ]);
+        const q = query(collection(db, "recargas"), orderBy("fecha", "desc"));
+        const snapshot = await getDocs(q);
+
+        if(snapshot.empty){
+          listEl.innerHTML = '<div class="empty-state">Todavía no hay solicitudes de recarga.</div>';
+          tagEl.textContent = '0 pendientes';
+          return;
+        }
 
         const recargas = [];
-        snapTienda.forEach(docSnap => recargas.push({ id: docSnap.id, _col: 'recargas', tipoCuenta: 'tienda', ...docSnap.data() }));
-        snapDiamantes.forEach(docSnap => recargas.push({ id: docSnap.id, _col: 'recargasSaldoDiamantes', tipoCuenta: 'diamantes', ...docSnap.data() }));
+        snapshot.forEach(docSnap => recargas.push({ id: docSnap.id, ...docSnap.data() }));
 
-        recargas.sort((a, b) => {
-          const fa = a.fecha && a.fecha.toDate ? a.fecha.toDate().getTime() : 0;
-          const fb = b.fecha && b.fecha.toDate ? b.fecha.toDate().getTime() : 0;
-          return fb - fa;
+        const pendientes = recargas.filter(r => r.estado === 'pendiente').length;
+        tagEl.textContent = pendientes + ' pendiente' + (pendientes === 1 ? '' : 's');
+
+        listEl.innerHTML = recargas.map(r => renderRecargaCard(r)).join('');
+
+        recargas.forEach(r => {
+          const aprobarBtn = document.getElementById('aprobar-recarga-' + r.id);
+          const rechazarBtn = document.getElementById('rechazar-recarga-' + r.id);
+          if(aprobarBtn) aprobarBtn.addEventListener('click', () => resolverRecarga(r, 'aprobado'));
+          if(rechazarBtn) rechazarBtn.addEventListener('click', () => resolverRecarga(r, 'rechazado'));
         });
-
-        recargasCache = recargas;
-        pintarRecargas();
       }catch(err){
         console.error('Error al cargar recargas:', err);
         listEl.innerHTML = '<div class="empty-state">No se pudieron cargar las recargas. Revisá la configuración de Firebase.</div>';
       }
     }
-
-    function pintarRecargas(){
-      const listEl = document.getElementById('admin-recargas-list');
-      const tagEl = document.getElementById('recargas-pendientes-tag');
-
-      const items = recargasCache.filter(r => r.tipoCuenta === recargasFiltroActual);
-
-      const pendientes = items.filter(r => r.estado === 'pendiente').length;
-      tagEl.textContent = pendientes + ' pendiente' + (pendientes === 1 ? '' : 's');
-
-      if(items.length === 0){
-        listEl.innerHTML = '<div class="empty-state">Todavía no hay solicitudes de recarga acá.</div>';
-        return;
-      }
-
-      listEl.innerHTML = items.map(r => renderRecargaCard(r)).join('');
-
-      items.forEach(r => {
-        const aprobarBtn = document.getElementById('aprobar-recarga-' + r.id);
-        const rechazarBtn = document.getElementById('rechazar-recarga-' + r.id);
-        if(aprobarBtn) aprobarBtn.addEventListener('click', () => resolverRecarga(r, 'aprobado'));
-        if(rechazarBtn) rechazarBtn.addEventListener('click', () => resolverRecarga(r, 'rechazado'));
-      });
-    }
-
-    document.querySelectorAll('#recargas-tipo-tabs .admin-tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        recargasFiltroActual = btn.dataset.tipo;
-        document.querySelectorAll('#recargas-tipo-tabs .admin-tab').forEach(b => b.classList.toggle('active', b === btn));
-        pintarRecargas();
-      });
-    });
 
     function renderRecargaCard(r){
       const fecha = r.fecha && r.fecha.toDate ? r.fecha.toDate() : new Date();
@@ -1804,7 +1762,7 @@
 
     async function resolverRecarga(r, nuevoEstado){
       try{
-        await updateDoc(doc(db, r._col || "recargas", r.id), { estado: nuevoEstado });
+        await updateDoc(doc(db, "recargas", r.id), { estado: nuevoEstado });
 
         if(nuevoEstado === 'aprobado'){
           const montoSaldo = r.montoSaldo != null ? r.montoSaldo : r.monto;
@@ -1826,8 +1784,8 @@
 
       const statusClass = 'status-' + r.estado;
       const statusLabel = r.estado === 'pendiente' ? 'Pendiente' : (r.estado === 'aprobado' ? 'Aprobado' : 'Rechazado');
-      const tipo = r.tipo === 'bot' ? 'bot' : r.tipo === 'ventas' ? 'ventas' : r.tipo === 'diamantes' ? 'diamantes' : 'tienda';
-      const tipoLabel = tipo === 'bot' ? 'Bot de tickets' : tipo === 'ventas' ? 'Bot de ventas' : tipo === 'diamantes' ? 'Recarga de diamantes' : 'Tienda';
+      const tipo = r.tipo === 'bot' ? 'bot' : r.tipo === 'ventas' ? 'ventas' : 'tienda';
+      const tipoLabel = tipo === 'bot' ? 'Bot de tickets' : tipo === 'ventas' ? 'Bot de ventas' : 'Tienda';
 
       return `
         <div class="reg-card">
