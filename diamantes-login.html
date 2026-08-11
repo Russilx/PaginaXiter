@@ -173,7 +173,8 @@
           nombre: registro.nombre,
           email: registro.email,
           tipo: registro.tipo || 'diamantes',
-          saldo: registro.saldo || 0
+          saldo: registro.saldo || 0,
+          uidsFreeFire: Array.isArray(registro.uidsFreeFire) ? registro.uidsFreeFire : []
         }));
 
         window.location.href = 'recargasdiamantes.html';
