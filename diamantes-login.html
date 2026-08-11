@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<script type="module" src="mantenimiento-check.js"></script>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="logo.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recarga de Diamantes — XITERKING STORE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=10">
+</head>
+<body class="login-page">
+
+  <div class="topbar">
+    <a class="back-btn" href="index.html">← Volver</a>
+    <span class="brandmark">XITERKING</span>
+  </div>
+
+  <div class="login-split">
+
+    <div class="login-promo">
+      <div class="promo-brand">
+        <img class="brand-logo" src="logo.png" alt="Logo XITERKING STORE">
+        <span class="promo-brand-name">XITERKING STORE</span>
+      </div>
+      <p class="promo-tagline">Recargá diamantes de Free Fire con tu propio saldo en USDT, sin depender de la tienda</p>
+
+      <div class="promo-bubbles">
+        <div class="promo-bubble">
+          <span class="promo-bubble-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 7.5L12 3 3 7.5l9 4.5 9-4.5z"/>
+              <path d="M3 7.5v9l9 4.5 9-4.5v-9"/>
+              <path d="M12 12v9"/>
+            </svg>
+          </span>
+          <span>Recarga automática apenas confirmás tu UID de Free Fire</span>
+        </div>
+        <div class="promo-bubble">
+          <span class="promo-bubble-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+            </svg>
+          </span>
+          <span>Saldo propio en USDT, separado de la tienda y los bots</span>
+        </div>
+        <div class="promo-bubble">
+          <span class="promo-bubble-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="11" width="14" height="9" rx="2"/>
+              <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+            </svg>
+          </span>
+          <span>Tu cuenta queda protegida hasta que el admin la autoriza</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="login-form-side">
+      <div class="card">
+        <div id="login-form-wrap">
+          <h2>Iniciar <span>sesión</span></h2>
+          <p class="sub">Ingresá con el email y la contraseña que usaste al registrarte para recargar diamantes con tu saldo en USDT.</p>
+
+          <div class="field">
+            <label for="login-email">Email</label>
+            <input id="login-email" type="email" placeholder="tuemail@ejemplo.com">
+          </div>
+          <div class="field">
+            <label for="login-pass">Contraseña</label>
+            <input id="login-pass" type="password" placeholder="Tu contraseña">
+          </div>
+
+          <div class="form-error" id="login-error"></div>
+
+          <button class="btn btn-primary" style="width:100%;" id="login-btn">Iniciar sesión</button>
+
+          <div class="alt-link">¿Todavía no tenés cuenta? <a href="registro.html?origen=diamantes">Registrate</a></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { firebaseConfig } from './firebase-config.js';
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs }
+      from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // mismo hash simple que usa registro.html, para poder comparar
+    // contra lo guardado en Firestore.
+    async function hashPassword(texto){
+      const codificado = new TextEncoder().encode(texto);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', codificado);
+      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('');
+    }
+
+    const btn = document.getElementById('login-btn');
+    const errorEl = document.getElementById('login-error');
+
+    btn.addEventListener('click', async () => {
+      const email = document.getElementById('login-email').value.trim();
+      const pass = document.getElementById('login-pass').value;
+
+      errorEl.textContent = '';
+
+      if(!email || !pass){
+        errorEl.textContent = 'Completá email y contraseña.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Ingresando…';
+
+      try{
+        const q = query(collection(db, "registros"), where("email", "==", email));
+        const snapshot = await getDocs(q);
+
+        if(snapshot.empty){
+          errorEl.textContent = 'No existe una cuenta con ese email.';
+          resetBtn();
+          return;
+        }
+
+        const regDoc = snapshot.docs[0];
+        const registro = regDoc.data();
+
+        // esta página es solo para cuentas de recarga de diamantes. Las
+        // de la tienda y las de los bots tienen su propio login.
+        if(registro.tipo === 'tienda'){
+          errorEl.textContent = 'Esa cuenta es de la tienda. Iniciá sesión en login.html.';
+          resetBtn();
+          return;
+        }
+        if(registro.tipo === 'bot'){
+          errorEl.textContent = 'Esa cuenta es del Bot de Tickets. Iniciá sesión en ticketbot.html.';
+          resetBtn();
+          return;
+        }
+        if(registro.tipo === 'ventas'){
+          errorEl.textContent = 'Esa cuenta es del Bot de Ventas. Iniciá sesión en ventasbot-login.html.';
+          resetBtn();
+          return;
+        }
+
+        if(registro.estado === 'pendiente'){
+          errorEl.textContent = 'Tu cuenta todavía está pendiente de aprobación.';
+          resetBtn();
+          return;
+        }
+        if(registro.estado === 'rechazado'){
+          errorEl.textContent = 'Tu solicitud de cuenta no fue aprobada.';
+          resetBtn();
+          return;
+        }
+
+        const passHash = await hashPassword(pass);
+        if(passHash !== registro.passHash){
+          errorEl.textContent = 'Contraseña incorrecta.';
+          resetBtn();
+          return;
+        }
+
+        sessionStorage.setItem('xiterking_user', JSON.stringify({
+          id: regDoc.id,
+          nombre: registro.nombre,
+          email: registro.email,
+          tipo: registro.tipo || 'diamantes',
+          saldo: registro.saldo || 0
+        }));
+
+        window.location.href = 'recargasdiamantes.html';
+      }catch(err){
+        console.error('Error al iniciar sesión:', err);
+        errorEl.textContent = 'Hubo un problema al iniciar sesión. Probá de nuevo.';
+        resetBtn();
+      }
+    });
+
+    function resetBtn(){
+      btn.disabled = false;
+      btn.textContent = 'Iniciar sesión';
+    }
+  </script>
+  <!-- FOOTER DE CONTACTO -->
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <span class="site-footer-title">Seguinos y contactanos</span>
+      <div class="site-footer-links">
+        <a class="footer-link" id="footer-wsp-link" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.5.1-.3-.1-1.1-.4-2.1-1.3-.8-.7-1.3-1.6-1.5-1.8-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.4.1-.2 0-.3 0-.5-.1-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.5h-.5c-.2 0-.5.1-.7.3-.3.3-1 1-1 2.3 0 1.3 1 2.6 1.1 2.8.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.6.2-1.1.2-1.3-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.3 5L2 22l5.2-1.4C8.6 21.5 10.3 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3C4 14.7 3.6 13.4 3.6 12c0-4.6 3.8-8.4 8.4-8.4s8.4 3.8 8.4 8.4-3.8 8.4-8.4 8.4z"/></svg>
+          WhatsApp
+        </a>
+        <a class="footer-link" id="footer-discord-link" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.6 3c-.2.4-.5.9-.7 1.3a18.3 18.3 0 0 0-5.8 0c-.2-.4-.4-.9-.7-1.3-1.6.3-3.2.8-4.7 1.4C1 8.7.3 13 .6 17.1a20 20 0 0 0 6 3c.5-.6.9-1.3 1.3-2-.7-.3-1.4-.6-2-1 .2-.1.3-.3.5-.4a14.3 14.3 0 0 0 12.2 0c.2.1.3.3.5.4-.6.4-1.3.7-2 1 .4.7.8 1.4 1.3 2a20 20 0 0 0 6-3c.4-4.7-.8-9-3.1-12.7zM8.5 14.6c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2zm7 0c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2z"/></svg>
+          Discord
+        </a>
+        <a class="footer-link" id="footer-ig-personal-link" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"/></svg>
+          Instagram
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- SOPORTE FLOTANTE (visible en toda la página) -->
+  <div class="soporte-flotante" id="soporte-flotante">
+    <div class="soporte-menu" id="soporte-menu">
+      <a class="soporte-opcion soporte-wsp" id="soporte-wsp-link" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.5.1-.3-.1-1.1-.4-2.1-1.3-.8-.7-1.3-1.6-1.5-1.8-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.4.1-.2 0-.3 0-.5-.1-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.5h-.5c-.2 0-.5.1-.7.3-.3.3-1 1-1 2.3 0 1.3 1 2.6 1.1 2.8.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.6.2-1.1.2-1.3-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.3 5L2 22l5.2-1.4C8.6 21.5 10.3 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3C4 14.7 3.6 13.4 3.6 12c0-4.6 3.8-8.4 8.4-8.4s8.4 3.8 8.4 8.4-3.8 8.4-8.4 8.4z"/></svg>
+        WhatsApp
+      </a>
+      <a class="soporte-opcion soporte-discord" id="soporte-discord-link" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.6 3c-.2.4-.5.9-.7 1.3a18.3 18.3 0 0 0-5.8 0c-.2-.4-.4-.9-.7-1.3-1.6.3-3.2.8-4.7 1.4C1 8.7.3 13 .6 17.1a20 20 0 0 0 6 3c.5-.6.9-1.3 1.3-2-.7-.3-1.4-.6-2-1 .2-.1.3-.3.5-.4a14.3 14.3 0 0 0 12.2 0c.2.1.3.3.5.4-.6.4-1.3.7-2 1 .4.7.8 1.4 1.3 2a20 20 0 0 0 6-3c.4-4.7-.8-9-3.1-12.7zM8.5 14.6c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2zm7 0c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2z"/></svg>
+        Discord
+      </a>
+    </div>
+    <button class="soporte-btn" id="soporte-btn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.5 0 10-4 10-9s-4.5-9-10-9-10 4-10 9c0 2 1 4 2.5 5.5L4 22l4.5-1.5C9.6 21 10.8 22 12 22z"/></svg>
+      <span class="soporte-btn-label">Soporte</span>
+    </button>
+  </div>
+
+  <script type="module">
+    import { WHATSAPP_RECARGAS, DISCORD_INVITE, INSTAGRAM_PERSONAL } from './firebase-config.js';
+
+    const soporteWspTexto = encodeURIComponent('Hola! Necesito ayuda con XITERKING STORE.');
+    document.getElementById('soporte-wsp-link').href = `https://wa.me/${WHATSAPP_RECARGAS}?text=${soporteWspTexto}`;
+    document.getElementById('soporte-discord-link').href = DISCORD_INVITE;
+
+    document.getElementById('footer-wsp-link').href = `https://wa.me/${WHATSAPP_RECARGAS}?text=${soporteWspTexto}`;
+    document.getElementById('footer-discord-link').href = DISCORD_INVITE;
+    document.getElementById('footer-ig-personal-link').href = INSTAGRAM_PERSONAL;
+
+    const soporteFlotante = document.getElementById('soporte-flotante');
+    document.getElementById('soporte-btn').addEventListener('click', () => {
+      soporteFlotante.classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => {
+      if(!soporteFlotante.contains(e.target)) soporteFlotante.classList.remove('open');
+    });
+  </script>
+  <script src="particles.js" defer></script>
+  <script src="cursor-fx.js" defer></script>
+</body>
+</html>
