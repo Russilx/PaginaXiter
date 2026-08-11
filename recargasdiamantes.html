@@ -82,7 +82,12 @@
   }
 
   /* ---------- input de UID ---------- */
-  .rfd-uid-field{ position:relative; }
+  /* el ícono se posiciona respecto a este contenedor chico (solo
+     input+ícono), no respecto a .rfd-uid-field entero — si no, al
+     haber más cosas arriba (como los chips de UIDs guardados) el
+     "top:50%" cae en el medio de TODO el bloque en vez de caer
+     centrado sobre el input. */
+  .rfd-uid-input-wrap{ position:relative; }
   .rfd-uid-field input{ padding-left:42px !important; }
   .rfd-uid-icon{
     position:absolute;
@@ -321,11 +326,13 @@
           <div class="rfd-step-head"><span class="rfd-step-num">1</span> Tu cuenta de Free Fire</div>
           <div class="field rfd-uid-field">
             <label for="rf-uid">UID de Free Fire</label>
-            <span class="rfd-uid-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.3" fill="currentColor" stroke="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-            </span>
             <div class="rf-uid-guardados" id="rf-uid-guardados" style="display:none;"></div>
-            <input id="rf-uid" type="text" inputmode="numeric" placeholder="Ej: 123456789">
+            <div class="rfd-uid-input-wrap">
+              <span class="rfd-uid-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.3" fill="currentColor" stroke="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+              </span>
+              <input id="rf-uid" type="text" inputmode="numeric" placeholder="Ej: 123456789">
+            </div>
             <div class="rf-uid-check" id="rf-uid-check"></div>
             <span class="rf-uid-note">Lo encontrás tocando tu avatar dentro del juego, abajo a la izquierda de la pantalla. Revisalo bien: una vez confirmada, la recarga no se puede deshacer.</span>
           </div>
