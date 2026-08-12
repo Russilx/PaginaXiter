@@ -97,12 +97,13 @@
           <a href="#" id="mp-qr-toggle-link" style="font-size:12.5px; color:var(--grey); text-decoration:underline;">¿Preferís pagar escaneando un QR?</a>
         </div>
 
-        <!-- QR del link de pago: aparece solo si el cliente toca el
-             link de arriba, en vez de que lo redirija directo -->
+        <!-- QR interoperable con el monto ya fijo: se genera al tocar
+             el link de arriba, vía POST /crear-qr al worker de MP -->
         <div id="mp-qr-box" style="display:none; text-align:center; margin-top:18px;">
-          <p class="sub" style="margin-bottom:12px;">Escaneá este código con la cámara del celular (la app de fotos/cámara normal, no el lector de "Pagar" de Mercado Pago) — te va a abrir el link de pago en el navegador.</p>
-          <img id="mp-qr-img" alt="Código QR para pagar con Mercado Pago" style="width:220px; height:220px; border-radius:12px; background:#fff; padding:10px;">
-          <a class="btn btn-secondary" style="width:100%; display:block; text-align:center; margin-top:14px;" id="mp-qr-link" target="_blank" rel="noopener">Abrir el link de pago igual</a>
+          <p class="sub" style="margin-bottom:12px;">Escaneá este código con la app de tu banco o billetera (Mercado Pago, Naranja X, Cuenta DNI, BNA+, etc.) — buscá la opción "Pagar" o "Escanear QR" adentro de la app, no la cámara de fotos normal. El monto ya viene cargado, no hace falta escribirlo.</p>
+          <img id="mp-qr-img" alt="Código QR para pagar" style="width:220px; height:220px; border-radius:12px; background:#fff; padding:10px;">
+          <p class="tb-note" id="mp-qr-fallback-nota" style="margin-top:10px; display:none;"></p>
+          <a class="btn btn-secondary" style="width:100%; display:none; text-align:center; margin-top:14px;" id="mp-qr-link" target="_blank" rel="noopener">Abrir el link de pago en su lugar</a>
         </div>
       </div>
 
@@ -240,20 +241,26 @@
     const mpBtn = document.getElementById('rec-mp-btn');
     const mpQrToggleLink = document.getElementById('mp-qr-toggle-link');
 
-    // arma la preferencia de pago en el worker y devuelve el link.
-    // la llaman tanto el botón principal (redirige directo) como el
-    // link de "pagar con QR" (muestra el código en vez de redirigir).
-    async function crearPreferenciaMP(){
+    // calcula monto (ARS) y montoSaldo (USDT) a partir de lo que puso
+    // el cliente, validando que sea un número válido.
+    function calcularMontos(){
       const monto = parseFloat(document.getElementById('rec-monto').value);
       errorEl.textContent = '';
-
       if(!monto || monto <= 0){
         errorEl.textContent = 'Ingresá un monto válido.';
         return null;
       }
-
       const tasa = TASAS_RECARGA.mercadopago;
       const montoSaldo = Math.round((monto / tasa) * 100) / 100;
+      return { monto, montoSaldo };
+    }
+
+    // arma la preferencia de pago (link de Checkout Pro) en el worker.
+    // la usa el botón principal, y como respaldo si /crear-qr falla.
+    async function crearPreferenciaMP(){
+      const montos = calcularMontos();
+      if(!montos) return null;
+      const { monto, montoSaldo } = montos;
 
       const resp = await fetch(`${MERCADOPAGO_WORKER_URL}/crear-preferencia`, {
         method: 'POST',
@@ -277,6 +284,38 @@
       return datos.linkPago;
     }
 
+    // pide el QR interoperable (monto fijo, sirve con cualquier banco o
+    // billetera). Si por algún motivo no está disponible (por ejemplo,
+    // todavía no se configuró el Punto de venta de Mercado Pago), cae
+    // de respaldo al link de Checkout Pro de siempre.
+    async function crearQrMP(){
+      const montos = calcularMontos();
+      if(!montos) return null;
+      const { monto, montoSaldo } = montos;
+
+      const resp = await fetch(`${MERCADOPAGO_WORKER_URL}/crear-qr`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Site-Key': MERCADOPAGO_SITE_KEY },
+        body: JSON.stringify({
+          tipo: 'saldo',
+          usuarioId: usuario.id,
+          nombre: usuario.nombre,
+          email: usuario.email,
+          monto,
+          montoSaldo,
+          descripcion: 'Recarga de saldo — XITERKING STORE',
+        })
+      });
+      const datos = await resp.json();
+      if(datos.ok && datos.qrData){
+        return { tipo: 'interoperable', contenido: datos.qrData };
+      }
+      // respaldo: mismo QR de siempre (el link de checkout)
+      const linkPago = await crearPreferenciaMP();
+      if(linkPago) return { tipo: 'link', contenido: linkPago };
+      return null;
+    }
+
     // botón principal: redirige directo al checkout de Mercado Pago.
     mpBtn.addEventListener('click', async () => {
       mpBtn.disabled = true;
@@ -295,17 +334,33 @@
       mpBtn.textContent = 'Pagar con Mercado Pago';
     });
 
-    // link secundario: en vez de redirigir, muestra el QR del mismo link.
+    // link secundario: en vez de redirigir, muestra el QR interoperable
+    // (o el de respaldo si todavía no está configurado el QR real).
     mpQrToggleLink.addEventListener('click', async (e) => {
       e.preventDefault();
       const textoOriginal = mpQrToggleLink.textContent;
       mpQrToggleLink.textContent = 'Generando QR…';
       try{
-        const linkPago = await crearPreferenciaMP();
-        if(linkPago){
+        const resultado = await crearQrMP();
+        if(resultado){
           const qrImg = document.getElementById('mp-qr-img');
-          qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(linkPago)}`;
-          document.getElementById('mp-qr-link').href = linkPago;
+          const notaEl = document.getElementById('mp-qr-fallback-nota');
+          const linkBtn = document.getElementById('mp-qr-link');
+
+          qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(resultado.contenido)}`;
+
+          if(resultado.tipo === 'link'){
+            // respaldo: es el QR viejo, que dibuja un link — hay que
+            // escanearlo con la cámara normal, no con el lector de pagos.
+            notaEl.textContent = 'Este código todavía no es el interoperable — escaneálo con la cámara normal del celular, te va a abrir el link de pago.';
+            notaEl.style.display = 'block';
+            linkBtn.href = resultado.contenido;
+            linkBtn.style.display = 'block';
+          }else{
+            notaEl.style.display = 'none';
+            linkBtn.style.display = 'none';
+          }
+
           document.getElementById('mp-qr-box').style.display = 'block';
         }
       }catch(err){
