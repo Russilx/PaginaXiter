@@ -432,6 +432,7 @@
       const inicial = (usuario.nombre || '?').trim().charAt(0).toUpperCase();
       el.innerHTML = `
         <span class="saldo-chip">SALDO: ${formatearPrecio(usuario.saldo)}</span>
+        <a class="pill-btn pill-outline" href="recargar-saldo-diamantes.html">Recargar</a>
         <div class="account-chip">
           <span class="account-avatar">${escapeHtml(inicial)}</span>
           <span class="account-name">${escapeHtml(usuario.nombre)}</span>
