@@ -1690,7 +1690,7 @@
           </div>
           <div class="reg-saldo-row">
             <span class="reg-saldo-actual">Saldo: <strong>${formatearPrecio(r.saldo)}</strong></span>
-            <input type="number" class="saldo-input" id="saldo-input-${r.id}" placeholder="Monto" min="1" step="1">
+            <input type="number" class="saldo-input" id="saldo-input-${r.id}" placeholder="Monto" min="0.01" step="0.01">
             <button class="mini-btn mini-saldo" id="cargar-saldo-${r.id}">Cargar saldo</button>
             <button class="mini-btn mini-quitar" id="quitar-saldo-${r.id}">Quitar saldo</button>
           </div>
@@ -1853,7 +1853,7 @@
 
     async function cargarSaldo(r, signo){
       const input = document.getElementById('saldo-input-' + r.id);
-      const monto = parseInt(input.value, 10);
+      const monto = Math.round(parseFloat(input.value) * 100) / 100;
       if(!monto || monto <= 0){
         alert('Ingresá un monto válido.');
         return;
