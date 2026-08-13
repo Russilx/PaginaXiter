@@ -24,7 +24,7 @@
     <div class="card" id="card-sin-sesion" style="display:none;">
       <h2>Recargar <span>saldo</span></h2>
       <p class="sub" id="sin-sesion-texto">Tenés que iniciar sesión con tu cuenta de Recarga de Diamantes antes de poder recargar saldo.</p>
-      <a class="btn btn-primary" style="width:100%; display:block; text-align:center;" href="diamantes-login.html">Iniciar sesión</a>
+      <a class="btn btn-primary" style="width:100%; display:block; text-align:center;" href="diamantes-login.html?redirect=recargar-saldo-diamantes.html">Iniciar sesión</a>
     </div>
 
     <!-- FORM DE RECARGA -->
@@ -105,7 +105,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const raw = sessionStorage.getItem('xiterking_user');
+    const raw = sessionStorage.getItem('xiterking_diamantes_user');
     let usuario = null;
     try{ usuario = raw ? JSON.parse(raw) : null; }catch(e){ usuario = null; }
 
