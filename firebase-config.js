@@ -133,7 +133,7 @@ export const IMGBB_API_KEY = "3ab45368d9e1341556fc9313a5c8c807";
 //    que ver con FlashTopup) y tiene que ser IDÉNTICA a la que
 //    cargaste como variable de entorno "SITE_KEY" en el worker.
 // ============================================================
-export const FLASHTOPUP_WORKER_URL = "https://flashtopup-proxy.xiterkingstore.workers.dev";
+export const FLASHTOPUP_WORKER_URL = "https://flashtopup-relay.xiterking.shop";
 export const FLASHTOPUP_SITE_KEY = "e024d865-1779-4723-9d8b-529941fddd9c";
 
 // ============================================================
