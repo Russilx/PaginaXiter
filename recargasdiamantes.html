@@ -447,6 +447,28 @@
 
     let usuario = obtenerUsuario();
     pintarCuenta();
+
+    // el saldo guardado en sessionStorage es el de cuando se inició
+    // sesión — puede haber quedado viejo (ej: si se acreditó un pago
+    // de Mercado Pago mientras tanto). Acá lo traemos fresco de
+    // Firestore apenas carga la página y repintamos si cambió.
+    async function refrescarSaldo(){
+      if(!usuario || !usuario.id) return;
+      try{
+        const snap = await getDoc(doc(db, 'registros', usuario.id));
+        if(snap.exists()){
+          const saldoReal = snap.data().saldo || 0;
+          if(saldoReal !== usuario.saldo){
+            usuario.saldo = saldoReal;
+            guardarUsuario(usuario);
+            pintarCuenta();
+          }
+        }
+      }catch(err){
+        console.error('Error al refrescar el saldo:', err);
+      }
+    }
+    refrescarSaldo();
     if(usuario){
       document.getElementById('rf-form-wrap').style.display = 'block';
       document.getElementById('rf-historial-wrap').style.display = 'block';
