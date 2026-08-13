@@ -5,241 +5,186 @@
 <meta charset="UTF-8">
 <link rel="icon" type="image/png" href="logo.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mi Bot de Ventas — XITERKING STORE</title>
+<title>Bot de Ventas — XITERKING STORE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=10">
-<style>
-  /* ---------- mismos estilos "tb-" que usa mibot.html / admin.html ---------- */
-  .tb-section{
-    margin-top:28px;
-    padding-top:22px;
-    border-top:1px solid rgba(255,255,255,0.08);
-  }
-  .tb-section:first-of-type{ margin-top:20px; padding-top:0; border-top:none; }
-  .tb-section-title{
-    font-family:'Anton', sans-serif;
-    font-size:13px;
-    letter-spacing:1.2px;
-    color:var(--red-light);
-    text-transform:uppercase;
-    margin-bottom:4px;
-  }
-  .tb-section-sub{ font-size:12px; color:var(--grey); margin-bottom:16px; line-height:1.5; }
-  .tb-row{ display:flex; gap:14px; flex-wrap:wrap; }
-  .tb-row .field{ flex:1 1 220px; }
-  .tb-note{ font-size:11.5px; color:var(--grey); line-height:1.5; margin-top:6px; }
-  .tb-warning{
-    background:rgba(245,197,66,0.08);
-    border:1px solid rgba(245,197,66,0.35);
-    border-radius:12px;
-    padding:14px 16px;
-    font-size:12.5px;
-    color:var(--yellow);
-    line-height:1.6;
-    margin-bottom:22px;
-  }
-  .tb-warning strong{ color:var(--white); }
-  .tb-save-bar{
-    position:sticky;
-    bottom:0;
-    background:linear-gradient(180deg, transparent, var(--black) 30%);
-    padding:20px 0 6px;
-    margin-top:10px;
-  }
-  .tb-saved-msg{ font-size:12.5px; color:var(--green); margin-top:8px; display:none; }
-  .mibot-user-bar{
-    text-align:center;
-    font-size:12.5px;
-    color:var(--grey);
-    padding:10px 20px 0;
-  }
-  .mibot-user-bar a{ color:var(--red-light); }
-</style>
 </head>
-<body>
+<body class="login-page">
 
   <div class="topbar">
     <a class="back-btn" href="index.html">← Volver</a>
     <span class="brandmark">XITERKING</span>
   </div>
-  <div class="mibot-user-bar">
-    <span id="vb-usuario-nombre"></span> — <a href="#" id="vb-logout-link">Cerrar sesión</a>
-  </div>
 
-  <div class="page-wrap">
-    <div class="card admin-card" id="card-panel">
+  <div class="login-split">
 
-      <div class="admin-header">
-        <h2>Mi <span>bot de ventas</span></h2>
+    <div class="login-promo">
+      <div class="promo-brand">
+        <img class="brand-logo" src="logo.png" alt="Logo XITERKING STORE">
+        <span class="promo-brand-name">XITERKING STORE</span>
       </div>
-      <p class="sub">Configurá tu propio bot de ventas de Discord. Nadie más puede editarla — solo vos, con tu cuenta. Necesitás haber invitado al bot a tu propio servidor de Discord antes de completar esto (pedile el link de invitación al soporte).</p>
+      <p class="promo-tagline">Cargá tus ventas cerradas directo desde tu propio servidor con nuestro Bot de Ventas</p>
 
-      <div class="tb-warning">
-        <strong>Importante:</strong> con tu servidor solo funciona el comando <code>/venta-ticket</code> — para cargar una venta cerrada en un ticket tuyo, sea de cualquier bot de tickets. No recibís los avisos de compras/recargas de la tienda, esos son solo del servidor principal.
-      </div>
-
-      <div class="status-pill" id="vb-estado-pill" style="margin-bottom:22px; display:inline-block;"></div>
-
-      <div id="vb-form-wrap">
-
-        <div class="tb-section">
-          <div class="tb-section-title">Tu servidor de Discord</div>
-          <div class="tb-section-sub">Los ID se consiguen activando el "Modo desarrollador" en Discord (Ajustes → Avanzado) y haciendo clic derecho sobre el servidor, canal o rol → "Copiar ID".</div>
-          <div class="field">
-            <label for="vb-guild-id">ID de tu servidor de Discord</label>
-            <input id="vb-guild-id" type="text" placeholder="Ej: 123456789012345678">
-            <span class="tb-note">El bot busca esta configuración apenas se conecta a ESE servidor.</span>
-          </div>
-          <div class="tb-row">
-            <div class="field">
-              <label for="vb-canal-ventas">ID del canal donde se avisan tus ventas</label>
-              <input id="vb-canal-ventas" type="text" placeholder="Ej: 123456789012345678">
-            </div>
-            <div class="field">
-              <label for="vb-rol-staff">ID(s) de rol que pueden usar /venta-ticket</label>
-              <input id="vb-rol-staff" type="text" placeholder="Ej: 123456789012345678, 987654321098765432">
-              <span class="tb-note">Separados por coma si son varios. Solo estos roles van a poder cargar una venta.</span>
-            </div>
-          </div>
+      <div class="promo-bubbles">
+        <div class="promo-bubble">
+          <span class="promo-bubble-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 7.5L12 3 3 7.5l9 4.5 9-4.5z"/>
+              <path d="M3 7.5v9l9 4.5 9-4.5v-9"/>
+              <path d="M12 12v9"/>
+            </svg>
+          </span>
+          <span>Comando /venta-ticket para cargar ventas al instante</span>
         </div>
-
-        <div class="form-error" id="vb-form-error"></div>
-
-        <div class="tb-save-bar">
-          <button class="btn btn-primary" style="width:100%;" id="vb-guardar-btn">Guardar mi configuración</button>
-          <div class="tb-saved-msg" id="vb-saved-msg">✓ Configuración guardada. El bot va a usarla apenas se conecte a tu servidor (o al toque si ya está online y fue aprobada).</div>
+        <div class="promo-bubble">
+          <span class="promo-bubble-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+            </svg>
+          </span>
+          <span>Configuración propia, solo vos podés editarla</span>
+        </div>
+        <div class="promo-bubble">
+          <span class="promo-bubble-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="11" width="14" height="9" rx="2"/>
+              <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+            </svg>
+          </span>
+          <span>Tu servidor queda protegido hasta que el admin lo autoriza</span>
         </div>
       </div>
-
     </div>
+
+    <div class="login-form-side">
+      <div class="card">
+        <div id="login-form-wrap">
+          <h2>Iniciar <span>sesión</span></h2>
+          <p class="sub">Ingresá con el email y la contraseña que usaste al registrarte para configurar tu propio bot de ventas.</p>
+
+          <div class="field">
+            <label for="login-email">Email</label>
+            <input id="login-email" type="email" placeholder="tuemail@ejemplo.com">
+          </div>
+          <div class="field">
+            <label for="login-pass">Contraseña</label>
+            <input id="login-pass" type="password" placeholder="Tu contraseña">
+          </div>
+
+          <div class="form-error" id="login-error"></div>
+
+          <button class="btn btn-primary" style="width:100%;" id="login-btn">Iniciar sesión</button>
+
+          <div class="alt-link">¿Todavía no tenés cuenta? <a href="registro.html?origen=ventas">Registrate</a></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script type="module">
     import { firebaseConfig } from './firebase-config.js';
+    import { reproducirSonidoLogin } from './login-sound.js';
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, serverTimestamp }
+    import { getFirestore, collection, query, where, getDocs }
       from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    /* ---------- exige sesión iniciada con una cuenta propia del bot de ventas ---------- */
-    const raw = sessionStorage.getItem('xiterking_user');
-    let usuario = null;
-    try{ usuario = raw ? JSON.parse(raw) : null; }catch(e){ usuario = null; }
-
-    if(!usuario || !usuario.id){
-      window.location.href = 'ventasbot-login.html';
+    // mismo hash simple que usa registro.html, para poder comparar
+    // contra lo guardado en Firestore.
+    async function hashPassword(texto){
+      const codificado = new TextEncoder().encode(texto);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', codificado);
+      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('');
     }
 
-    document.getElementById('vb-usuario-nombre').textContent = usuario ? usuario.nombre : '';
-    document.getElementById('vb-logout-link').addEventListener('click', (e) => {
-      e.preventDefault();
-      sessionStorage.removeItem('xiterking_user');
-      window.location.href = 'ventasbot-login.html';
-    });
+    const btn = document.getElementById('login-btn');
+    const errorEl = document.getElementById('login-error');
 
-    const CONFIG_DOC = doc(db, 'ventasbotConfigs', usuario ? usuario.id : 'nadie');
+    btn.addEventListener('click', async () => {
+      const email = document.getElementById('login-email').value.trim();
+      const pass = document.getElementById('login-pass').value;
 
-    const el = (id) => document.getElementById(id);
-    const campos = {
-      guildId: el('vb-guild-id'),
-      canalVentasId: el('vb-canal-ventas'),
-      staffRoleIds: el('vb-rol-staff'),
-    };
+      errorEl.textContent = '';
 
-    let estadoAprobacion = 'pendiente';
-    let guildIdAprobado = '';
-
-    function pintarEstadoAprobacion(){
-      const pill = el('vb-estado-pill');
-      pill.classList.remove('status-pendiente', 'status-aprobado', 'status-rechazado');
-      if(estadoAprobacion === 'aprobado'){
-        pill.classList.add('status-aprobado');
-        pill.textContent = '✓ Tu servidor está autorizado — /venta-ticket ya funciona ahí';
-      }else if(estadoAprobacion === 'rechazado'){
-        pill.classList.add('status-rechazado');
-        pill.textContent = '✕ Esta configuración fue rechazada. Revisá los datos y volvé a guardar.';
-      }else{
-        pill.classList.add('status-pendiente');
-        pill.textContent = '⏳ Pendiente de autorización — guardá tus datos y esperá a que el admin lo apruebe';
-      }
-    }
-
-    async function cargarConfig(){
-      try{
-        const snap = await getDoc(CONFIG_DOC);
-        if(snap.exists()){
-          const datos = snap.data();
-          Object.entries(campos).forEach(([key, input]) => {
-            input.value = datos[key] != null ? datos[key] : '';
-          });
-          estadoAprobacion = datos.estadoAprobacion === 'aprobado' || datos.estadoAprobacion === 'rechazado' ? datos.estadoAprobacion : 'pendiente';
-          guildIdAprobado = datos.guildId || '';
-        }
-      }catch(err){
-        console.error('Error al cargar tu configuración del bot de ventas:', err);
-        el('vb-form-error').textContent = 'No se pudo cargar tu configuración guardada.';
-      }
-      pintarEstadoAprobacion();
-    }
-    cargarConfig();
-
-    const guardarBtn = el('vb-guardar-btn');
-    const formError = el('vb-form-error');
-    const savedMsg = el('vb-saved-msg');
-
-    guardarBtn.addEventListener('click', async () => {
-      formError.textContent = '';
-      savedMsg.style.display = 'none';
-
-      if(!campos.guildId.value.trim() || !campos.canalVentasId.value.trim()){
-        formError.textContent = 'Completá al menos el ID de tu servidor y el ID del canal de ventas.';
+      if(!email || !pass){
+        errorEl.textContent = 'Completá email y contraseña.';
         return;
       }
 
-      guardarBtn.disabled = true;
-      guardarBtn.textContent = 'Guardando…';
-
-      const datos = {};
-      Object.entries(campos).forEach(([key, input]) => {
-        datos[key] = input.value.trim();
-      });
-
-      // Si ya estaba aprobado pero cambió el servidor, vuelve a pendiente
-      // para que el admin lo revise de nuevo antes de que el bot lo use ahí.
-      if(estadoAprobacion === 'aprobado' && datos.guildId !== guildIdAprobado){
-        estadoAprobacion = 'pendiente';
-      }
-      // Si estaba rechazado y volvieron a guardar (corrigiendo algo), pasa
-      // a pendiente de nuevo para que el admin lo revise otra vez.
-      if(estadoAprobacion === 'rechazado'){
-        estadoAprobacion = 'pendiente';
-      }
-      datos.estadoAprobacion = estadoAprobacion;
-
-      datos.usuarioId = usuario.id;
-      datos.usuarioNombre = usuario.nombre;
-      datos.usuarioEmail = usuario.email;
-      datos.actualizado = serverTimestamp();
+      btn.disabled = true;
+      btn.textContent = 'Ingresando…';
 
       try{
-        await setDoc(CONFIG_DOC, datos, { merge: true });
-        pintarEstadoAprobacion();
-        savedMsg.style.display = 'block';
-        setTimeout(() => { savedMsg.style.display = 'none'; }, 4000);
+        const q = query(collection(db, "registros"), where("email", "==", email));
+        const snapshot = await getDocs(q);
+
+        if(snapshot.empty){
+          errorEl.textContent = 'No existe una cuenta con ese email.';
+          resetBtn();
+          return;
+        }
+
+        const regDoc = snapshot.docs[0];
+        const registro = regDoc.data();
+
+        // esta página es solo para cuentas del bot de ventas. Las de la
+        // tienda y las del bot de tickets tienen su propio login.
+        if(registro.tipo === 'tienda'){
+          errorEl.textContent = 'Esa cuenta es de la tienda. Iniciá sesión en login.html.';
+          resetBtn();
+          return;
+        }
+        if(registro.tipo === 'bot'){
+          errorEl.textContent = 'Esa cuenta es del Bot de Tickets. Iniciá sesión en ticketbot.html.';
+          resetBtn();
+          return;
+        }
+
+        if(registro.estado === 'pendiente'){
+          errorEl.textContent = 'Tu cuenta todavía está pendiente de aprobación.';
+          resetBtn();
+          return;
+        }
+        if(registro.estado === 'rechazado'){
+          errorEl.textContent = 'Tu solicitud de cuenta no fue aprobada.';
+          resetBtn();
+          return;
+        }
+
+        const passHash = await hashPassword(pass);
+        if(passHash !== registro.passHash){
+          errorEl.textContent = 'Contraseña incorrecta.';
+          resetBtn();
+          return;
+        }
+
+        sessionStorage.setItem('xiterking_user', JSON.stringify({
+          id: regDoc.id,
+          nombre: registro.nombre,
+          email: registro.email,
+          saldo: registro.saldo || 0
+        }));
+
+        reproducirSonidoLogin();
+        setTimeout(() => { window.location.href = 'ventasbot.html'; }, 250);
       }catch(err){
-        console.error('Error al guardar tu configuración del bot de ventas:', err);
-        formError.textContent = 'No se pudo guardar. Probá de nuevo.';
-      }finally{
-        guardarBtn.disabled = false;
-        guardarBtn.textContent = 'Guardar mi configuración';
+        console.error('Error al iniciar sesión:', err);
+        errorEl.textContent = 'Hubo un problema al iniciar sesión. Probá de nuevo.';
+        resetBtn();
       }
     });
-  </script>
 
+    function resetBtn(){
+      btn.disabled = false;
+      btn.textContent = 'Iniciar sesión';
+    }
+  </script>
   <!-- FOOTER DE CONTACTO -->
   <footer class="site-footer">
     <div class="site-footer-inner">
@@ -261,7 +206,7 @@
     </div>
   </footer>
 
-  <!-- SOPORTE FLOTANTE -->
+  <!-- SOPORTE FLOTANTE (visible en toda la página) -->
   <div class="soporte-flotante" id="soporte-flotante">
     <div class="soporte-menu" id="soporte-menu">
       <a class="soporte-opcion soporte-wsp" id="soporte-wsp-link" target="_blank" rel="noopener">
