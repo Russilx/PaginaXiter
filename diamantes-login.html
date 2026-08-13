@@ -87,6 +87,7 @@
 
   <script type="module">
     import { firebaseConfig } from './firebase-config.js';
+    import { reproducirSonidoLogin } from './login-sound.js';
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
     import { getFirestore, collection, query, where, getDocs }
       from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -177,9 +178,10 @@
           uidsFreeFire: Array.isArray(registro.uidsFreeFire) ? registro.uidsFreeFire : []
         }));
 
+        reproducirSonidoLogin();
         const params = new URLSearchParams(window.location.search);
         const destino = params.get('redirect') || 'recargasdiamantes.html';
-        window.location.href = destino;
+        setTimeout(() => { window.location.href = destino; }, 250);
       }catch(err){
         console.error('Error al iniciar sesión:', err);
         errorEl.textContent = 'Hubo un problema al iniciar sesión. Probá de nuevo.';
