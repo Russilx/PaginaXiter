@@ -142,6 +142,7 @@
 
   <script type="module">
     import { firebaseConfig, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from './firebase-config.js';
+    import { reproducirSonidoLogin } from './login-sound.js';
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
     import { getFirestore, collection, query, where, getDocs, doc, getDoc, updateDoc }
       from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -226,6 +227,7 @@
         document.getElementById('login-nombre').textContent = registro.nombre;
         document.getElementById('login-form-wrap').style.display = 'none';
         document.getElementById('login-success').style.display = 'block';
+        reproducirSonidoLogin();
 
         sessionStorage.setItem('xiterking_user', JSON.stringify({
           id: regDoc.id,
@@ -482,4 +484,3 @@
   <script src="cursor-fx.js" defer></script>
 </body>
 </html>
-
