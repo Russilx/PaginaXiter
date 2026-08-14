@@ -178,10 +178,10 @@
           uidsFreeFire: Array.isArray(registro.uidsFreeFire) ? registro.uidsFreeFire : []
         }));
 
-        reproducirSonidoLogin();
+        await reproducirSonidoLogin();
         const params = new URLSearchParams(window.location.search);
         const destino = params.get('redirect') || 'recargasdiamantes.html';
-        setTimeout(() => { window.location.href = destino; }, 250);
+        window.location.href = destino;
       }catch(err){
         console.error('Error al iniciar sesión:', err);
         errorEl.textContent = 'Hubo un problema al iniciar sesión. Probá de nuevo.';
