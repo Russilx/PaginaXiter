@@ -109,6 +109,30 @@
   }
   .tb-tipo-card-head span{ font-size:12.5px; color:var(--grey); font-weight:600; }
 
+  /* ---------- extras solo para la pestaña "Staff" ---------- */
+  .staff-permisos-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
+    gap:8px 14px;
+    margin-bottom:6px;
+  }
+  .staff-permiso-item{
+    display:flex; align-items:center; gap:8px;
+    font-size:12.5px; color:var(--white);
+    cursor:pointer;
+  }
+  .staff-permiso-item input{ cursor:pointer; width:15px; height:15px; flex-shrink:0; }
+  .staff-card-top{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap;
+  }
+  .staff-card-actions{ display:flex; gap:8px; flex-shrink:0; }
+  .staff-card-actions .mini-btn{ white-space:nowrap; }
+  .staff-permisos-divider{
+    margin:14px 0 10px; padding-top:14px;
+    border-top:1px solid rgba(255,255,255,0.08);
+    font-size:11.5px; color:var(--grey); text-transform:uppercase; letter-spacing:0.5px; font-weight:700;
+  }
+
   /* ---------- extras solo para la pestaña "Postulaciones" ---------- */
   .pq-card{
     background:var(--panel-2);
@@ -354,6 +378,10 @@
             <button class="admin-nav-btn" id="tab-mantenimiento">Mantenimiento</button>
             <button class="admin-nav-btn" id="tab-anuncio">Anuncio</button>
             <button class="admin-nav-btn" id="tab-postulaciones">Postulaciones</button>
+          </div>
+          <div class="admin-sidebar-group">
+            <div class="admin-sidebar-title">Staff</div>
+            <button class="admin-nav-btn" id="tab-staff">Cuentas de staff</button>
           </div>
         </nav>
 
@@ -950,6 +978,47 @@
         </div>
       </div>
 
+      <!-- TAB STAFF -->
+      <div id="panel-staff" style="display:none;">
+        <div class="admin-header">
+          <h2>Cuentas <span>de staff</span></h2>
+        </div>
+        <p class="sub">Creá cuentas para tu equipo y elegí, sección por sección, a qué partes del panel puede entrar cada una — en staff.html van a ver solo lo que vos les habilites acá. Podés desactivar el acceso de cualquiera en cualquier momento sin borrar la cuenta.</p>
+
+        <div class="tb-warning">
+          <strong>Ojo:</strong> esto controla qué pestañas VE cada persona de staff, no reemplaza reglas de seguridad de Firestore — es el mismo tipo de protección "de cliente" que usa el resto del sitio (como las contraseñas de registro.html).
+        </div>
+
+        <div class="tb-tipo-card">
+          <div class="tb-tipo-card-head"><span>Nueva cuenta de staff</span></div>
+          <div class="tb-row">
+            <div class="field">
+              <label for="staff-nuevo-nombre">Nombre</label>
+              <input id="staff-nuevo-nombre" type="text" placeholder="Ej: Juan Pérez">
+            </div>
+            <div class="field">
+              <label for="staff-nuevo-email">Email</label>
+              <input id="staff-nuevo-email" type="email" placeholder="tuemail@ejemplo.com">
+            </div>
+            <div class="field">
+              <label for="staff-nuevo-pass">Contraseña</label>
+              <input id="staff-nuevo-pass" type="password" placeholder="Mínimo 6 caracteres">
+            </div>
+          </div>
+
+          <div class="tb-section-title" style="margin-top:6px;">Permisos iniciales</div>
+          <div class="tb-section-sub">Después se pueden cambiar en cualquier momento desde la lista de abajo.</div>
+          <div class="staff-permisos-grid" id="staff-nuevo-permisos"></div>
+
+          <div class="form-error" id="staff-nuevo-error"></div>
+          <button class="btn btn-primary" style="width:100%; margin-top:6px;" id="staff-nuevo-btn">Crear cuenta de staff</button>
+        </div>
+
+        <div id="admin-staff-list" class="admin-list">
+          <div class="loading-row">Cargando cuentas de staff…</div>
+        </div>
+      </div>
+
         </div>
       </div>
 
@@ -1502,6 +1571,7 @@
       mantenimiento: { btn: document.getElementById('tab-mantenimiento'), panel: document.getElementById('panel-mantenimiento') },
       anuncio: { btn: document.getElementById('tab-anuncio'), panel: document.getElementById('panel-anuncio') },
       postulaciones: { btn: document.getElementById('tab-postulaciones'), panel: document.getElementById('panel-postulaciones') },
+      staff: { btn: document.getElementById('tab-staff'), panel: document.getElementById('panel-staff') },
     };
 
     function activarTab(nombre){
@@ -1525,6 +1595,7 @@
     tabs.mantenimiento.btn.addEventListener('click', () => activarTab('mantenimiento'));
     tabs.anuncio.btn.addEventListener('click', () => activarTab('anuncio'));
     tabs.postulaciones.btn.addEventListener('click', () => { activarTab('postulaciones'); iniciarPostulacionesPanel(); });
+    tabs.staff.btn.addEventListener('click', () => { activarTab('staff'); cargarStaff(); });
 
     /* ---------- sub-pestañas dentro de "Bot de tickets" (Usuarios / Servidor / Panel / Bienvenida) ---------- */
     const admtbTabs = {
@@ -3418,6 +3489,212 @@
         tbGuardarBtn.textContent = 'Guardar configuración';
       }
     });
+
+    /* ============================================================
+       STAFF — cuentas de staff con permisos por sección, guardadas
+       en Firestore: colección "staff". staff.html usa "permisos"
+       para mostrar solo las pestañas habilitadas a cada uno.
+       ============================================================ */
+    const STAFF_SECCIONES = [
+      { key: 'registros', label: 'Registros' },
+      { key: 'saldos', label: 'Saldos' },
+      { key: 'recargas', label: 'Recargas' },
+      { key: 'compras_invitado', label: 'Sin cuenta' },
+      { key: 'productos', label: 'Productos' },
+      { key: 'cupones', label: 'Cupones' },
+      { key: 'navegacion', label: 'Navegación' },
+      { key: 'compras', label: 'Compras' },
+      { key: 'ticketbot', label: 'Bot Tickets' },
+      { key: 'ventasbot', label: 'Bot Ventas' },
+      { key: 'mantenimiento', label: 'Mantenimiento' },
+      { key: 'anuncio', label: 'Anuncio' },
+      { key: 'postulaciones', label: 'Postulaciones' },
+    ];
+
+    async function staffHashPassword(texto){
+      const codificado = new TextEncoder().encode(texto);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', codificado);
+      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('');
+    }
+
+    function renderPermisosGrid(idPrefix, permisosActuales){
+      return STAFF_SECCIONES.map(s => `
+        <label class="staff-permiso-item">
+          <input type="checkbox" id="${idPrefix}-${s.key}" ${permisosActuales && permisosActuales[s.key] ? 'checked' : ''}>
+          ${s.label}
+        </label>
+      `).join('');
+    }
+
+    document.getElementById('staff-nuevo-permisos').innerHTML = renderPermisosGrid('staff-nuevo-permiso', null);
+
+    const staffNuevoBtn = document.getElementById('staff-nuevo-btn');
+    const staffNuevoError = document.getElementById('staff-nuevo-error');
+
+    staffNuevoBtn.addEventListener('click', async () => {
+      staffNuevoError.textContent = '';
+
+      const nombre = document.getElementById('staff-nuevo-nombre').value.trim();
+      const email = document.getElementById('staff-nuevo-email').value.trim();
+      const pass = document.getElementById('staff-nuevo-pass').value;
+
+      if(!nombre || !email || !pass){
+        staffNuevoError.textContent = 'Completá nombre, email y contraseña.';
+        return;
+      }
+      if(!email.includes('@') || !email.includes('.')){
+        staffNuevoError.textContent = 'Ingresá un email válido.';
+        return;
+      }
+      if(pass.length < 6){
+        staffNuevoError.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+        return;
+      }
+
+      const permisos = {};
+      STAFF_SECCIONES.forEach(s => {
+        permisos[s.key] = document.getElementById('staff-nuevo-permiso-' + s.key).checked;
+      });
+
+      staffNuevoBtn.disabled = true;
+      staffNuevoBtn.textContent = 'Creando…';
+
+      try{
+        // evita crear dos cuentas de staff con el mismo email
+        const q = query(collection(db, 'staff'), where('email', '==', email));
+        const existentes = await getDocs(q);
+        if(!existentes.empty){
+          staffNuevoError.textContent = 'Ya existe una cuenta de staff con ese email.';
+          staffNuevoBtn.disabled = false;
+          staffNuevoBtn.textContent = 'Crear cuenta de staff';
+          return;
+        }
+
+        const passHash = await staffHashPassword(pass);
+        await addDoc(collection(db, 'staff'), {
+          nombre, email, passHash, permisos,
+          activo: true,
+          fecha: serverTimestamp()
+        });
+
+        document.getElementById('staff-nuevo-nombre').value = '';
+        document.getElementById('staff-nuevo-email').value = '';
+        document.getElementById('staff-nuevo-pass').value = '';
+        document.getElementById('staff-nuevo-permisos').innerHTML = renderPermisosGrid('staff-nuevo-permiso', null);
+
+        cargarStaff();
+      }catch(err){
+        console.error('Error al crear la cuenta de staff:', err);
+        staffNuevoError.textContent = 'No se pudo crear la cuenta. Revisá la configuración de Firebase o probá de nuevo.';
+      }finally{
+        staffNuevoBtn.disabled = false;
+        staffNuevoBtn.textContent = 'Crear cuenta de staff';
+      }
+    });
+
+    async function cargarStaff(){
+      const listEl = document.getElementById('admin-staff-list');
+      listEl.innerHTML = '<div class="loading-row">Cargando cuentas de staff…</div>';
+
+      try{
+        const q = query(collection(db, 'staff'), orderBy('nombre'));
+        const snapshot = await getDocs(q);
+
+        if(snapshot.empty){
+          listEl.innerHTML = '<div class="empty-state">Todavía no creaste ninguna cuenta de staff.</div>';
+          return;
+        }
+
+        const cuentas = [];
+        snapshot.forEach(docSnap => cuentas.push({ id: docSnap.id, ...docSnap.data() }));
+
+        listEl.innerHTML = cuentas.map(c => renderStaffCard(c)).join('');
+
+        cuentas.forEach(c => {
+          const toggleBtn = document.getElementById('staff-toggle-' + c.id);
+          const guardarBtn = document.getElementById('staff-guardar-permisos-' + c.id);
+          const eliminarBtn = document.getElementById('staff-eliminar-' + c.id);
+
+          if(toggleBtn) toggleBtn.addEventListener('click', () => staffCambiarActivo(c));
+          if(guardarBtn) guardarBtn.addEventListener('click', () => staffGuardarPermisos(c));
+          if(eliminarBtn) eliminarBtn.addEventListener('click', () => staffEliminar(c));
+        });
+      }catch(err){
+        console.error('Error al cargar cuentas de staff:', err);
+        listEl.innerHTML = '<div class="empty-state">No se pudieron cargar las cuentas de staff. Revisá la configuración de Firebase.</div>';
+      }
+    }
+
+    function renderStaffCard(c){
+      const activo = c.activo !== false;
+      return `
+        <div class="reg-card">
+          <div class="staff-card-top">
+            <div>
+              <div class="reg-name">${escapeHtml(c.nombre || '(sin nombre)')}</div>
+              <div class="reg-meta">${escapeHtml(c.email || '')}</div>
+            </div>
+            <div class="staff-card-actions">
+              <span class="status-pill ${activo ? 'status-aprobado' : 'status-rechazado'}">${activo ? 'Activo' : 'Desactivado'}</span>
+              <button class="mini-btn" id="staff-toggle-${c.id}">${activo ? 'Desactivar' : 'Activar'}</button>
+              <button class="mini-btn mini-quitar" id="staff-eliminar-${c.id}">Eliminar</button>
+            </div>
+          </div>
+
+          <div class="staff-permisos-divider">Permisos</div>
+          <div class="staff-permisos-grid" id="staff-permisos-${c.id}">
+            ${renderPermisosGrid('staff-permiso-' + c.id, c.permisos)}
+          </div>
+          <button class="mini-btn mini-saldo" id="staff-guardar-permisos-${c.id}" style="margin-top:4px;">Guardar permisos</button>
+        </div>
+      `;
+    }
+
+    async function staffCambiarActivo(c){
+      const btn = document.getElementById('staff-toggle-' + c.id);
+      const activoActual = c.activo !== false;
+      btn.disabled = true;
+      try{
+        await updateDoc(doc(db, 'staff', c.id), { activo: !activoActual });
+        cargarStaff();
+      }catch(err){
+        console.error('Error al cambiar el estado de la cuenta de staff:', err);
+        btn.disabled = false;
+      }
+    }
+
+    async function staffGuardarPermisos(c){
+      const btn = document.getElementById('staff-guardar-permisos-' + c.id);
+      btn.disabled = true;
+      btn.textContent = 'Guardando…';
+
+      const permisos = {};
+      STAFF_SECCIONES.forEach(s => {
+        const chk = document.getElementById('staff-permiso-' + c.id + '-' + s.key);
+        permisos[s.key] = chk ? chk.checked : false;
+      });
+
+      try{
+        await updateDoc(doc(db, 'staff', c.id), { permisos });
+        btn.textContent = '✓ Guardado';
+        setTimeout(() => { btn.textContent = 'Guardar permisos'; btn.disabled = false; }, 1500);
+      }catch(err){
+        console.error('Error al guardar los permisos de staff:', err);
+        btn.textContent = 'Guardar permisos';
+        btn.disabled = false;
+      }
+    }
+
+    async function staffEliminar(c){
+      if(!confirm('¿Eliminar la cuenta de staff de ' + (c.nombre || c.email) + '? Esta acción no se puede deshacer.')) return;
+      try{
+        await deleteDoc(doc(db, 'staff', c.id));
+        cargarStaff();
+      }catch(err){
+        console.error('Error al eliminar la cuenta de staff:', err);
+        alert('No se pudo eliminar la cuenta. Probá de nuevo.');
+      }
+    }
   </script>
   <!-- SOPORTE FLOTANTE (visible en toda la página) -->
   <div class="soporte-flotante" id="soporte-flotante">
