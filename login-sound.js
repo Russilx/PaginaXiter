@@ -4,27 +4,51 @@
 // logins del sitio (tienda, diamantes, bot de tickets, bot de
 // ventas).
 //
+// reproducirSonidoLogin() devuelve una Promise que se resuelve
+// recién cuando el sonido TERMINA de sonar (evento "ended") — así,
+// si el código hace `await reproducirSonidoLogin()` antes de
+// redirigir a otra página, el sonido llega a escucharse completo
+// aunque el usuario "se vaya" enseguida después de loguearse.
+// Si por algún motivo el audio no puede reproducirse (navegador
+// bloqueó el autoplay, archivo corrupto, etc), no se traba nada:
+// la Promise igual se resuelve, como máximo, a los 6 segundos.
+//
 // Para cambiar el sonido más adelante: solo hace falta reemplazar
 // el archivo login-sound.mp3 por otro (mismo nombre), no hace
 // falta tocar código ni los HTML de los logins.
 // ============================================================
 
-// se crea una sola vez y se reutiliza, así el navegador no tiene
-// que volver a descargar el archivo en cada login.
 const audioLogin = new Audio('login-sound.mp3');
 audioLogin.preload = 'auto';
 
 export function reproducirSonidoLogin(){
-  try{
-    audioLogin.currentTime = 0;
-    const promesa = audioLogin.play();
-    // algunos navegadores devuelven una Promise que puede rechazarse
-    // (ej: política de autoplay) — si pasa, no rompemos el login, el
-    // usuario simplemente no escucha el sonido esa vez.
-    if(promesa && typeof promesa.catch === 'function'){
-      promesa.catch(err => console.error('No se pudo reproducir el sonido de login:', err));
+  return new Promise((resolve) => {
+    let resuelto = false;
+    function terminar(){
+      if(resuelto) return;
+      resuelto = true;
+      audioLogin.removeEventListener('ended', terminar);
+      resolve();
     }
-  }catch(err){
-    console.error('No se pudo reproducir el sonido de login:', err);
-  }
+
+    try{
+      audioLogin.currentTime = 0;
+      audioLogin.addEventListener('ended', terminar, { once: true });
+
+      const promesa = audioLogin.play();
+      if(promesa && typeof promesa.catch === 'function'){
+        promesa.catch(err => {
+          console.error('No se pudo reproducir el sonido de login:', err);
+          terminar();
+        });
+      }
+
+      // red de seguridad: si "ended" nunca dispara, no dejamos
+      // colgada la redirección para siempre.
+      setTimeout(terminar, 6000);
+    }catch(err){
+      console.error('No se pudo reproducir el sonido de login:', err);
+      terminar();
+    }
+  });
 }
