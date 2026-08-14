@@ -227,7 +227,7 @@
         document.getElementById('login-nombre').textContent = registro.nombre;
         document.getElementById('login-form-wrap').style.display = 'none';
         document.getElementById('login-success').style.display = 'block';
-        reproducirSonidoLogin();
+        await reproducirSonidoLogin();
 
         sessionStorage.setItem('xiterking_user', JSON.stringify({
           id: regDoc.id,
