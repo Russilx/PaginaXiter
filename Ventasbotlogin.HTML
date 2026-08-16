@@ -87,6 +87,7 @@
 
   <script type="module">
     import { firebaseConfig } from './firebase-config.js';
+    import { reproducirSonidoLogin } from './login-sound.js';
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
     import { getFirestore, collection, query, where, getDocs }
       from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -170,6 +171,7 @@
           saldo: registro.saldo || 0
         }));
 
+        await reproducirSonidoLogin();
         window.location.href = 'ventasbot.html';
       }catch(err){
         console.error('Error al iniciar sesión:', err);
