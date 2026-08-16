@@ -1095,8 +1095,6 @@ main.home{
   margin-top:6px;
 }
 .tipo-tienda{ background:rgba(138,138,138,0.18); color:var(--grey); }
-.tipo-bot{ background:rgba(88,101,242,0.18); color:#5865F2; }
-.tipo-ventas{ background:rgba(46,204,113,0.18); color:var(--green); }
 
 .reg-actions{ display:flex; gap:8px; margin-top:12px; }
 

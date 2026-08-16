@@ -140,16 +140,6 @@
           resetBtn();
           return;
         }
-        if(registro.tipo === 'bot'){
-          errorEl.textContent = 'Esa cuenta es del Bot de Tickets. Iniciá sesión en ticketbot.html.';
-          resetBtn();
-          return;
-        }
-        if(registro.tipo === 'ventas'){
-          errorEl.textContent = 'Esa cuenta es del Bot de Ventas. Iniciá sesión en ventasbot-login.html.';
-          resetBtn();
-          return;
-        }
 
         if(registro.estado === 'pendiente'){
           errorEl.textContent = 'Tu cuenta todavía está pendiente de aprobación.';

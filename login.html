@@ -190,18 +190,6 @@
         const regDoc = snapshot.docs[0];
         const registro = regDoc.data();
 
-        // las cuentas creadas desde ticketbot.html son solo para el bot,
-        // no tienen los beneficios de la tienda (saldo, descuentos, etc).
-        if(registro.tipo === 'bot'){
-          errorEl.textContent = 'Esa cuenta es del Bot de Tickets. Iniciá sesión en ticketbot.html.';
-          resetBtn();
-          return;
-        }
-        if(registro.tipo === 'ventas'){
-          errorEl.textContent = 'Esa cuenta es del Bot de Ventas. Iniciá sesión en ventasbot-login.html.';
-          resetBtn();
-          return;
-        }
         if(registro.tipo === 'diamantes'){
           errorEl.textContent = 'Esa cuenta es de Recarga de Diamantes. Iniciá sesión en diamantes-login.html.';
           resetBtn();

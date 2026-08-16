@@ -369,11 +369,6 @@
             <button class="admin-nav-btn" id="tab-compras">Compras</button>
           </div>
           <div class="admin-sidebar-group">
-            <div class="admin-sidebar-title">Bots de Discord</div>
-            <button class="admin-nav-btn" id="tab-ticketbot">Bot Tickets</button>
-            <button class="admin-nav-btn" id="tab-ventasbot">Bot Ventas</button>
-          </div>
-          <div class="admin-sidebar-group">
             <div class="admin-sidebar-title">Sitio</div>
             <button class="admin-nav-btn" id="tab-mantenimiento">Mantenimiento</button>
             <button class="admin-nav-btn" id="tab-anuncio">Anuncio</button>
@@ -405,7 +400,7 @@
         <div class="admin-header">
           <h2>Panel de <span>saldos</span></h2>
         </div>
-        <p class="sub">Cargale saldo a cada usuario. Los bots de Discord (tickets y ventas) no manejan saldo, así que no aparecen acá — solo cuentas de la tienda y de Recarga de Diamantes, cada una con su saldo independiente.</p>
+        <p class="sub">Cargale saldo a cada usuario: cuentas de la tienda y de Recarga de Diamantes, cada una con su saldo independiente.</p>
 
         <div id="admin-saldo-list" class="admin-list">
           <div class="loading-row">Cargando usuarios…</div>
@@ -448,7 +443,7 @@
         <div class="admin-header">
           <h2>Modo <span>mantenimiento</span></h2>
         </div>
-        <p class="sub">Con esto activado, cualquiera que entre a la tienda (index, login, registro, producto, recarga, mibot, ticketbot, ventasbot) ve un cartel de "en mantenimiento" en vez de la página normal. Vos seguís entrando siempre acá al panel, sin importar el estado.</p>
+        <p class="sub">Con esto activado, cualquiera que entre a la tienda (index, login, registro, producto, recarga) ve un cartel de "en mantenimiento" en vez de la página normal. Vos seguís entrando siempre acá al panel, sin importar el estado.</p>
 
         <div class="status-pill" id="mant-estado-pill" style="margin-bottom:20px; display:inline-block;">Cargando estado…</div>
 
@@ -731,253 +726,6 @@
         </div>
       </div>
 
-      <!-- TAB BOT TICKETS -->
-      <div id="panel-ticketbot" style="display:none;">
-        <div class="admin-header">
-          <h2>Bot de <span>tickets</span></h2>
-        </div>
-        <p class="sub">Configurá todo lo que hace el bot de tickets de Discord: el panel que ven los clientes, el botón, dónde se crean los tickets y qué mensaje reciben adentro. El bot lee esta configuración solo — no hace falta tocar código.</p>
-
-        <div class="tb-warning">
-          <strong>Importante:</strong> acá NO se carga el token del bot (la clave secreta de Discord). Ese token va únicamente en el servidor donde corre el bot, nunca en esta página, porque cualquiera podría verlo abriendo el navegador. Todo lo de acá abajo es seguro de guardar: son solo IDs, textos y colores.
-        </div>
-
-        <div class="admin-tabs" id="admtb-tabs">
-          <button class="admin-tab active" id="admtb-tab-usuarios">Servidores de usuarios <span class="admin-tag" id="ticketbot-pendientes-tag">0 pendientes</span></button>
-          <button class="admin-tab" id="admtb-tab-servidor">Servidor</button>
-          <button class="admin-tab" id="admtb-tab-panel">Panel del ticket</button>
-          <button class="admin-tab" id="admtb-tab-bienvenida">Mensaje de bienvenida</button>
-        </div>
-
-        <!-- SERVIDORES DE USUARIOS -->
-        <div id="admtb-panel-usuarios">
-          <p class="sub">Cada usuario aprobado puede cargar, desde su propio panel (mibot.html), el ID de su servidor de Discord para usar el bot ahí. El bot NO funciona en ningún servidor hasta que vos lo apruebes acá.</p>
-
-          <div id="admin-ticketbot-list" class="admin-list">
-            <div class="loading-row">Cargando servidores…</div>
-          </div>
-        </div>
-
-        <div id="tb-form-wrap" style="display:none;">
-          <p class="sub" style="margin-top:0;">Esta es la configuración del bot para tu propio servidor de Discord (el de la tienda). No necesita aprobación porque la cargás vos mismo.</p>
-
-          <!-- DÓNDE SE PUBLICA EL PANEL -->
-          <div class="tb-section" id="admtb-panel-servidor">
-            <div class="tb-section-title">Ubicación</div>
-            <div class="tb-section-sub">Los ID se consiguen activando el "Modo desarrollador" en Discord (Ajustes → Avanzado) y haciendo clic derecho sobre el servidor, canal, categoría o rol → "Copiar ID".</div>
-            <div class="field">
-              <label for="tb-guild-id">ID del servidor de Discord (donde funciona este bot)</label>
-              <input id="tb-guild-id" type="text" placeholder="Ej: 123456789012345678">
-              <span class="tb-note">Clic derecho sobre el ícono del servidor en Discord → "Copiar ID del servidor". El bot usa este ID para saber que esta configuración es la de ESTE servidor.</span>
-            </div>
-            <div class="tb-row">
-              <div class="field">
-                <label for="tb-canal-panel">ID del canal donde se publica el panel</label>
-                <input id="tb-canal-panel" type="text" placeholder="Ej: 123456789012345678">
-              </div>
-              <div class="field">
-                <label for="tb-categoria-id">ID de la categoría donde se crean los tickets</label>
-                <input id="tb-categoria-id" type="text" placeholder="Ej: 123456789012345678">
-              </div>
-            </div>
-            <div class="tb-row">
-              <div class="field">
-                <label for="tb-rol-staff">ID del rol de soporte (opcional, separados por coma)</label>
-                <input id="tb-rol-staff" type="text" placeholder="Ej: 123456789012345678, 987654321098765432">
-                <span class="tb-note">Estos roles ven automáticamente todos los tickets que se crean. Dejalo vacío si no querés dar acceso a ningún rol.</span>
-              </div>
-              <div class="field">
-                <label for="tb-nombre-canal">Nombre del canal de cada ticket</label>
-                <input id="tb-nombre-canal" type="text" placeholder="Ej: ticket-{usuario}">
-                <button type="button" class="tb-vars-btn" id="tb-vars-btn-servidor">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                  Ver variables disponibles
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- MENSAJE DEL PANEL -->
-          <div class="tb-section" id="admtb-panel-panel" style="display:none;">
-            <div class="tb-section-title">Mensaje del panel (donde tocan para abrir un ticket)</div>
-            <div class="tb-section-sub">Esto es lo primero que ve el cliente en el canal público.</div>
-            <div class="field">
-              <label for="tb-panel-titulo">Título</label>
-              <input id="tb-panel-titulo" type="text" placeholder="Ej: Soporte XITERKING STORE">
-            </div>
-            <div class="field">
-              <label for="tb-panel-desc">Descripción</label>
-              <textarea id="tb-panel-desc" class="tb-textarea" rows="4" placeholder="Ej: Tocá el botón de abajo para abrir un ticket privado con el equipo de soporte."></textarea>
-            </div>
-            <div class="tb-row">
-              <div class="field">
-                <label for="tb-panel-color">Color del panel</label>
-                <div class="tb-color-field">
-                  <input id="tb-panel-color" type="color" value="#e10600">
-                  <input id="tb-panel-color-hex" type="text" placeholder="#e10600">
-                </div>
-              </div>
-              <div class="field">
-                <label for="tb-panel-imagen-file">Imagen del panel (opcional)</label>
-                <input id="tb-panel-imagen-file" type="file" accept="image/*">
-                <div id="tb-panel-imagen-preview-wrap" style="margin-top:8px; display:none; align-items:center; gap:10px;">
-                  <img id="tb-panel-imagen-preview" src="" alt="Vista previa" style="max-width:140px; max-height:140px; border-radius:10px; display:block; object-fit:cover;">
-                  <button type="button" class="mini-btn mini-reject" id="tb-panel-imagen-eliminar-btn">Eliminar imagen</button>
-                </div>
-                <input type="hidden" id="tb-panel-imagen" value="">
-                <span class="tb-note">Elegís la foto desde tu compu, se sube sola. Si no elegís una nueva se mantiene la que ya tenías.</span>
-              </div>
-            </div>
-
-            <div class="field">
-              <label for="tb-modo-panel">Cómo se muestra el panel</label>
-              <select id="tb-modo-panel">
-                <option value="boton">Un solo botón (simple)</option>
-                <option value="multiple">Varios tipos de ticket (elige el cliente)</option>
-              </select>
-              <span class="tb-note">Con "varios tipos" podés armar, por ejemplo, "Soporte", "Compras" y "Reportar un bug", cada uno con su propia categoría de Discord. Se muestran como botones o como un menú desplegable.</span>
-            </div>
-
-            <div id="tb-modo-boton-wrap">
-              <div class="tb-row">
-                <div class="field">
-                  <label for="tb-boton-texto">Texto del botón</label>
-                  <input id="tb-boton-texto" type="text" placeholder="Ej: Abrir ticket">
-                </div>
-                <div class="field">
-                  <label for="tb-boton-emoji">Emoji del botón (opcional)</label>
-                  <input id="tb-boton-emoji" type="text" placeholder="Ej: 🎫 o el emoji de tu server">
-                  <span class="tb-note">Para usar un emoji propio del servidor: escribí <code>\:nombre_del_emoji:</code> en cualquier canal de Discord (con la barra invertida) y mandalo. Discord te muestra el código completo, tipo <code>&lt;:nombre:1234567890&gt;</code>. Copiá y pegá ESE código acá.</span>
-                </div>
-              </div>
-
-              <div class="tb-preview-wrap">
-                <div class="tb-section-title" style="font-size:11px; opacity:0.7;">Vista previa</div>
-                <div class="tb-discord-bg">
-                  <div class="tb-embed">
-                    <div class="tb-embed-bar" id="tb-prev-bar"></div>
-                    <div class="tb-embed-body">
-                      <div class="tb-embed-title" id="tb-prev-titulo">Soporte XITERKING STORE</div>
-                      <div class="tb-embed-desc" id="tb-prev-desc">Tocá el botón de abajo para abrir un ticket privado con el equipo de soporte.</div>
-                    </div>
-                  </div>
-                  <div class="tb-discord-btn" id="tb-prev-boton"><span id="tb-prev-emoji">🎫</span> <span id="tb-prev-boton-texto">Abrir ticket</span></div>
-                </div>
-              </div>
-            </div>
-
-            <div id="tb-modo-multiple-wrap" style="display:none;">
-              <div class="field">
-                <label for="tb-estilo-multiple">Cómo se eligen los tipos</label>
-                <select id="tb-estilo-multiple">
-                  <option value="botones">Varios botones, uno al lado del otro</option>
-                  <option value="menu">Menú desplegable (dropdown)</option>
-                </select>
-              </div>
-              <div class="field" id="tb-menu-placeholder-wrap" style="display:none;">
-                <label for="tb-menu-placeholder">Texto del menú antes de elegir</label>
-                <input id="tb-menu-placeholder" type="text" placeholder="Ej: Elegí el motivo de tu ticket">
-              </div>
-
-              <div id="tb-tipos-lista"></div>
-              <button type="button" class="mini-btn" id="tb-tipo-agregar-btn" style="margin-top:6px;">+ Agregar tipo de ticket</button>
-              <span class="tb-note" style="display:block; margin-top:8px;">Cada tipo puede tener su propia categoría de Discord, rol de soporte y mensaje de bienvenida. Si dejás vacío el mensaje de bienvenida de un tipo, se usa el mensaje general de la pestaña "Mensaje de bienvenida".</span>
-            </div>
-          </div>
-
-          <!-- MENSAJE DE BIENVENIDA DENTRO DEL TICKET -->
-          <div class="tb-section" id="admtb-panel-bienvenida" style="display:none;">
-            <div class="tb-section-title">Mensaje al entrar al ticket</div>
-            <div class="tb-section-sub">Esto se manda automáticamente dentro del canal privado apenas se crea, junto con un botón para cerrar el ticket.</div>
-            <div class="field">
-              <label for="tb-bienvenida-titulo">Título</label>
-              <input id="tb-bienvenida-titulo" type="text" placeholder="Ej: ¡Gracias por tu consulta!">
-            </div>
-            <div class="field">
-              <label for="tb-bienvenida-desc">Descripción</label>
-              <textarea id="tb-bienvenida-desc" class="tb-textarea" rows="4" placeholder="Ej: Hola {usuario}, en breve un miembro del equipo te va a responder. Contanos qué necesitás."></textarea>
-              <button type="button" class="tb-vars-btn" id="tb-vars-btn-bienvenida">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                Ver variables disponibles
-              </button>
-            </div>
-            <div class="field">
-              <label for="tb-cerrar-texto">Texto del botón para cerrar el ticket</label>
-              <input id="tb-cerrar-texto" type="text" placeholder="Ej: Cerrar ticket">
-            </div>
-          </div>
-
-          <div class="form-error" id="tb-form-error"></div>
-
-          <div class="tb-save-bar">
-            <button class="btn btn-primary" style="width:100%;" id="tb-guardar-btn">Guardar configuración</button>
-            <div class="tb-saved-msg" id="tb-saved-msg">✓ Configuración guardada. El bot va a usarla la próxima vez que publique el panel o cree un ticket.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB BOT VENTAS -->
-      <div id="panel-ventasbot" style="display:none;">
-        <div class="admin-header">
-          <h2>Bot de <span>ventas</span></h2>
-        </div>
-        <p class="sub">Configurá el bot que avisa las ventas en Discord y aprobá los servidores de clientes que quieran usar su propio bot de ventas (solo el comando <code>/venta-ticket</code>). El bot lee esta configuración solo — no hace falta tocar código.</p>
-
-        <div class="tb-warning">
-          <strong>Importante:</strong> acá NO se carga el token del bot (la clave secreta de Discord). Ese token va únicamente en el <code>.env</code> del servidor donde corre cada bot, nunca en esta página. Todo lo de acá abajo es seguro de guardar: son solo IDs de Discord.
-        </div>
-
-        <div class="admin-tabs" id="admvb-tabs">
-          <button class="admin-tab active" id="admvb-tab-usuarios">Servidores de clientes <span class="admin-tag" id="ventasbot-pendientes-tag">0 pendientes</span></button>
-          <button class="admin-tab" id="admvb-tab-servidor">Tu servidor</button>
-        </div>
-
-        <!-- SERVIDORES DE CLIENTES -->
-        <div id="admvb-panel-usuarios">
-          <p class="sub">Cada cliente aprobado puede cargar, desde su propio panel (ventasbot.html), el ID de su servidor, su canal de ventas y sus roles de staff. No reciben avisos de las compras/recargas de la tienda — solo lo que ellos mismos carguen con <code>/venta-ticket</code>. El bot NO funciona en el servidor de ningún cliente hasta que vos lo apruebes acá.</p>
-
-          <div id="admin-ventasbot-list" class="admin-list">
-            <div class="loading-row">Cargando servidores…</div>
-          </div>
-        </div>
-
-        <!-- TU PROPIO SERVIDOR -->
-        <div id="vb-form-wrap" style="display:none;">
-          <p class="sub" style="margin-top:0;">Esta es la configuración de TU servidor (el de la tienda). No necesita aprobación porque la cargás vos. Este servidor recibe los avisos automáticos de compras y recargas, además de <code>/venta-ticket</code>.</p>
-
-          <div class="tb-section" style="margin-top:0; padding-top:0; border-top:none;">
-            <div class="tb-row">
-              <div class="field">
-                <label for="vb-guild-id">ID de tu servidor de Discord</label>
-                <input id="vb-guild-id" type="text" placeholder="Ej: 123456789012345678">
-              </div>
-              <div class="field">
-                <label for="vb-canal-ventas">ID del canal de avisos de ventas</label>
-                <input id="vb-canal-ventas" type="text" placeholder="Ej: 123456789012345678">
-              </div>
-            </div>
-            <div class="tb-row">
-              <div class="field">
-                <label for="vb-canal-recargas">ID del canal de avisos de recargas</label>
-                <input id="vb-canal-recargas" type="text" placeholder="Ej: 123456789012345678">
-              </div>
-              <div class="field">
-                <label for="vb-rol-staff">ID(s) de rol que pueden usar /venta-ticket</label>
-                <input id="vb-rol-staff" type="text" placeholder="Separados por coma si son varios">
-                <span class="tb-note">Clic derecho sobre el rol en Ajustes del servidor → Roles → "Copiar ID".</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-error" id="vb-form-error"></div>
-
-          <div class="tb-save-bar">
-            <button class="btn btn-primary" style="width:100%;" id="vb-guardar-btn">Guardar configuración</button>
-            <div class="tb-saved-msg" id="vb-saved-msg">✓ Configuración guardada. El bot la toma sola, sin reiniciar.</div>
-          </div>
-        </div>
-      </div>
-
       <!-- TAB STAFF -->
       <div id="panel-staff" style="display:none;">
         <div class="admin-header">
@@ -1058,10 +806,6 @@
       cargarProductosAdmin();
       cargarNavItemsAdmin();
       cargarCompras();
-      cargarConfigTicketbot();
-      cargarServidoresUsuarios();
-      cargarConfigVentasbot();
-      cargarServidoresVentasbot();
       cargarMantenimiento();
       cargarAnuncio();
     });
@@ -1566,8 +1310,6 @@
       cupones: { btn: document.getElementById('tab-cupones'), panel: document.getElementById('panel-cupones') },
       navegacion: { btn: document.getElementById('tab-navegacion'), panel: document.getElementById('panel-navegacion') },
       compras: { btn: document.getElementById('tab-compras'), panel: document.getElementById('panel-compras') },
-      ticketbot: { btn: document.getElementById('tab-ticketbot'), panel: document.getElementById('panel-ticketbot') },
-      ventasbot: { btn: document.getElementById('tab-ventasbot'), panel: document.getElementById('panel-ventasbot') },
       mantenimiento: { btn: document.getElementById('tab-mantenimiento'), panel: document.getElementById('panel-mantenimiento') },
       anuncio: { btn: document.getElementById('tab-anuncio'), panel: document.getElementById('panel-anuncio') },
       postulaciones: { btn: document.getElementById('tab-postulaciones'), panel: document.getElementById('panel-postulaciones') },
@@ -1590,50 +1332,10 @@
     tabs.cupones.btn.addEventListener('click', () => { activarTab('cupones'); cargarCupones(); });
     tabs.navegacion.btn.addEventListener('click', () => activarTab('navegacion'));
     tabs.compras.btn.addEventListener('click', () => activarTab('compras'));
-    tabs.ticketbot.btn.addEventListener('click', () => activarTab('ticketbot'));
-    tabs.ventasbot.btn.addEventListener('click', () => activarTab('ventasbot'));
     tabs.mantenimiento.btn.addEventListener('click', () => activarTab('mantenimiento'));
     tabs.anuncio.btn.addEventListener('click', () => activarTab('anuncio'));
     tabs.postulaciones.btn.addEventListener('click', () => { activarTab('postulaciones'); iniciarPostulacionesPanel(); });
     tabs.staff.btn.addEventListener('click', () => { activarTab('staff'); cargarStaff(); });
-
-    /* ---------- sub-pestañas dentro de "Bot de tickets" (Usuarios / Servidor / Panel / Bienvenida) ---------- */
-    const admtbTabs = {
-      usuarios: { btn: document.getElementById('admtb-tab-usuarios'), panel: document.getElementById('admtb-panel-usuarios') },
-      servidor: { btn: document.getElementById('admtb-tab-servidor'), panel: document.getElementById('admtb-panel-servidor') },
-      panel: { btn: document.getElementById('admtb-tab-panel'), panel: document.getElementById('admtb-panel-panel') },
-      bienvenida: { btn: document.getElementById('admtb-tab-bienvenida'), panel: document.getElementById('admtb-panel-bienvenida') },
-    };
-    const admtbFormWrap = document.getElementById('tb-form-wrap');
-    function activarAdmtbTab(nombre){
-      Object.entries(admtbTabs).forEach(([key, t]) => {
-        const activo = key === nombre;
-        t.btn.classList.toggle('active', activo);
-        t.panel.style.display = activo ? 'block' : 'none';
-      });
-      admtbFormWrap.style.display = (nombre === 'usuarios') ? 'none' : 'block';
-    }
-    admtbTabs.usuarios.btn.addEventListener('click', () => activarAdmtbTab('usuarios'));
-    admtbTabs.servidor.btn.addEventListener('click', () => activarAdmtbTab('servidor'));
-    admtbTabs.panel.btn.addEventListener('click', () => activarAdmtbTab('panel'));
-    admtbTabs.bienvenida.btn.addEventListener('click', () => activarAdmtbTab('bienvenida'));
-
-    /* ---------- sub-pestañas dentro de "Bot de ventas" (Usuarios / Servidor) ---------- */
-    const admvbTabs = {
-      usuarios: { btn: document.getElementById('admvb-tab-usuarios'), panel: document.getElementById('admvb-panel-usuarios') },
-      servidor: { btn: document.getElementById('admvb-tab-servidor'), panel: null },
-    };
-    const admvbFormWrap = document.getElementById('vb-form-wrap');
-    function activarAdmvbTab(nombre){
-      Object.entries(admvbTabs).forEach(([key, t]) => {
-        const activo = key === nombre;
-        t.btn.classList.toggle('active', activo);
-        if(t.panel) t.panel.style.display = activo ? 'block' : 'none';
-      });
-      admvbFormWrap.style.display = (nombre === 'usuarios') ? 'none' : 'block';
-    }
-    admvbTabs.usuarios.btn.addEventListener('click', () => activarAdmvbTab('usuarios'));
-    admvbTabs.servidor.btn.addEventListener('click', () => activarAdmvbTab('servidor'));
 
     function escapeHtml(str){
       const div = document.createElement('div');
@@ -1716,13 +1418,9 @@
         const q = query(collection(db, "registros"), orderBy("nombre"));
         const snapshot = await getDocs(q);
 
-        // Los bots (tickets/ventas) son solo cuentas de configuración del
-        // bot de Discord — no manejan saldo, así que no aparecen acá.
         const registros = [];
         snapshot.forEach(docSnap => {
-          const datos = docSnap.data();
-          if(datos.tipo === 'bot' || datos.tipo === 'ventas') return;
-          registros.push({ id: docSnap.id, ...datos });
+          registros.push({ id: docSnap.id, ...docSnap.data() });
         });
 
         if(registros.length === 0){
@@ -1747,8 +1445,8 @@
     function renderSaldoCard(r){
       const statusClass = 'status-' + r.estado;
       const statusLabel = r.estado === 'pendiente' ? 'Pendiente' : (r.estado === 'aprobado' ? 'Aprobado' : 'Rechazado');
-      const tipo = r.tipo === 'bot' ? 'bot' : r.tipo === 'ventas' ? 'ventas' : r.tipo === 'diamantes' ? 'diamantes' : 'tienda';
-      const tipoLabel = tipo === 'bot' ? 'Bot de tickets' : tipo === 'ventas' ? 'Bot de ventas' : tipo === 'diamantes' ? 'Recarga de diamantes' : 'Tienda';
+      const tipo = r.tipo === 'diamantes' ? 'diamantes' : 'tienda';
+      const tipoLabel = tipo === 'diamantes' ? 'Recarga de diamantes' : 'Tienda';
       return `
         <div class="reg-card">
           <div class="reg-top">
@@ -1897,8 +1595,8 @@
 
       const statusClass = 'status-' + r.estado;
       const statusLabel = r.estado === 'pendiente' ? 'Pendiente' : (r.estado === 'aprobado' ? 'Aprobado' : 'Rechazado');
-      const tipo = r.tipo === 'bot' ? 'bot' : r.tipo === 'ventas' ? 'ventas' : r.tipo === 'diamantes' ? 'diamantes' : 'tienda';
-      const tipoLabel = tipo === 'bot' ? 'Bot de tickets' : tipo === 'ventas' ? 'Bot de ventas' : tipo === 'diamantes' ? 'Recarga de diamantes' : 'Tienda';
+      const tipo = r.tipo === 'diamantes' ? 'diamantes' : 'tienda';
+      const tipoLabel = tipo === 'diamantes' ? 'Recarga de diamantes' : 'Tienda';
 
       return `
         <div class="reg-card">
@@ -2950,545 +2648,6 @@
       }
     }
 
-    /* ============================================================
-       SERVIDORES DE USUARIOS (aprobación manual, uno por uno)
-       ============================================================ */
-    async function cargarServidoresUsuarios(){
-      const listEl = document.getElementById('admin-ticketbot-list');
-      listEl.innerHTML = '<div class="loading-row">Cargando servidores…</div>';
-
-      try{
-        const snapshot = await getDocs(collection(db, "ticketbotConfigs"));
-
-        if(snapshot.empty){
-          listEl.innerHTML = '<div class="empty-state">Todavía nadie cargó su servidor.</div>';
-          document.getElementById('ticketbot-pendientes-tag').textContent = '0 pendientes';
-          return;
-        }
-
-        const configs = [];
-        snapshot.forEach(d => configs.push({ id: d.id, ...d.data() }));
-
-        const pendientes = configs.filter(c => c.estadoAprobacion !== 'aprobado' && c.estadoAprobacion !== 'rechazado').length;
-        document.getElementById('ticketbot-pendientes-tag').textContent = `${pendientes} pendiente${pendientes === 1 ? '' : 's'}`;
-
-        // pendientes primero, después aprobados, después rechazados
-        const orden = { pendiente: 0, aprobado: 1, rechazado: 2 };
-        configs.sort((a, b) => (orden[a.estadoAprobacion] ?? 0) - (orden[b.estadoAprobacion] ?? 0));
-
-        listEl.innerHTML = configs.map(renderServidorCard).join('');
-
-        configs.forEach(c => {
-          const aprobarBtn = document.getElementById(`aprobar-tb-${c.id}`);
-          const rechazarBtn = document.getElementById(`rechazar-tb-${c.id}`);
-          if(aprobarBtn) aprobarBtn.addEventListener('click', () => cambiarEstadoServidor(c, 'aprobado'));
-          if(rechazarBtn) rechazarBtn.addEventListener('click', () => cambiarEstadoServidor(c, 'rechazado'));
-        });
-      }catch(err){
-        console.error('Error al cargar los servidores de usuarios:', err);
-        listEl.innerHTML = '<div class="empty-state">No se pudo cargar la lista. Revisá la configuración de Firebase.</div>';
-      }
-    }
-
-    function renderServidorCard(c){
-      const estado = c.estadoAprobacion === 'aprobado' || c.estadoAprobacion === 'rechazado' ? c.estadoAprobacion : 'pendiente';
-      const statusLabel = estado === 'pendiente' ? 'Pendiente' : (estado === 'aprobado' ? 'Aprobado' : 'Rechazado');
-
-      return `
-        <div class="reg-card">
-          <div class="reg-top">
-            <div>
-              <div class="reg-name">${escapeHtml(c.usuarioNombre || '(sin nombre)')}</div>
-              <div class="reg-meta">
-                ${escapeHtml(c.usuarioEmail || '')}<br>
-                ID del servidor: <strong>${escapeHtml(c.guildId || '—')}</strong><br>
-                Canal panel: ${escapeHtml(c.canalPanelId || '—')} · Categoría: ${escapeHtml(c.categoriaId || '—')}
-              </div>
-            </div>
-            <span class="status-pill status-${estado}">${statusLabel}</span>
-          </div>
-          <div class="reg-actions">
-            <button class="mini-btn mini-approve" id="aprobar-tb-${c.id}" ${estado==='aprobado' ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}>Aprobar</button>
-            <button class="mini-btn mini-reject" id="rechazar-tb-${c.id}" ${estado==='rechazado' ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}>Rechazar</button>
-          </div>
-        </div>
-      `;
-    }
-
-    async function cambiarEstadoServidor(c, nuevoEstado){
-      try{
-        await updateDoc(doc(db, "ticketbotConfigs", c.id), { estadoAprobacion: nuevoEstado });
-        cargarServidoresUsuarios();
-      }catch(err){
-        console.error('Error al actualizar el estado del servidor:', err);
-        alert('No se pudo actualizar. Probá de nuevo.');
-      }
-    }
-
-    /* ============================================================
-       SERVIDORES DE CLIENTES — BOT DE VENTAS (aprobación manual)
-       ============================================================ */
-    async function cargarServidoresVentasbot(){
-      const listEl = document.getElementById('admin-ventasbot-list');
-      listEl.innerHTML = '<div class="loading-row">Cargando servidores…</div>';
-
-      try{
-        const snapshot = await getDocs(collection(db, "ventasbotConfigs"));
-
-        if(snapshot.empty){
-          listEl.innerHTML = '<div class="empty-state">Todavía nadie cargó su servidor.</div>';
-          document.getElementById('ventasbot-pendientes-tag').textContent = '0 pendientes';
-          return;
-        }
-
-        const configs = [];
-        snapshot.forEach(d => configs.push({ id: d.id, ...d.data() }));
-
-        const pendientes = configs.filter(c => c.estadoAprobacion !== 'aprobado' && c.estadoAprobacion !== 'rechazado').length;
-        document.getElementById('ventasbot-pendientes-tag').textContent = `${pendientes} pendiente${pendientes === 1 ? '' : 's'}`;
-
-        const orden = { pendiente: 0, aprobado: 1, rechazado: 2 };
-        configs.sort((a, b) => (orden[a.estadoAprobacion] ?? 0) - (orden[b.estadoAprobacion] ?? 0));
-
-        listEl.innerHTML = configs.map(renderServidorCardVenta).join('');
-
-        configs.forEach(c => {
-          const aprobarBtn = document.getElementById(`aprobar-vb-${c.id}`);
-          const rechazarBtn = document.getElementById(`rechazar-vb-${c.id}`);
-          if(aprobarBtn) aprobarBtn.addEventListener('click', () => cambiarEstadoServidorVenta(c, 'aprobado'));
-          if(rechazarBtn) rechazarBtn.addEventListener('click', () => cambiarEstadoServidorVenta(c, 'rechazado'));
-        });
-      }catch(err){
-        console.error('Error al cargar los servidores del bot de ventas:', err);
-        listEl.innerHTML = '<div class="empty-state">No se pudo cargar la lista. Revisá la configuración de Firebase.</div>';
-      }
-    }
-
-    function renderServidorCardVenta(c){
-      const estado = c.estadoAprobacion === 'aprobado' || c.estadoAprobacion === 'rechazado' ? c.estadoAprobacion : 'pendiente';
-      const statusLabel = estado === 'pendiente' ? 'Pendiente' : (estado === 'aprobado' ? 'Aprobado' : 'Rechazado');
-
-      return `
-        <div class="reg-card">
-          <div class="reg-top">
-            <div>
-              <div class="reg-name">${escapeHtml(c.usuarioNombre || '(sin nombre)')}</div>
-              <div class="reg-meta">
-                ${escapeHtml(c.usuarioEmail || '')}<br>
-                ID del servidor: <strong>${escapeHtml(c.guildId || '—')}</strong><br>
-                Canal de ventas: ${escapeHtml(c.canalVentasId || '—')} · Roles staff: ${escapeHtml(c.staffRoleIds || '—')}
-              </div>
-            </div>
-            <span class="status-pill status-${estado}">${statusLabel}</span>
-          </div>
-          <div class="reg-actions">
-            <button class="mini-btn mini-approve" id="aprobar-vb-${c.id}" ${estado==='aprobado' ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}>Aprobar</button>
-            <button class="mini-btn mini-reject" id="rechazar-vb-${c.id}" ${estado==='rechazado' ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}>Rechazar</button>
-          </div>
-        </div>
-      `;
-    }
-
-    async function cambiarEstadoServidorVenta(c, nuevoEstado){
-      try{
-        await updateDoc(doc(db, "ventasbotConfigs", c.id), { estadoAprobacion: nuevoEstado });
-        cargarServidoresVentasbot();
-      }catch(err){
-        console.error('Error al actualizar el estado del servidor de ventas:', err);
-        alert('No se pudo actualizar. Probá de nuevo.');
-      }
-    }
-
-    /* ============================================================
-       BOT DE VENTAS — config del servidor propio (config/ventasbot,
-       la usa index.js del bot de ventas)
-       ============================================================ */
-    const CONFIG_DOC_VENTASBOT = doc(db, "config", "ventasbot");
-
-    const vbEl = (id) => document.getElementById(id);
-    const vbCampos = {
-      guildId: vbEl('vb-guild-id'),
-      canalVentasId: vbEl('vb-canal-ventas'),
-      canalRecargasId: vbEl('vb-canal-recargas'),
-      staffRoleIds: vbEl('vb-rol-staff'),
-    };
-    let vbConfigCargada = false;
-
-    async function cargarConfigVentasbot(){
-      if(vbConfigCargada) return;
-      vbConfigCargada = true;
-
-      let datos = {};
-      try{
-        const snap = await getDoc(CONFIG_DOC_VENTASBOT);
-        if(snap.exists()) datos = snap.data();
-      }catch(err){
-        console.error('Error al cargar la configuración del bot de ventas:', err);
-        vbEl('vb-form-error').textContent = 'No se pudo cargar la configuración guardada.';
-      }
-
-      Object.entries(vbCampos).forEach(([key, input]) => {
-        input.value = datos[key] != null ? datos[key] : '';
-      });
-    }
-
-    const vbGuardarBtn = vbEl('vb-guardar-btn');
-    const vbFormError = vbEl('vb-form-error');
-    const vbSavedMsg = vbEl('vb-saved-msg');
-
-    vbGuardarBtn.addEventListener('click', async () => {
-      vbFormError.textContent = '';
-      vbSavedMsg.style.display = 'none';
-
-      if(!vbCampos.guildId.value.trim() || !vbCampos.canalVentasId.value.trim() || !vbCampos.canalRecargasId.value.trim()){
-        vbFormError.textContent = 'Completá al menos el ID de tu servidor y los dos canales (ventas y recargas).';
-        return;
-      }
-
-      vbGuardarBtn.disabled = true;
-      vbGuardarBtn.textContent = 'Guardando…';
-
-      const datos = {};
-      Object.entries(vbCampos).forEach(([key, input]) => {
-        datos[key] = input.value.trim();
-      });
-      datos.actualizado = serverTimestamp();
-
-      try{
-        await setDoc(CONFIG_DOC_VENTASBOT, datos, { merge: true });
-        vbSavedMsg.style.display = 'block';
-        setTimeout(() => { vbSavedMsg.style.display = 'none'; }, 4000);
-      }catch(err){
-        console.error('Error al guardar la configuración del bot de ventas:', err);
-        vbFormError.textContent = 'No se pudo guardar. Revisá la configuración de Firebase o probá de nuevo.';
-      }finally{
-        vbGuardarBtn.disabled = false;
-        vbGuardarBtn.textContent = 'Guardar configuración';
-      }
-    });
-
-    /* ============================================================
-       BOT DE TICKETS (config leída/guardada en config/ticketbot,
-       la usa index.js del bot)
-       ============================================================ */
-    const CONFIG_DOC_TICKETBOT = doc(db, "config", "ticketbot");
-
-    const tbEl = (id) => document.getElementById(id);
-    const tbCampos = {
-      guildId: tbEl('tb-guild-id'),
-      canalPanelId: tbEl('tb-canal-panel'),
-      categoriaId: tbEl('tb-categoria-id'),
-      rolStaffId: tbEl('tb-rol-staff'),
-      nombreCanal: tbEl('tb-nombre-canal'),
-      panelTitulo: tbEl('tb-panel-titulo'),
-      panelDescripcion: tbEl('tb-panel-desc'),
-      panelColorHex: tbEl('tb-panel-color-hex'),
-      panelImagen: tbEl('tb-panel-imagen'),
-      modoPanel: tbEl('tb-modo-panel'),
-      estiloMultiple: tbEl('tb-estilo-multiple'),
-      menuPlaceholder: tbEl('tb-menu-placeholder'),
-      botonTexto: tbEl('tb-boton-texto'),
-      botonEmoji: tbEl('tb-boton-emoji'),
-      bienvenidaTitulo: tbEl('tb-bienvenida-titulo'),
-      bienvenidaDescripcion: tbEl('tb-bienvenida-desc'),
-      cerrarTexto: tbEl('tb-cerrar-texto'),
-    };
-    const tbColorPicker = tbEl('tb-panel-color');
-
-    const TB_DEFAULTS = {
-      guildId: '',
-      canalPanelId: '',
-      categoriaId: '',
-      rolStaffId: '',
-      nombreCanal: 'ticket-{usuario}',
-      panelTitulo: 'Soporte XITERKING STORE',
-      panelDescripcion: 'Tocá el botón de abajo para abrir un ticket privado con el equipo de soporte.',
-      panelColorHex: '#e10600',
-      panelImagen: '',
-      modoPanel: 'boton',
-      estiloMultiple: 'botones',
-      menuPlaceholder: 'Elegí el motivo de tu ticket',
-      tiposTicket: [],
-      botonTexto: 'Abrir ticket',
-      botonEmoji: '🎫',
-      bienvenidaTitulo: '¡Gracias por tu consulta!',
-      bienvenidaDescripcion: 'Hola {usuario}, en breve un miembro del equipo te va a responder. Contanos qué necesitás.',
-      cerrarTexto: 'Cerrar ticket',
-    };
-
-    let tbConfigCargada = false;
-
-    /* ---------- mostrar/ocultar según el modo de panel elegido ---------- */
-    function tbActualizarModoPanel(){
-      const multiple = tbCampos.modoPanel.value === 'multiple';
-      tbEl('tb-modo-boton-wrap').style.display = multiple ? 'none' : 'block';
-      tbEl('tb-modo-multiple-wrap').style.display = multiple ? 'block' : 'none';
-      tbEl('tb-menu-placeholder-wrap').style.display = (multiple && tbCampos.estiloMultiple.value === 'menu') ? 'block' : 'none';
-    }
-    tbCampos.modoPanel.addEventListener('change', tbActualizarModoPanel);
-    tbCampos.estiloMultiple.addEventListener('change', tbActualizarModoPanel);
-
-    /* ---------- editor de "varios tipos de ticket" ---------- */
-    const tbTiposListaEl = tbEl('tb-tipos-lista');
-
-    function tbTipoCardHTML(t, i){
-      const v = (x) => (x || '').toString().replace(/"/g, '&quot;');
-      return `
-        <div class="tb-tipo-card" data-index="${i}">
-          <div class="tb-tipo-card-head">
-            <span>Tipo #${i + 1}</span>
-            <button type="button" class="mini-btn mini-reject tb-tipo-quitar-btn">Quitar</button>
-          </div>
-          <div class="tb-row">
-            <div class="field">
-              <label>Nombre (se ve en el botón o en el menú)</label>
-              <input type="text" class="tb-tipo-nombre" placeholder="Ej: Soporte" value="${v(t.nombre)}">
-            </div>
-            <div class="field">
-              <label>Emoji (opcional)</label>
-              <input type="text" class="tb-tipo-emoji" placeholder="Ej: 🛠️" value="${v(t.emoji)}">
-            </div>
-          </div>
-          <div class="tb-row">
-            <div class="field">
-              <label>ID de la categoría de Discord</label>
-              <input type="text" class="tb-tipo-categoria" placeholder="Ej: 123456789012345678" value="${v(t.categoriaId)}">
-            </div>
-            <div class="field">
-              <label>ID del rol de soporte (opcional)</label>
-              <input type="text" class="tb-tipo-rol" placeholder="Deja vacío para usar el general" value="${v(t.rolStaffId)}">
-            </div>
-          </div>
-          <div class="field">
-            <label>Nombre del canal (opcional)</label>
-            <input type="text" class="tb-tipo-canal" placeholder="Ej: soporte-{usuario}" value="${v(t.nombreCanal)}">
-          </div>
-          <div class="field">
-            <label>Título de bienvenida para este tipo (opcional)</label>
-            <input type="text" class="tb-tipo-bienv-titulo" placeholder="Deja vacío para usar el general" value="${v(t.bienvenidaTitulo)}">
-          </div>
-          <div class="field">
-            <label>Descripción de bienvenida para este tipo (opcional)</label>
-            <textarea class="tb-textarea tb-tipo-bienv-desc" rows="3" placeholder="Deja vacío para usar el general">${v(t.bienvenidaDescripcion)}</textarea>
-            <button type="button" class="tb-vars-btn tb-vars-btn-tipo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-              Ver variables disponibles
-            </button>
-          </div>
-        </div>`;
-    }
-
-    function tbLeerTiposDesdeDOM(){
-      return Array.from(tbTiposListaEl.querySelectorAll('.tb-tipo-card')).map((card, i) => ({
-        id: card.dataset.id || `tipo_${Date.now()}_${i}`,
-        nombre: card.querySelector('.tb-tipo-nombre').value.trim(),
-        emoji: card.querySelector('.tb-tipo-emoji').value.trim(),
-        categoriaId: card.querySelector('.tb-tipo-categoria').value.trim(),
-        rolStaffId: card.querySelector('.tb-tipo-rol').value.trim(),
-        nombreCanal: card.querySelector('.tb-tipo-canal').value.trim(),
-        bienvenidaTitulo: card.querySelector('.tb-tipo-bienv-titulo').value.trim(),
-        bienvenidaDescripcion: card.querySelector('.tb-tipo-bienv-desc').value.trim(),
-      }));
-    }
-
-    function tbRenderTipos(lista){
-      tbTiposListaEl.innerHTML = lista.map((t, i) => tbTipoCardHTML(t, i)).join('');
-      Array.from(tbTiposListaEl.querySelectorAll('.tb-tipo-card')).forEach((card, i) => {
-        if(lista[i] && lista[i].id) card.dataset.id = lista[i].id;
-      });
-      tbTiposListaEl.querySelectorAll('.tb-tipo-quitar-btn').forEach((btn, i) => {
-        btn.addEventListener('click', () => {
-          const actuales = tbLeerTiposDesdeDOM();
-          actuales.splice(i, 1);
-          tbRenderTipos(actuales);
-        });
-      });
-    }
-
-    tbEl('tb-tipo-agregar-btn').addEventListener('click', () => {
-      const actuales = tbLeerTiposDesdeDOM();
-      actuales.push({ nombre: '', emoji: '', categoriaId: '', rolStaffId: '', nombreCanal: '', bienvenidaTitulo: '', bienvenidaDescripcion: '' });
-      tbRenderTipos(actuales);
-    });
-
-    /* ---------- imagen del panel: subida de archivo (misma lógica que productos) ---------- */
-    const tbPanelImagenFile = tbEl('tb-panel-imagen-file');
-    const tbPanelImagenPreview = tbEl('tb-panel-imagen-preview');
-    const tbPanelImagenPreviewWrap = tbEl('tb-panel-imagen-preview-wrap');
-    const tbPanelImagenEliminarBtn = tbEl('tb-panel-imagen-eliminar-btn');
-    let tbPanelImagenArchivoNuevo = null;
-
-    tbPanelImagenFile.addEventListener('change', () => {
-      const archivo = tbPanelImagenFile.files[0];
-      tbEl('tb-form-error').textContent = '';
-      if(!archivo) return;
-      if(!archivo.type.startsWith('image/')){
-        tbEl('tb-form-error').textContent = 'Ese archivo no es una imagen.';
-        tbPanelImagenFile.value = '';
-        return;
-      }
-      if(archivo.size > 15 * 1024 * 1024){
-        tbEl('tb-form-error').textContent = 'La imagen pesa demasiado (máximo 15MB). Probá con otra foto.';
-        tbPanelImagenFile.value = '';
-        return;
-      }
-      tbPanelImagenArchivoNuevo = archivo;
-      tbPanelImagenPreview.src = URL.createObjectURL(archivo);
-      tbPanelImagenPreviewWrap.style.display = 'flex';
-    });
-
-    tbPanelImagenEliminarBtn.addEventListener('click', () => {
-      tbCampos.panelImagen.value = '';
-      tbPanelImagenFile.value = '';
-      tbPanelImagenArchivoNuevo = null;
-      tbPanelImagenPreviewWrap.style.display = 'none';
-      tbPanelImagenPreview.src = '';
-    });
-
-    // Reutiliza IMGBB_API_KEY (ya importado arriba para productos).
-    async function tbSubirImagen(archivo){
-      const formData = new FormData();
-      formData.append('image', archivo);
-      const respuesta = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-        method: 'POST',
-        body: formData
-      });
-      const data = await respuesta.json();
-      if(!respuesta.ok || !data.success){
-        throw new Error('IMGBB_UPLOAD_FALLO');
-      }
-      return data.data.url;
-    }
-
-    async function cargarConfigTicketbot(){
-      if(tbConfigCargada) return;
-      tbConfigCargada = true;
-
-      let datos = TB_DEFAULTS;
-      try{
-        const snap = await getDoc(CONFIG_DOC_TICKETBOT);
-        if(snap.exists()){
-          datos = { ...TB_DEFAULTS, ...snap.data() };
-        }
-      }catch(err){
-        console.error('Error al cargar la configuración del bot de tickets:', err);
-        tbEl('tb-form-error').textContent = 'No se pudo cargar la configuración guardada. Se muestran valores por defecto.';
-      }
-
-      Object.entries(tbCampos).forEach(([key, input]) => {
-        input.value = datos[key] != null ? datos[key] : '';
-      });
-      tbColorPicker.value = /^#([0-9a-f]{6})$/i.test(datos.panelColorHex) ? datos.panelColorHex : '#e10600';
-      if(datos.panelImagen){
-        tbPanelImagenPreview.src = datos.panelImagen;
-        tbPanelImagenPreviewWrap.style.display = 'flex';
-      }
-      tbRenderTipos(Array.isArray(datos.tiposTicket) ? datos.tiposTicket : []);
-      tbActualizarModoPanel();
-      actualizarVistaPreviaTicketbot();
-    }
-
-    /* ---------- modal "variables disponibles" ---------- */
-    const tbVarsOverlay = tbEl('tb-vars-overlay');
-    document.addEventListener('click', (e) => {
-      if(e.target.closest('.tb-vars-btn')){
-        tbVarsOverlay.style.display = 'flex';
-      }
-    });
-    tbEl('tb-vars-close-btn').addEventListener('click', () => {
-      tbVarsOverlay.style.display = 'none';
-    });
-    tbVarsOverlay.addEventListener('click', (e) => {
-      if(e.target.id === 'tb-vars-overlay') tbVarsOverlay.style.display = 'none';
-    });
-
-    /* ---------- color picker <-> input de texto ---------- */
-    tbColorPicker.addEventListener('input', () => {
-      tbCampos.panelColorHex.value = tbColorPicker.value;
-      actualizarVistaPreviaTicketbot();
-    });
-    tbCampos.panelColorHex.addEventListener('input', () => {
-      if(/^#([0-9a-f]{6})$/i.test(tbCampos.panelColorHex.value)){
-        tbColorPicker.value = tbCampos.panelColorHex.value;
-      }
-      actualizarVistaPreviaTicketbot();
-    });
-
-    /* ---------- vista previa en vivo ---------- */
-    function actualizarVistaPreviaTicketbot(){
-      tbEl('tb-prev-titulo').textContent = tbCampos.panelTitulo.value || '(sin título)';
-      tbEl('tb-prev-desc').textContent = tbCampos.panelDescripcion.value || '(sin descripción)';
-      tbEl('tb-prev-bar').style.background = /^#([0-9a-f]{6})$/i.test(tbCampos.panelColorHex.value) ? tbCampos.panelColorHex.value : '#e10600';
-      tbEl('tb-prev-boton-texto').textContent = tbCampos.botonTexto.value || 'Abrir ticket';
-      tbEl('tb-prev-emoji').textContent = tbCampos.botonEmoji.value || '';
-    }
-    [tbCampos.panelTitulo, tbCampos.panelDescripcion, tbCampos.botonTexto, tbCampos.botonEmoji].forEach(input => {
-      input.addEventListener('input', actualizarVistaPreviaTicketbot);
-    });
-
-    /* ---------- guardar ---------- */
-    const tbGuardarBtn = tbEl('tb-guardar-btn');
-    const tbFormError = tbEl('tb-form-error');
-    const tbSavedMsg = tbEl('tb-saved-msg');
-
-    tbGuardarBtn.addEventListener('click', async () => {
-      tbFormError.textContent = '';
-      tbSavedMsg.style.display = 'none';
-
-      if(!tbCampos.guildId.value.trim() || !tbCampos.canalPanelId.value.trim() || !tbCampos.categoriaId.value.trim()){
-        tbFormError.textContent = 'Completá al menos el ID del servidor, el ID del canal del panel y el ID de la categoría.';
-        return;
-      }
-
-      const tiposTicket = tbLeerTiposDesdeDOM();
-      if(tbCampos.modoPanel.value === 'multiple'){
-        if(tiposTicket.length === 0){
-          tbFormError.textContent = 'Agregá al menos un tipo de ticket, o volvé al modo "Un solo botón".';
-          return;
-        }
-        for(const t of tiposTicket){
-          if(!t.nombre || !t.categoriaId){
-            tbFormError.textContent = 'Cada tipo de ticket necesita al menos un nombre y un ID de categoría.';
-            return;
-          }
-        }
-      }
-
-      tbGuardarBtn.disabled = true;
-      tbGuardarBtn.textContent = 'Guardando…';
-
-      if(tbPanelImagenArchivoNuevo){
-        tbGuardarBtn.textContent = 'Subiendo imagen…';
-        try{
-          tbCampos.panelImagen.value = await tbSubirImagen(tbPanelImagenArchivoNuevo);
-        }catch(err){
-          console.error('Error al subir la imagen del panel:', err);
-          tbFormError.textContent = 'No se pudo subir la imagen. Probá de nuevo o con otra foto.';
-          tbGuardarBtn.disabled = false;
-          tbGuardarBtn.textContent = 'Guardar configuración';
-          return;
-        }
-      }
-
-      const datos = {};
-      Object.entries(tbCampos).forEach(([key, input]) => {
-        datos[key] = input.value.trim();
-      });
-      datos.tiposTicket = tiposTicket;
-      datos.actualizado = serverTimestamp();
-
-      try{
-        await setDoc(CONFIG_DOC_TICKETBOT, datos, { merge: true });
-        tbSavedMsg.style.display = 'block';
-        setTimeout(() => { tbSavedMsg.style.display = 'none'; }, 4000);
-      }catch(err){
-        console.error('Error al guardar la configuración del bot de tickets:', err);
-        tbFormError.textContent = 'No se pudo guardar. Revisá la configuración de Firebase o probá de nuevo.';
-      }finally{
-        tbGuardarBtn.disabled = false;
-        tbGuardarBtn.textContent = 'Guardar configuración';
-      }
-    });
 
     /* ============================================================
        STAFF — cuentas de staff con permisos por sección, guardadas
@@ -3504,8 +2663,6 @@
       { key: 'cupones', label: 'Cupones' },
       { key: 'navegacion', label: 'Navegación' },
       { key: 'compras', label: 'Compras' },
-      { key: 'ticketbot', label: 'Bot Tickets' },
-      { key: 'ventasbot', label: 'Bot Ventas' },
       { key: 'mantenimiento', label: 'Mantenimiento' },
       { key: 'anuncio', label: 'Anuncio' },
       { key: 'postulaciones', label: 'Postulaciones' },
@@ -3729,23 +2886,6 @@
       if(!soporteFlotante.contains(e.target)) soporteFlotante.classList.remove('open');
     });
   </script>
-  <!-- MODAL: VARIABLES DISPONIBLES (bot de tickets) -->
-  <div class="modal-overlay" id="tb-vars-overlay" style="display:none;">
-    <div class="modal-box modal-box-wide">
-      <h2 style="margin-bottom:6px;">Variables <span>disponibles</span></h2>
-      <p class="sub" style="margin-bottom:18px;">Usalas en el nombre del canal y en los mensajes de bienvenida — el bot las reemplaza automáticamente al crear cada ticket.</p>
-      <div class="tb-vars-list">
-        <div class="tb-vars-item"><span class="tb-vars-code">{usuario}</span><span class="tb-vars-desc">Menciona (@) a quien abrió el ticket.</span></div>
-        <div class="tb-vars-item"><span class="tb-vars-code">{USER_ID}</span><span class="tb-vars-desc">El ID de Discord de esa persona.</span></div>
-        <div class="tb-vars-item"><span class="tb-vars-code">{GUILD_NAME}</span><span class="tb-vars-desc">El nombre del servidor de Discord.</span></div>
-        <div class="tb-vars-item"><span class="tb-vars-code">{TICKET_NUMBER}</span><span class="tb-vars-desc">Número correlativo del ticket (1, 2, 3…), nunca se repite.</span></div>
-        <div class="tb-vars-item"><span class="tb-vars-code">{CANAL}</span><span class="tb-vars-desc">Menciona el canal del ticket recién creado (solo tiene efecto en el mensaje de bienvenida).</span></div>
-        <div class="tb-vars-item"><span class="tb-vars-code">{FECHA}</span><span class="tb-vars-desc">La fecha en que se abrió el ticket.</span></div>
-        <div class="tb-vars-item"><span class="tb-vars-code">{HORA}</span><span class="tb-vars-desc">La hora en que se abrió el ticket.</span></div>
-      </div>
-      <button class="btn btn-secondary" style="width:100%; margin-top:6px;" id="tb-vars-close-btn">Cerrar</button>
-    </div>
-  </div>
 
 </body>
 </html>
