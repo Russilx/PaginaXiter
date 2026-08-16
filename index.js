@@ -1,365 +1,354 @@
 // ============================================================
-// BOT DE VENTAS — XITERKING STORE
-// ------------------------------------------------------------
-// QUÉ HACE: es UN SOLO bot de Discord (un solo token) que le sirve
-// a VARIOS clientes al mismo tiempo. Cuando alguien usa el comando
-// /venta-ticket en SU servidor, el bot busca en Firestore qué
-// configuración corresponde a ESE servidor (por su guildId, en la
-// colección "ventasbotConfigs" que llena cada cliente desde su
-// panel ventasbot.html) y publica el mensaje de venta ahí, con el
-// formato que ese cliente eligió.
+// WORKER "flashtopup-proxy" — intermediario entre tu sitio y la
+// API de FlashTopup.
 //
-// Si el servidor no tiene una configuración APROBADA por el admin
-// (ver admin.html → pestaña "Bot Ventas"), el comando no hace nada
-// más que avisarle a quien lo usó que todavía no está habilitado.
-//
-// También publica, de forma automática y periódica, un resumen de
-// ventas por cliente (diario / semanal / mensual / desactivado,
-// según lo que cada cliente eligió en su panel).
+// POR QUÉ EXISTE: tu sitio (XITERKING STORE) es HTML/JS puro, sin
+// servidor propio. Si la clave secreta de FlashTopup (la "Clave
+// API") estuviera en un archivo .js de tu sitio, cualquiera que
+// abra el código fuente de la página se la podría llevar y hacer
+// recargas gratis a tu costa. Este Worker vive aparte, en los
+// servidores de Cloudflare, y es el ÚNICO lugar donde esa clave
+// existe. Tu sitio le pide cosas a ESTE worker (con una clave
+// propia tuya, mucho menos grave si se filtra) y el worker es
+// quien realmente le habla a FlashTopup.
 //
 // ------------------------------------------------------------
-// CÓMO DESPLEGAR ESTO (en la misma VPS del relay de FlashTopup)
+// CÓMO DESPLEGAR ESTO (una sola vez, gratis)
 // ------------------------------------------------------------
-// 1. CREÁ LA APLICACIÓN DE DISCORD Y EL BOT
-//    a) Andá a https://discord.com/developers/applications → "New
-//       Application" → ponele un nombre (ej: "XITERKING Ventas").
-//    b) Menú lateral "Bot" → "Add Bot" → confirmá.
-//    c) En esa misma pantalla, activá "MESSAGE CONTENT INTENT" si
-//       en el futuro querés que lea mensajes (no hace falta para
-//       este bot tal cual está, que solo usa slash commands).
-//    d) "Reset Token" → copiá el token que te muestra UNA sola vez.
-//       Ese es tu DISCORD_BOT_TOKEN (guardalo ahora, no se puede
-//       volver a ver después sin resetearlo de nuevo).
-//    e) Menú lateral "OAuth2" → "URL Generator" → tildá "bot" y
-//       "applications.commands", y en permisos tildá al menos
-//       "Send Messages", "Embed Links" y "Use Slash Commands".
-//       Copiá la URL que genera abajo — ESE es el link que le
-//       pasás a cada cliente para invitar el bot a su servidor.
+// 1. Andá a https://dash.cloudflare.com/ → creá una cuenta si no
+//    tenés (gratis, no pide tarjeta para el plan free de Workers).
+// 2. En el menú lateral: Workers & Pages → "Create" → "Create Worker".
+//    Ponele un nombre, ej: "flashtopup-proxy". Deploy.
+// 3. Click en "Edit code" (o "Quick edit") y pegá TODO este
+//    archivo reemplazando lo que venga por defecto. Deploy.
+// 4. En la página del Worker: Settings → Variables and Secrets →
+//    "Add" y cargá estas 4, TODAS como tipo "Secret" (no "Text"):
 //
-// 2. CONSEGUÍ LAS CREDENCIALES DE FIREBASE ADMIN (distintas de las
-//    que usa el sitio web — esas son "públicas", estas son privadas
-//    y con permiso total sobre tu base de datos, así que el bot
-//    puede leer y escribir sin las reglas de seguridad del cliente)
-//    a) https://console.firebase.google.com/ → tu proyecto →
-//       ⚙️ Configuración del proyecto → "Cuentas de servicio".
-//    b) "Generar nueva clave privada" → descarga un .json.
-//    c) Subí ese archivo a la VPS (al lado de este index.js) con
-//       el nombre "firebase-admin-key.json". NUNCA lo subas a
-//       GitHub ni lo compartas — tiene acceso total a tu Firestore.
+//      FT_API_ID       -> tu "ID de API" de FlashTopup (RSECTHDQD7PALPE6)
+//      FT_API_KEY      -> tu "Clave API" de FlashTopup (la larga)
+//      SITE_KEY        -> inventate una clave random vos mismo,
+//                          ej. una cadena larga random (no tiene que
+//                          ver con FlashTopup, es solo para que tu
+//                          web y el worker se reconozcan entre sí).
+//                          Podés generar una acá: https://www.uuidgenerator.net/
+//      ALLOWED_ORIGIN  -> el dominio de tu sitio, ej:
+//                          https://xiterking-store.web.app
+//                          (sin barra al final)
 //
-// 3. EN LA VPS (la misma donde ya tenés flashtopup-relay-server.js)
-//      cd /la/carpeta/de/siempre
-//      mkdir ventas-bot && cd ventas-bot
-//      (subí acá index.js, package.json y firebase-admin-key.json)
-//      npm install
-//      nano .env
-//    y pegá:
-//      DISCORD_BOT_TOKEN=el-token-del-paso-1d
-//    Guardá con Ctrl+O, salí con Ctrl+X.
+// 5. Copiá la URL que te da Cloudflare para tu Worker (algo como
+//    https://flashtopup-proxy.tu-usuario.workers.dev) y pegala en
+//    firebase-config.js en FLASHTOPUP_WORKER_URL. La SITE_KEY que
+//    inventaste en el paso 4 también va en firebase-config.js en
+//    FLASHTOPUP_SITE_KEY (tiene que ser IDÉNTICA en los dos lados).
 //
-// 4. PROBALO A MANO UNA VEZ
-//      node --env-file=.env index.js
-//    Tiene que imprimir "Bot de ventas conectado como ...". Dejalo
-//    un segundo, Ctrl+C.
-//
-// 5. DEJALO CORRIENDO SIEMPRE CON PM2 (junto al relay de FlashTopup)
-//      pm2 start index.js --name ventas-bot --env-file .env
-//      pm2 save
-//    (si ya corriste "pm2 startup" antes para el relay, no hace
-//    falta repetirlo — un solo pm2 administra todos los procesos).
-//
-// 6. INVITÁ EL BOT a tu propio servidor de Discord y al de cada
-//    cliente aprobado, con el link del paso 1e.
-//
-// NOTA SOBRE LOS SLASH COMMANDS: la primera vez que arranca, el bot
-// registra /venta-ticket como comando GLOBAL (funciona en cualquier
-// servidor donde esté invitado). Discord puede tardar hasta 1 hora
-// en mostrarlo la primera vez — después los cambios son casi
-// instantáneos.
+// 6. Probá primero con X-FT-Sandbox activado (ver más abajo, es
+//    automático si activás MODO_SANDBOX = true acá abajo) — así
+//    podés probar el flujo completo SIN gastar saldo real de tu
+//    billetera de FlashTopup ni hacer recargas de verdad.
 // ============================================================
 
-const {
-  Client,
-  GatewayIntentBits,
-  REST,
-  Routes,
-  SlashCommandBuilder,
-  EmbedBuilder,
-  PermissionsBitField,
-} = require('discord.js');
-const admin = require('firebase-admin');
-const cron = require('node-cron');
+// Poné esto en true mientras probás, y en false cuando ya
+// verificaste que las recargas reales funcionan bien.
+const MODO_SANDBOX = true;
 
-const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
-if (!DISCORD_BOT_TOKEN) {
-  console.error('Falta DISCORD_BOT_TOKEN en el .env');
-  process.exit(1);
+// IDs de servicio de FlashTopup para los paquetes de diamantes de
+// Free Fire. "id" es el número que se ve en el panel de FlashTopup
+// (y el que usa tu frontend para elegir el paquete). "code" es el
+// service_code REAL que pide la API para crear la orden — no es lo
+// mismo que el id, y hay que sacarlo tal cual del catálogo (GET
+// /services), no armarlo a mano. Sacado del catálogo el 2026-07-15.
+const PAQUETES_FREE_FIRE = {
+  542: { diamantes: 110, code: 'TOPUP_FREE_FIRE_LATAM_15_110_DIAMONDS_542' },
+  543: { diamantes: 341, code: 'TOPUP_FREE_FIRE_LATAM_15_341_DIAMONDS_543' },
+  544: { diamantes: 572, code: 'TOPUP_FREE_FIRE_LATAM_15_572_DIAMONDS_544' },
+  545: { diamantes: 1166, code: 'TOPUP_FREE_FIRE_LATAM_15_1166_DIAMONDS_545' },
+  546: { diamantes: 2398, code: 'TOPUP_FREE_FIRE_LATAM_15_2398_DIAMONDS_546' },
+  547: { diamantes: 6160, code: 'TOPUP_FREE_FIRE_LATAM_15_6160_DIAMONDS_547' },
+};
+
+// Código de "validación" del PRODUCTO Free Fire en FlashTopup (distinto
+// de los serviceId de arriba, que son de cada PAQUETE de diamantes). Lo
+// buscás en tu panel de FlashTopup, en la ficha del juego Free Fire —
+// es el mismo tipo de código que en su doc de ejemplo usa "mlbb" para
+// Mobile Legends. Reemplazá el texto de abajo por el tuyo.
+const VALIDATION_CODE_FREE_FIRE = 'freefire_latam';
+
+// Código del PRODUCTO (juego + región) en el catálogo de FlashTopup.
+// Los paquetes de PAQUETES_FREE_FIRE (542, 543, etc.) viven adentro de
+// este producto puntual — sin este dato, FlashTopup no los encuentra
+// (por eso tirab SERVICE_NOT_FOUND). Visto en el panel de FlashTopup,
+// "Free Fire LATAM" (ID 15).
+const PRODUCT_CODE_FREE_FIRE = 'TOPUP_FREE_FIRE_LATAM_15';
+
+const FT_HOST = 'https://api.flashtopup.com';
+
+// ---------- utilidades de firma HMAC-SHA256 (según la doc de FlashTopup) ----------
+
+async function sha256Hex(texto) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// ---------- Firebase Admin ----------
-admin.initializeApp({
-  credential: admin.credential.cert(require('./firebase-admin-key.json')),
-});
-const db = admin.firestore();
-
-// ---------- Discord client ----------
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-
-// ============================================================
-// REGISTRO DEL SLASH COMMAND
-// ============================================================
-const comandoVentaTicket = new SlashCommandBuilder()
-  .setName('venta-ticket')
-  .setDescription('Registra una venta y la publica en el canal de ventas configurado.')
-  .addStringOption(opt =>
-    opt.setName('producto').setDescription('Qué se vendió').setRequired(true))
-  .addStringOption(opt =>
-    opt.setName('monto').setDescription('Monto de la venta (con la moneda, ej: 5000 ARS)').setRequired(true))
-  .addStringOption(opt =>
-    opt.setName('cliente').setDescription('Nombre o usuario del cliente (opcional)').setRequired(false));
-
-async function registrarComandos() {
-  const rest = new REST({ version: '10' }).setToken(DISCORD_BOT_TOKEN);
-  await rest.put(
-    Routes.applicationCommands(client.user.id),
-    { body: [comandoVentaTicket.toJSON()] }
+async function hmacSha256Hex(clave, mensaje) {
+  const claveCrypto = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(clave),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
   );
-  console.log('Slash command /venta-ticket registrado (global).');
+  const firma = await crypto.subtle.sign('HMAC', claveCrypto, new TextEncoder().encode(mensaje));
+  return [...new Uint8Array(firma)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// ============================================================
-// UTILIDADES
-// ============================================================
+// Llama a un endpoint de FlashTopup ya firmado correctamente.
+// `path` tiene que ser la ruta CANÓNICA sin query string, ej:
+// "/api/reseller/v2/order" (la doc de FlashTopup pide firmar
+// siempre esta ruta completa, nunca un alias corto).
+async function llamarFlashTopup(env, method, path, queryString, bodyObj) {
+  const bodyStr = bodyObj ? JSON.stringify(bodyObj) : '';
+  const bodyHash = await sha256Hex(bodyStr);
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const nonce = crypto.randomUUID();
 
-// Reemplaza las variables {vendedor}, {producto}, {monto}, {cliente},
-// {numero}, {fecha}, {hora} dentro de un texto.
-function reemplazarVariables(texto, vars) {
-  if (!texto) return '';
-  return texto.replace(/\{(\w+)\}/g, (match, key) => (vars[key] != null ? String(vars[key]) : match));
+  const canonico = [method, path, timestamp, nonce, bodyHash].join('\n');
+  const firma = await hmacSha256Hex(env.FT_API_KEY, canonico);
+
+  const headers = {
+    'X-FT-API-ID': env.FT_API_ID,
+    'X-FT-Timestamp': timestamp,
+    'X-FT-Nonce': nonce,
+    'X-FT-Signature': firma,
+  };
+  if (bodyObj) headers['Content-Type'] = 'application/json';
+  if (MODO_SANDBOX) headers['X-FT-Sandbox'] = 'true';
+
+  const url = FT_HOST + path + (queryString ? '?' + queryString : '');
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: bodyObj ? bodyStr : undefined,
+  });
+
+  let data;
+  try { data = await res.json(); } catch (e) { data = null; }
+  return { httpStatus: res.status, data };
 }
 
-function formatearFechaHora(date) {
-  const fecha = date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  const hora = date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-  return { fecha, hora };
+// ---------- CORS + validación de que el pedido venga de tu propio sitio ----------
+
+function headersCORS(origenPedido, env) {
+  const permitido = origenPedido === env.ALLOWED_ORIGIN ? origenPedido : env.ALLOWED_ORIGIN;
+  return {
+    'Access-Control-Allow-Origin': permitido,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Site-Key',
+    'Vary': 'Origin',
+  };
 }
 
-// Busca, entre TODAS las configs aprobadas, la que corresponde a
-// este servidor de Discord. Como cada cliente tiene su propio
-// guildId, esta consulta devuelve como mucho un resultado.
-async function buscarConfigPorGuild(guildId) {
-  const snap = await db.collection('ventasbotConfigs')
-    .where('guildId', '==', guildId)
-    .where('estadoAprobacion', '==', 'aprobado')
-    .limit(1)
-    .get();
-  if (snap.empty) return null;
-  const doc = snap.docs[0];
-  return { id: doc.id, ...doc.data() };
-}
-
-// Siguiente número correlativo de venta para este cliente
-// (transacción para que nunca se repita, aunque caigan dos ventas
-// casi al mismo tiempo).
-async function siguienteNumeroVenta(usuarioId) {
-  const ref = db.collection('ventasContadores').doc(usuarioId);
-  return db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const actual = snap.exists ? (snap.data().ultimoNumero || 0) : 0;
-    const siguiente = actual + 1;
-    tx.set(ref, { ultimoNumero: siguiente }, { merge: true });
-    return siguiente;
+function jsonResponse(obj, status, cors) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...cors },
   });
 }
 
-// ============================================================
-// SLASH COMMAND: /venta-ticket
-// ============================================================
-client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
-  if (interaction.commandName !== 'venta-ticket') return;
-  if (!interaction.guildId) {
-    return interaction.reply({ content: 'Este comando solo funciona dentro de un servidor.', ephemeral: true });
-  }
+function siteKeyValida(request, env) {
+  return request.headers.get('X-Site-Key') === env.SITE_KEY && !!env.SITE_KEY;
+}
 
-  await interaction.deferReply({ ephemeral: true });
+// ============================================================
+// RUTAS QUE EXPONE ESTE WORKER (las que llama tu sitio)
+// ============================================================
 
-  try {
-    const config = await buscarConfigPorGuild(interaction.guildId);
-    if (!config) {
-      return interaction.editReply('Este servidor todavía no tiene el Bot de Ventas habilitado. Pedile a XITERKING STORE que apruebe tu configuración desde tu panel.');
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const origenPedido = request.headers.get('Origin') || '';
+    const cors = headersCORS(origenPedido, env);
+
+    // preflight de CORS
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: cors });
     }
 
-    // ---------- permisos: rol de staff (si hay alguno configurado) ----------
-    const rolesPermitidos = (config.staffRoleIds || '')
-      .split(',').map(s => s.trim()).filter(Boolean);
-    if (rolesPermitidos.length > 0) {
-      const tieneRol = interaction.member.roles.cache.some(r => rolesPermitidos.includes(r.id));
-      if (!tieneRol) {
-        return interaction.editReply('No tenés permiso para cargar ventas en este servidor.');
+    // ---------- GET /debug-servicios ----------
+    // SOLO PARA DIAGNÓSTICO — TEMPORAL. Pide a FlashTopup el catálogo real
+    // de servicios (respetando el header de sandbox si MODO_SANDBOX está
+    // en true) para comparar contra los service_code hardcodeados en
+    // PAQUETES_FREE_FIRE. Protegido igual que el resto con X-Site-Key.
+    // Sacá esta ruta del worker una vez que termines de diagnosticar.
+    if (request.method === 'GET' && url.pathname === '/debug-servicios') {
+      if (!siteKeyValida(request, env)) {
+        return jsonResponse({ ok: false, motivo: 'NO_AUTORIZADO' }, 401, cors);
       }
+
+      const { httpStatus, data } = await llamarFlashTopup(
+        env, 'GET', '/api/reseller/v2/services', 'product_code=' + encodeURIComponent(PRODUCT_CODE_FREE_FIRE), null
+      );
+
+      return jsonResponse({
+        ok: true,
+        modoSandbox: MODO_SANDBOX,
+        httpStatusDeFlashTopup: httpStatus,
+        respuestaCompleta: data,
+      }, 200, cors);
     }
 
-    // ---------- canal de ventas configurado ----------
-    if (!config.canalVentasId) {
-      return interaction.editReply('El canal de ventas todavía no está configurado. Avisale al dueño del servidor que lo complete en su panel.');
-    }
-    const canal = await interaction.guild.channels.fetch(config.canalVentasId).catch(() => null);
-    if (!canal || !canal.isTextBased()) {
-      return interaction.editReply('No pude encontrar el canal de ventas configurado (puede que se haya borrado). Avisale al dueño del servidor.');
-    }
-    const permisosBot = canal.permissionsFor(interaction.guild.members.me);
-    if (!permisosBot || !permisosBot.has(PermissionsBitField.Flags.SendMessages) || !permisosBot.has(PermissionsBitField.Flags.EmbedLinks)) {
-      return interaction.editReply('No tengo permiso para escribir en el canal de ventas configurado. Dale permiso al bot ahí y probá de nuevo.');
+    if (request.method !== 'POST') {
+      return jsonResponse({ ok: false, motivo: 'METODO_NO_PERMITIDO' }, 405, cors);
     }
 
-    // ---------- arma la venta ----------
-    const producto = interaction.options.getString('producto');
-    const monto = interaction.options.getString('monto');
-    const cliente = interaction.options.getString('cliente') || '—';
-    const numero = await siguienteNumeroVenta(config.id);
-    const ahora = new Date();
-    const { fecha, hora } = formatearFechaHora(ahora);
-
-    const vars = {
-      vendedor: `<@${interaction.user.id}>`,
-      producto,
-      monto,
-      cliente,
-      numero,
-      fecha,
-      hora,
-    };
-
-    const colorHex = /^#([0-9a-f]{6})$/i.test(config.ventaColorHex) ? config.ventaColorHex : '#e10600';
-    const embed = new EmbedBuilder()
-      .setColor(parseInt(colorHex.replace('#', ''), 16))
-      .setTitle(reemplazarVariables(config.ventaTitulo || 'Nueva venta registrada', vars))
-      .setDescription(reemplazarVariables(config.ventaDescripcion || '', vars) || null)
-      .setTimestamp(ahora);
-
-    const camposVenta = Array.isArray(config.camposVenta) ? config.camposVenta : [];
-    camposVenta.forEach(c => {
-      if (!c.nombre) return;
-      embed.addFields({
-        name: reemplazarVariables(c.nombre, vars),
-        value: reemplazarVariables(c.valor, vars) || '—',
-        inline: true,
-      });
-    });
-
-    await canal.send({ embeds: [embed] });
-
-    // ---------- guarda la venta para las estadísticas ----------
-    await db.collection('ventas').add({
-      usuarioId: config.id,
-      guildId: interaction.guildId,
-      vendedorId: interaction.user.id,
-      vendedorTag: interaction.user.tag,
-      producto,
-      monto,
-      cliente,
-      numero,
-      fecha: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    await interaction.editReply(`✅ Venta #${numero} cargada y publicada en <#${canal.id}>.`);
-  } catch (err) {
-    console.error('Error al procesar /venta-ticket:', err);
-    await interaction.editReply('Hubo un problema al cargar la venta. Probá de nuevo o avisale al soporte.').catch(() => {});
-  }
-});
-
-// ============================================================
-// RESUMEN PERIÓDICO DE VENTAS (diario / semanal / mensual)
-// ------------------------------------------------------------
-// Corre todos los días a las 09:00 (hora del servidor donde vive
-// el bot). Revisa, cliente por cliente, si hoy le toca resumen
-// según la frecuencia que eligió, y si es así, lo publica.
-// ============================================================
-cron.schedule('0 9 * * *', async () => {
-  console.log('Chequeando resúmenes de ventas del día...');
-  try {
-    const snap = await db.collection('ventasbotConfigs')
-      .where('estadoAprobacion', '==', 'aprobado')
-      .get();
-
-    const hoy = new Date();
-    const esLunes = hoy.getDay() === 1;
-    const esPrimerDiaDeMes = hoy.getDate() === 1;
-
-    for (const doc of snap.docs) {
-      const config = { id: doc.id, ...doc.data() };
-      const frecuencia = config.statsFrecuencia || 'desactivado';
-      if (frecuencia === 'desactivado') continue;
-      if (frecuencia === 'semanal' && !esLunes) continue;
-      if (frecuencia === 'mensual' && !esPrimerDiaDeMes) continue;
-      if (!config.statsCanalId || !config.guildId) continue;
-
-      await publicarResumen(config, frecuencia);
-    }
-  } catch (err) {
-    console.error('Error al chequear resúmenes de ventas:', err);
-  }
-});
-
-async function publicarResumen(config, frecuencia) {
-  try {
-    const guild = await client.guilds.fetch(config.guildId).catch(() => null);
-    if (!guild) return;
-    const canal = await guild.channels.fetch(config.statsCanalId).catch(() => null);
-    if (!canal || !canal.isTextBased()) return;
-
-    const desde = calcularInicioPeriodo(frecuencia);
-    const ventasSnap = await db.collection('ventas')
-      .where('usuarioId', '==', config.id)
-      .where('fecha', '>=', admin.firestore.Timestamp.fromDate(desde))
-      .get();
-
-    const cantidad = ventasSnap.size;
-    let totalNumerico = 0;
-    let totalParseable = true;
-    ventasSnap.forEach(d => {
-      const monto = (d.data().monto || '').replace(/[^\d.,-]/g, '').replace(',', '.');
-      const num = parseFloat(monto);
-      if (!isNaN(num)) totalNumerico += num;
-      else totalParseable = false;
-    });
-
-    const embed = new EmbedBuilder()
-      .setColor(0xe10600)
-      .setTitle(config.statsTitulo || 'Resumen de ventas')
-      .addFields({ name: 'Ventas cargadas', value: String(cantidad), inline: true });
-
-    if (cantidad > 0) {
-      embed.addFields({
-        name: 'Total (aproximado)',
-        value: totalParseable
-          ? totalNumerico.toLocaleString('es-AR')
-          : `${totalNumerico.toLocaleString('es-AR')} (algunos montos no se pudieron sumar, revisar cargas)`,
-        inline: true,
-      });
+    if (!siteKeyValida(request, env)) {
+      return jsonResponse({ ok: false, motivo: 'NO_AUTORIZADO' }, 401, cors);
     }
 
-    await canal.send({ embeds: [embed] });
-  } catch (err) {
-    console.error(`Error al publicar el resumen del cliente ${config.id}:`, err);
-  }
-}
+    let body;
+    try { body = await request.json(); } catch (e) {
+      return jsonResponse({ ok: false, motivo: 'BODY_INVALIDO' }, 400, cors);
+    }
 
-function calcularInicioPeriodo(frecuencia) {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  if (frecuencia === 'diario') return d;
-  if (frecuencia === 'semanal') { d.setDate(d.getDate() - 7); return d; }
-  if (frecuencia === 'mensual') { d.setDate(d.getDate() - 30); return d; }
-  return d;
-}
+    // ---------- POST /validar-uid ----------
+    // body esperado: { uid: "123456789" }
+    // Confirma que el UID de Free Fire existe ANTES de cobrar/crear la
+    // orden, y devuelve el nombre de la cuenta para mostrárselo al
+    // cliente (así puede confirmar que es la suya antes de recargar).
+    if (url.pathname === '/validar-uid') {
+      const { uid } = body;
 
-// ============================================================
-client.once('ready', async () => {
-  console.log(`Bot de ventas conectado como ${client.user.tag}`);
-  await registrarComandos();
-});
+      if (!uid || typeof uid !== 'string' || uid.trim().length < 3) {
+        return jsonResponse({ ok: false, motivo: 'UID_INVALIDO' }, 400, cors);
+      }
 
-client.login(DISCORD_BOT_TOKEN);
+      const checkBody = {
+        user_id: uid.trim(),
+        // este producto puntual de Free Fire (LATAM) no pide server_id,
+        // así que no lo mandamos (la API lo rechaza si no está en "fields").
+        product_code: PRODUCT_CODE_FREE_FIRE,
+        validation_code: VALIDATION_CODE_FREE_FIRE,
+      };
+
+      const { httpStatus, data } = await llamarFlashTopup(
+        env, 'POST', '/api/reseller/v2/check-id', null, checkBody
+      );
+
+      if (!data) {
+        return jsonResponse({ ok: false, motivo: 'RESPUESTA_INVALIDA_DE_FLASHTOPUP' }, 502, cors);
+      }
+      // OJO: FlashTopup devuelve "success" / "data" / "error.code" /
+      // "error.message" (en inglés) — no "exito" / "datos" / "codigo" /
+      // "mensaje" como se asumía antes. Esa era la causa de que TODO se
+      // tratara como error sin importar lo que respondiera FlashTopup.
+      if (!data.success) {
+        return jsonResponse({
+          ok: false,
+          motivo: data.error?.code || 'ERROR_DESCONOCIDO',
+          mensaje: data.error?.message || '',
+        }, httpStatus, cors);
+      }
+
+      const datos = data.data || {};
+      return jsonResponse({
+        ok: true,
+        valido: (datos.valid ?? datos['válido']) !== false,
+        nombreCuenta: datos.account_name || datos['nombre_de_cuenta'] || datos.username || '',
+      }, 200, cors);
+    }
+
+    // ---------- POST /crear-orden ----------
+    // body esperado: { serviceId: 542, uid: "123456789", referenceId: "uuid-unico" }
+    if (url.pathname === '/crear-orden') {
+      const { serviceId, uid, referenceId } = body;
+
+      if (!PAQUETES_FREE_FIRE[serviceId]) {
+        return jsonResponse({ ok: false, motivo: 'PAQUETE_DESCONOCIDO' }, 400, cors);
+      }
+      if (!uid || typeof uid !== 'string' || uid.trim().length < 3) {
+        return jsonResponse({ ok: false, motivo: 'UID_INVALIDO' }, 400, cors);
+      }
+      if (!referenceId || typeof referenceId !== 'string') {
+        return jsonResponse({ ok: false, motivo: 'REFERENCE_ID_FALTANTE' }, 400, cors);
+      }
+
+      const ordenBody = {
+        service_code: PAQUETES_FREE_FIRE[serviceId].code,
+        reference_id: referenceId,
+        cantidad: 1,
+        user_id: uid.trim(),
+        // Nota: Free Fire solo pide el UID del jugador (a diferencia de
+        // juegos como Mobile Legends que también piden server_id). Si
+        // FlashTopup devuelve VALIDACION_FALLIDA pidiendo un campo
+        // extra, el error trae el nombre exacto del campo que falta
+        // (ver el "motivo"/"errores" que devuelve este mismo endpoint)
+        // y se agrega acá.
+      };
+
+      const { httpStatus, data } = await llamarFlashTopup(
+        env, 'POST', '/api/reseller/v2/order', null, ordenBody
+      );
+
+      if (!data) {
+        return jsonResponse({ ok: false, motivo: 'RESPUESTA_INVALIDA_DE_FLASHTOPUP' }, 502, cors);
+      }
+      // mismo fix que en /validar-uid: FlashTopup responde en inglés
+      // (success / data / error.code / error.message).
+      if (!data.success) {
+        return jsonResponse({
+          ok: false,
+          motivo: data.error?.code || 'ERROR_DESCONOCIDO',
+          mensaje: data.error?.message || '',
+          detalle: data.error || null,
+          // TEMPORAL — para diagnosticar. Sacar después.
+          bodyEnviado: ordenBody,
+        }, httpStatus, cors);
+      }
+
+      const datosOrden = data.data || {};
+      return jsonResponse({
+        ok: true,
+        orderId: datosOrden.order_id ?? datosOrden.orderId,
+        estado: datosOrden.status ?? datosOrden.estado ?? datosOrden.order_status,
+        diamantes: PAQUETES_FREE_FIRE[serviceId].diamantes,
+      }, 200, cors);
+    }
+
+    // ---------- POST /consultar-orden ----------
+    // body esperado: { orderId: "ORD1" }  ó  { referenceId: "uuid-unico" }
+    if (url.pathname === '/consultar-orden') {
+      const { orderId, referenceId } = body;
+      if (!orderId && !referenceId) {
+        return jsonResponse({ ok: false, motivo: 'FALTA_ORDER_ID_O_REFERENCE_ID' }, 400, cors);
+      }
+
+      const qs = orderId
+        ? 'order_id=' + encodeURIComponent(orderId)
+        : 'reference_id=' + encodeURIComponent(referenceId);
+
+      const { httpStatus, data } = await llamarFlashTopup(
+        env, 'GET', '/api/reseller/v2/order/status', qs, null
+      );
+
+      if (!data) {
+        return jsonResponse({ ok: false, motivo: 'RESPUESTA_INVALIDA_DE_FLASHTOPUP' }, 502, cors);
+      }
+      if (!data.success) {
+        return jsonResponse({
+          ok: false,
+          motivo: data.error?.code || 'ERROR_DESCONOCIDO',
+          mensaje: data.error?.message || '',
+        }, httpStatus, cors);
+      }
+
+      const datosConsulta = data.data || {};
+      return jsonResponse({
+        ok: true,
+        orderId: datosConsulta.order_id ?? datosConsulta.orderId,
+        estado: datosConsulta.status ?? datosConsulta.estado ?? datosConsulta.order_status,
+        nota: datosConsulta.note ?? datosConsulta.nota ?? '',
+      }, 200, cors);
+    }
+
+    return jsonResponse({ ok: false, motivo: 'RUTA_NO_ENCONTRADA' }, 404, cors);
+  },
+};
