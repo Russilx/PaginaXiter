@@ -5,186 +5,536 @@
 <meta charset="UTF-8">
 <link rel="icon" type="image/png" href="logo.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bot de Ventas — XITERKING STORE</title>
+<title>Mi Bot de Ventas — XITERKING STORE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=10">
+<style>
+  /* ---------- mismos estilos "vb-" que usa mibot.html (con prefijo "tb-") ---------- */
+  .vb-section{
+    margin-top:28px;
+    padding-top:22px;
+    border-top:1px solid rgba(255,255,255,0.08);
+  }
+  .vb-section:first-of-type{ margin-top:20px; padding-top:0; border-top:none; }
+  .vb-section-title{
+    font-family:'Anton', sans-serif;
+    font-size:13px;
+    letter-spacing:1.2px;
+    color:var(--red-light);
+    text-transform:uppercase;
+    margin-bottom:4px;
+  }
+  .vb-section-sub{ font-size:12px; color:var(--grey); margin-bottom:16px; line-height:1.5; }
+  .vb-row{ display:flex; gap:14px; flex-wrap:wrap; }
+  .vb-row .field{ flex:1 1 220px; }
+  .vb-textarea{
+    width:100%; resize:vertical; font-family:'Inter',sans-serif; font-size:13px;
+    background:var(--panel-2); border:1px solid rgba(255,255,255,0.1); border-radius:10px;
+    padding:10px 12px; color:var(--white);
+  }
+  .vb-color-field{ display:flex; align-items:center; gap:10px; }
+  .vb-color-field input[type="color"]{
+    width:44px; height:38px; padding:2px; border-radius:8px; border:1px solid rgba(255,255,255,0.15);
+    background:var(--panel-2); cursor:pointer;
+  }
+  .vb-color-field input[type="text"]{ flex:1; }
+  .vb-note{ font-size:11.5px; color:var(--grey); line-height:1.5; margin-top:6px; }
+  .vb-warning{
+    background:rgba(245,197,66,0.08);
+    border:1px solid rgba(245,197,66,0.35);
+    border-radius:12px;
+    padding:14px 16px;
+    font-size:12.5px;
+    color:var(--yellow);
+    line-height:1.6;
+    margin-bottom:22px;
+  }
+  .vb-warning strong{ color:var(--white); }
+
+  .vb-preview-wrap{ margin-top:10px; }
+  .vb-discord-bg{ background:#313338; border-radius:12px; padding:16px; }
+  .vb-embed{ display:flex; gap:0; background:#2b2d31; border-radius:4px; overflow:hidden; max-width:440px; }
+  .vb-embed-bar{ width:4px; flex-shrink:0; background:#e10600; }
+  .vb-embed-body{ padding:10px 14px; min-width:0; }
+  .vb-embed-title{ color:#fff; font-weight:700; font-size:14px; margin-bottom:4px; font-family:'Inter',sans-serif; }
+  .vb-embed-desc{ color:#dbdee1; font-size:13px; line-height:1.5; white-space:pre-wrap; font-family:'Inter',sans-serif; margin-bottom:8px; }
+  .vb-embed-campo{ margin-top:6px; }
+  .vb-embed-campo-nombre{ color:#fff; font-weight:700; font-size:12.5px; font-family:'Inter',sans-serif; }
+  .vb-embed-campo-valor{ color:#dbdee1; font-size:12.5px; font-family:'Inter',sans-serif; }
+
+  .vb-save-bar{
+    position:sticky;
+    bottom:0;
+    background:linear-gradient(180deg, transparent, var(--black) 30%);
+    padding:20px 0 6px;
+    margin-top:10px;
+  }
+  .vb-saved-msg{ font-size:12.5px; color:var(--green); margin-top:8px; display:none; }
+
+  .mibot-user-bar{
+    text-align:center;
+    font-size:12.5px;
+    color:var(--grey);
+    padding:10px 20px 0;
+  }
+  .mibot-user-bar a{ color:var(--red-light); }
+
+  .vb-campo-card{
+    background:var(--panel-2);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px;
+    padding:14px 16px;
+    margin-bottom:12px;
+  }
+  .vb-campo-card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .vb-campo-card-head span{ font-size:12.5px; color:var(--grey); font-weight:600; }
+</style>
 </head>
-<body class="login-page">
+<body>
 
   <div class="topbar">
     <a class="back-btn" href="index.html">← Volver</a>
     <span class="brandmark">XITERKING</span>
   </div>
+  <div class="mibot-user-bar">
+    <span id="mibot-usuario-nombre"></span> — <a href="ticketbot.html">Bot de tickets</a> · <a href="#" id="mibot-logout-link">Cerrar sesión</a>
+  </div>
 
-  <div class="login-split">
+  <div class="page-wrap">
+    <div class="card admin-card" id="card-panel">
 
-    <div class="login-promo">
-      <div class="promo-brand">
-        <img class="brand-logo" src="logo.png" alt="Logo XITERKING STORE">
-        <span class="promo-brand-name">XITERKING STORE</span>
+      <div class="admin-header">
+        <h2>Mi <span>bot de ventas</span></h2>
       </div>
-      <p class="promo-tagline">Cargá tus ventas cerradas directo desde tu propio servidor con nuestro Bot de Ventas</p>
+      <p class="sub">Esta es tu propia configuración del bot de ventas de Discord. Nadie más puede editarla — solo vos, con tu cuenta. Necesitás haber invitado al bot a tu propio servidor de Discord antes de completar esto (pedile el link de invitación al soporte).</p>
 
-      <div class="promo-bubbles">
-        <div class="promo-bubble">
-          <span class="promo-bubble-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 7.5L12 3 3 7.5l9 4.5 9-4.5z"/>
-              <path d="M3 7.5v9l9 4.5 9-4.5v-9"/>
-              <path d="M12 12v9"/>
-            </svg>
-          </span>
-          <span>Comando /venta-ticket para cargar ventas al instante</span>
-        </div>
-        <div class="promo-bubble">
-          <span class="promo-bubble-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="8" r="4"/>
-              <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
-            </svg>
-          </span>
-          <span>Configuración propia, solo vos podés editarla</span>
-        </div>
-        <div class="promo-bubble">
-          <span class="promo-bubble-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="5" y="11" width="14" height="9" rx="2"/>
-              <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
-            </svg>
-          </span>
-          <span>Tu servidor queda protegido hasta que el admin lo autoriza</span>
-        </div>
+      <div class="vb-warning">
+        <strong>Importante:</strong> Solo pegás IDs de tu servidor de Discord, textos y colores — todo seguro de guardar.
       </div>
-    </div>
 
-    <div class="login-form-side">
-      <div class="card">
-        <div id="login-form-wrap">
-          <h2>Iniciar <span>sesión</span></h2>
-          <p class="sub">Ingresá con el email y la contraseña que usaste al registrarte para configurar tu propio bot de ventas.</p>
+      <div class="status-pill" id="mibot-estado-pill" style="margin-bottom:22px; display:inline-block;"></div>
 
+      <div class="admin-tabs" id="mibot-tabs">
+        <button class="admin-tab active" id="mibot-tab-servidor">Servidor</button>
+        <button class="admin-tab" id="mibot-tab-venta">Mensaje de venta</button>
+        <button class="admin-tab" id="mibot-tab-stats">Estadísticas</button>
+      </div>
+
+      <div id="vb-form-wrap">
+
+        <!-- SERVIDOR + CANAL + ROL DE STAFF -->
+        <div class="vb-section" id="mibot-panel-servidor">
+          <div class="vb-section-title">Tu servidor de Discord</div>
+          <div class="vb-section-sub">Los ID se consiguen activando el "Modo desarrollador" en Discord (Ajustes → Avanzado) y haciendo clic derecho sobre el servidor, canal o rol → "Copiar ID".</div>
           <div class="field">
-            <label for="login-email">Email</label>
-            <input id="login-email" type="email" placeholder="tuemail@ejemplo.com">
+            <label for="vb-guild-id">ID de tu servidor de Discord</label>
+            <input id="vb-guild-id" type="text" placeholder="Ej: 123456789012345678">
+            <span class="vb-note">El bot busca esta configuración cuando alguien usa <code>/venta-ticket</code> en ESE servidor.</span>
+          </div>
+          <div class="vb-row">
+            <div class="field">
+              <label for="vb-canal-ventas">ID del canal donde se postea cada venta</label>
+              <input id="vb-canal-ventas" type="text" placeholder="Ej: 123456789012345678">
+              <span class="vb-note">Cada vez que alguien cargue una venta con <code>/venta-ticket</code>, el bot publica el mensaje acá.</span>
+            </div>
+            <div class="field">
+              <label for="vb-rol-staff">ID del rol que puede usar /venta-ticket (separados por coma)</label>
+              <input id="vb-rol-staff" type="text" placeholder="Ej: 123456789012345678, 987654321098765432">
+              <span class="vb-note">Solo quienes tengan alguno de estos roles pueden cargar ventas. Dejalo vacío para permitirle a cualquiera.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- MENSAJE / EMBED DE CADA VENTA -->
+        <div class="vb-section" id="mibot-panel-venta" style="display:none;">
+          <div class="vb-section-title">Mensaje de cada venta</div>
+          <div class="vb-section-sub">Esto es lo que se publica en el canal de ventas cada vez que alguien carga una con <code>/venta-ticket</code>.</div>
+          <div class="field">
+            <label for="vb-venta-titulo">Título</label>
+            <input id="vb-venta-titulo" type="text" placeholder="Ej: Nueva venta registrada">
           </div>
           <div class="field">
-            <label for="login-pass">Contraseña</label>
-            <input id="login-pass" type="password" placeholder="Tu contraseña">
+            <label for="vb-venta-desc">Descripción</label>
+            <textarea id="vb-venta-desc" class="vb-textarea" rows="3" placeholder="Ej: {vendedor} cargó una venta nueva."></textarea>
+            <button type="button" class="tb-vars-btn vb-vars-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              Ver variables disponibles
+            </button>
+          </div>
+          <div class="field">
+            <label for="vb-venta-color">Color del mensaje</label>
+            <div class="vb-color-field">
+              <input id="vb-venta-color" type="color" value="#e10600">
+              <input id="vb-venta-color-hex" type="text" placeholder="#e10600">
+            </div>
           </div>
 
-          <div class="form-error" id="login-error"></div>
+          <div class="vb-section-title" style="margin-top:22px; font-size:12px;">Campos del mensaje</div>
+          <div class="vb-section-sub">Cada campo se muestra como un renglón "Nombre: valor" dentro del mensaje. Ej: "Producto: {producto}", "Monto: {monto}", "Cliente: {cliente}".</div>
+          <div id="vb-campos-lista"></div>
+          <button type="button" class="mini-btn" id="vb-campo-agregar-btn" style="margin-top:6px;">+ Agregar campo</button>
 
-          <button class="btn btn-primary" style="width:100%;" id="login-btn">Iniciar sesión</button>
+          <div class="vb-preview-wrap">
+            <div class="vb-section-title" style="font-size:11px; opacity:0.7; margin-top:22px;">Vista previa</div>
+            <div class="vb-discord-bg">
+              <div class="vb-embed">
+                <div class="vb-embed-bar" id="vb-prev-bar"></div>
+                <div class="vb-embed-body">
+                  <div class="vb-embed-title" id="vb-prev-titulo">Nueva venta registrada</div>
+                  <div class="vb-embed-desc" id="vb-prev-desc"></div>
+                  <div id="vb-prev-campos"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-          <div class="alt-link">¿Todavía no tenés cuenta? <a href="registro.html?origen=ventas">Registrate</a></div>
+        <!-- ESTADÍSTICAS / RESUMEN -->
+        <div class="vb-section" id="mibot-panel-stats" style="display:none;">
+          <div class="vb-section-title">Resumen de ventas</div>
+          <div class="vb-section-sub">El bot puede publicar un resumen automático con el total de ventas cargadas en el período elegido.</div>
+          <div class="field">
+            <label for="vb-stats-frecuencia">Frecuencia del resumen</label>
+            <select id="vb-stats-frecuencia">
+              <option value="desactivado">Desactivado (no publicar resumen)</option>
+              <option value="diario">Diario</option>
+              <option value="semanal">Semanal</option>
+              <option value="mensual">Mensual</option>
+            </select>
+          </div>
+          <div class="vb-row" id="vb-stats-campos-wrap">
+            <div class="field">
+              <label for="vb-stats-canal">ID del canal donde se publica el resumen</label>
+              <input id="vb-stats-canal" type="text" placeholder="Ej: 123456789012345678">
+              <span class="vb-note">Podés usar el mismo canal de ventas u otro aparte.</span>
+            </div>
+            <div class="field">
+              <label for="vb-stats-titulo">Título del resumen</label>
+              <input id="vb-stats-titulo" type="text" placeholder="Ej: Resumen de ventas de la semana">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-error" id="vb-form-error"></div>
+
+        <div class="vb-save-bar">
+          <button class="btn btn-primary" style="width:100%;" id="vb-guardar-btn">Guardar mi configuración</button>
+          <div class="vb-saved-msg" id="vb-saved-msg">✓ Configuración guardada. El bot va a usarla la próxima vez que se cargue una venta o se publique un resumen en tu servidor.</div>
         </div>
       </div>
-    </div>
 
+    </div>
   </div>
 
   <script type="module">
     import { firebaseConfig } from './firebase-config.js';
-    import { reproducirSonidoLogin } from './login-sound.js';
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs }
+    import { getFirestore, doc, getDoc, setDoc, serverTimestamp }
       from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // mismo hash simple que usa registro.html, para poder comparar
-    // contra lo guardado en Firestore.
-    async function hashPassword(texto){
-      const codificado = new TextEncoder().encode(texto);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', codificado);
-      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2,'0')).join('');
+    /* ---------- exige sesión iniciada ---------- */
+    const raw = sessionStorage.getItem('xiterking_user');
+    let usuario = null;
+    try{ usuario = raw ? JSON.parse(raw) : null; }catch(e){ usuario = null; }
+
+    if(!usuario || !usuario.id){
+      window.location.href = 'ventasbot-login.html';
     }
 
-    const btn = document.getElementById('login-btn');
-    const errorEl = document.getElementById('login-error');
+    document.getElementById('mibot-usuario-nombre').textContent = usuario ? usuario.nombre : '';
+    document.getElementById('mibot-logout-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      sessionStorage.removeItem('xiterking_user');
+      window.location.href = 'ventasbot-login.html';
+    });
 
-    btn.addEventListener('click', async () => {
-      const email = document.getElementById('login-email').value.trim();
-      const pass = document.getElementById('login-pass').value;
+    const CONFIG_DOC = doc(db, 'ventasbotConfigs', usuario ? usuario.id : 'nadie');
 
-      errorEl.textContent = '';
+    /* ---------- navegación por pestañas ---------- */
+    const mibotTabs = {
+      servidor: { btn: document.getElementById('mibot-tab-servidor'), panel: document.getElementById('mibot-panel-servidor') },
+      venta: { btn: document.getElementById('mibot-tab-venta'), panel: document.getElementById('mibot-panel-venta') },
+      stats: { btn: document.getElementById('mibot-tab-stats'), panel: document.getElementById('mibot-panel-stats') },
+    };
+    function activarMibotTab(nombre){
+      Object.entries(mibotTabs).forEach(([key, t]) => {
+        const activo = key === nombre;
+        t.btn.classList.toggle('active', activo);
+        t.panel.style.display = activo ? 'block' : 'none';
+      });
+    }
+    mibotTabs.servidor.btn.addEventListener('click', () => activarMibotTab('servidor'));
+    mibotTabs.venta.btn.addEventListener('click', () => activarMibotTab('venta'));
+    mibotTabs.stats.btn.addEventListener('click', () => activarMibotTab('stats'));
 
-      if(!email || !pass){
-        errorEl.textContent = 'Completá email y contraseña.';
+    const el = (id) => document.getElementById(id);
+    const campos = {
+      guildId: el('vb-guild-id'),
+      canalVentasId: el('vb-canal-ventas'),
+      staffRoleIds: el('vb-rol-staff'),
+      ventaTitulo: el('vb-venta-titulo'),
+      ventaDescripcion: el('vb-venta-desc'),
+      ventaColorHex: el('vb-venta-color-hex'),
+      statsFrecuencia: el('vb-stats-frecuencia'),
+      statsCanalId: el('vb-stats-canal'),
+      statsTitulo: el('vb-stats-titulo'),
+    };
+    const colorPicker = el('vb-venta-color');
+
+    const DEFAULTS = {
+      guildId: '',
+      canalVentasId: '',
+      staffRoleIds: '',
+      ventaTitulo: 'Nueva venta registrada',
+      ventaDescripcion: '{vendedor} cargó una venta nueva.',
+      ventaColorHex: '#e10600',
+      camposVenta: [
+        { nombre: 'Producto', valor: '{producto}' },
+        { nombre: 'Monto', valor: '{monto}' },
+        { nombre: 'Cliente', valor: '{cliente}' },
+      ],
+      statsFrecuencia: 'desactivado',
+      statsCanalId: '',
+      statsTitulo: 'Resumen de ventas',
+    };
+
+    let estadoAprobacion = 'pendiente';
+    let guildIdAprobado = '';
+
+    function pintarEstadoAprobacion(){
+      const pill = el('mibot-estado-pill');
+      pill.classList.remove('status-pendiente', 'status-aprobado', 'status-rechazado');
+      if(estadoAprobacion === 'aprobado'){
+        pill.classList.add('status-aprobado');
+        pill.textContent = '✓ Tu servidor está autorizado — el bot ya funciona ahí';
+      }else if(estadoAprobacion === 'rechazado'){
+        pill.classList.add('status-rechazado');
+        pill.textContent = '✕ Esta configuración fue rechazada. Revisá los datos y volvé a guardar.';
+      }else{
+        pill.classList.add('status-pendiente');
+        pill.textContent = '⏳ Pendiente de autorización — guardá tus datos y esperá a que el admin lo apruebe';
+      }
+    }
+
+    /* ---------- mostrar/ocultar campos de estadísticas según la frecuencia ---------- */
+    function actualizarStatsWrap(){
+      const activo = campos.statsFrecuencia.value !== 'desactivado';
+      el('vb-stats-campos-wrap').style.display = activo ? 'flex' : 'none';
+    }
+    campos.statsFrecuencia.addEventListener('change', actualizarStatsWrap);
+
+    /* ---------- editor de "campos del mensaje de venta" ---------- */
+    const camposListaEl = el('vb-campos-lista');
+
+    function campoCardHTML(c, i){
+      const v = (x) => (x || '').toString().replace(/"/g, '&quot;');
+      return `
+        <div class="vb-campo-card" data-index="${i}">
+          <div class="vb-campo-card-head">
+            <span>Campo #${i + 1}</span>
+            <button type="button" class="mini-btn mini-reject vb-campo-quitar-btn">Quitar</button>
+          </div>
+          <div class="vb-row">
+            <div class="field">
+              <label>Nombre del campo</label>
+              <input type="text" class="vb-campo-nombre" placeholder="Ej: Producto" value="${v(c.nombre)}">
+            </div>
+            <div class="field">
+              <label>Valor (podés usar variables)</label>
+              <input type="text" class="vb-campo-valor" placeholder="Ej: {producto}" value="${v(c.valor)}">
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function leerCamposDesdeDOM(){
+      return Array.from(camposListaEl.querySelectorAll('.vb-campo-card')).map(card => ({
+        nombre: card.querySelector('.vb-campo-nombre').value.trim(),
+        valor: card.querySelector('.vb-campo-valor').value.trim(),
+      }));
+    }
+
+    function renderCampos(lista){
+      camposListaEl.innerHTML = lista.map((c, i) => campoCardHTML(c, i)).join('');
+      camposListaEl.querySelectorAll('.vb-campo-quitar-btn').forEach((btn, i) => {
+        btn.addEventListener('click', () => {
+          const actuales = leerCamposDesdeDOM();
+          actuales.splice(i, 1);
+          renderCampos(actuales);
+          actualizarVistaPrevia();
+        });
+      });
+      camposListaEl.querySelectorAll('.vb-campo-nombre, .vb-campo-valor').forEach(input => {
+        input.addEventListener('input', actualizarVistaPrevia);
+      });
+    }
+
+    el('vb-campo-agregar-btn').addEventListener('click', () => {
+      const actuales = leerCamposDesdeDOM();
+      actuales.push({ nombre: '', valor: '' });
+      renderCampos(actuales);
+    });
+
+    async function cargarConfig(){
+      if(!usuario) return;
+      let datos = DEFAULTS;
+      try{
+        const snap = await getDoc(CONFIG_DOC);
+        if(snap.exists()){
+          datos = { ...DEFAULTS, ...snap.data() };
+          estadoAprobacion = datos.estadoAprobacion === 'aprobado' || datos.estadoAprobacion === 'rechazado'
+            ? datos.estadoAprobacion
+            : 'pendiente';
+          if(estadoAprobacion === 'aprobado') guildIdAprobado = datos.guildId || '';
+        }
+      }catch(err){
+        console.error('Error al cargar tu configuración del bot de ventas:', err);
+        el('vb-form-error').textContent = 'No se pudo cargar tu configuración guardada. Se muestran valores por defecto.';
+      }
+
+      Object.entries(campos).forEach(([key, input]) => {
+        input.value = datos[key] != null ? datos[key] : '';
+      });
+      colorPicker.value = /^#([0-9a-f]{6})$/i.test(datos.ventaColorHex) ? datos.ventaColorHex : '#e10600';
+      renderCampos(Array.isArray(datos.camposVenta) ? datos.camposVenta : []);
+      actualizarStatsWrap();
+      pintarEstadoAprobacion();
+      actualizarVistaPrevia();
+    }
+    cargarConfig();
+
+    /* ---------- modal "variables disponibles" (reusa el modal de mibot.html si existiera en la misma página; acá tiene el suyo) ---------- */
+    const vbVarsOverlay = el('vb-vars-overlay');
+    document.addEventListener('click', (e) => {
+      if(e.target.closest('.vb-vars-btn')){
+        vbVarsOverlay.style.display = 'flex';
+      }
+    });
+    el('vb-vars-close-btn').addEventListener('click', () => {
+      vbVarsOverlay.style.display = 'none';
+    });
+    vbVarsOverlay.addEventListener('click', (e) => {
+      if(e.target.id === 'vb-vars-overlay') vbVarsOverlay.style.display = 'none';
+    });
+
+    /* ---------- color picker <-> input de texto ---------- */
+    colorPicker.addEventListener('input', () => {
+      campos.ventaColorHex.value = colorPicker.value;
+      actualizarVistaPrevia();
+    });
+    campos.ventaColorHex.addEventListener('input', () => {
+      if(/^#([0-9a-f]{6})$/i.test(campos.ventaColorHex.value)){
+        colorPicker.value = campos.ventaColorHex.value;
+      }
+      actualizarVistaPrevia();
+    });
+
+    /* ---------- vista previa en vivo ---------- */
+    function actualizarVistaPrevia(){
+      el('vb-prev-titulo').textContent = campos.ventaTitulo.value || '(sin título)';
+      el('vb-prev-desc').textContent = campos.ventaDescripcion.value || '';
+      el('vb-prev-bar').style.background = /^#([0-9a-f]{6})$/i.test(campos.ventaColorHex.value) ? campos.ventaColorHex.value : '#e10600';
+
+      const previstos = leerCamposDesdeDOM();
+      el('vb-prev-campos').innerHTML = previstos
+        .filter(c => c.nombre || c.valor)
+        .map(c => `<div class="vb-embed-campo"><span class="vb-embed-campo-nombre">${(c.nombre || '(sin nombre)').replace(/</g,'&lt;')}: </span><span class="vb-embed-campo-valor">${(c.valor || '').replace(/</g,'&lt;')}</span></div>`)
+        .join('');
+    }
+    [campos.ventaTitulo, campos.ventaDescripcion].forEach(input => {
+      input.addEventListener('input', actualizarVistaPrevia);
+    });
+
+    /* ---------- guardar ---------- */
+    const guardarBtn = el('vb-guardar-btn');
+    const formError = el('vb-form-error');
+    const savedMsg = el('vb-saved-msg');
+
+    guardarBtn.addEventListener('click', async () => {
+      formError.textContent = '';
+      savedMsg.style.display = 'none';
+
+      if(!campos.guildId.value.trim() || !campos.canalVentasId.value.trim()){
+        formError.textContent = 'Completá al menos el ID de tu servidor y el ID del canal de ventas.';
+        return;
+      }
+      if(campos.statsFrecuencia.value !== 'desactivado' && !campos.statsCanalId.value.trim()){
+        formError.textContent = 'Si activaste un resumen, completá el ID del canal donde se va a publicar.';
         return;
       }
 
-      btn.disabled = true;
-      btn.textContent = 'Ingresando…';
+      const camposVenta = leerCamposDesdeDOM();
+      for(const c of camposVenta){
+        if(!c.nombre){
+          formError.textContent = 'Cada campo del mensaje de venta necesita un nombre.';
+          return;
+        }
+      }
+
+      guardarBtn.disabled = true;
+      guardarBtn.textContent = 'Guardando…';
+
+      const datos = {};
+      Object.entries(campos).forEach(([key, input]) => {
+        datos[key] = input.value.trim();
+      });
+      datos.camposVenta = camposVenta;
+
+      // Si ya estaba aprobado pero cambió el servidor, vuelve a pendiente
+      // para que el admin lo revise de nuevo antes de que el bot lo use ahí.
+      if(estadoAprobacion === 'aprobado' && datos.guildId !== guildIdAprobado){
+        estadoAprobacion = 'pendiente';
+      }
+      // Si estaba rechazado y volvieron a guardar (corrigiendo algo), pasa
+      // a pendiente de nuevo para que el admin lo revise otra vez.
+      if(estadoAprobacion === 'rechazado'){
+        estadoAprobacion = 'pendiente';
+      }
+      datos.estadoAprobacion = estadoAprobacion;
+
+      datos.usuarioId = usuario.id;
+      datos.usuarioNombre = usuario.nombre;
+      datos.usuarioEmail = usuario.email;
+      datos.actualizado = serverTimestamp();
 
       try{
-        const q = query(collection(db, "registros"), where("email", "==", email));
-        const snapshot = await getDocs(q);
-
-        if(snapshot.empty){
-          errorEl.textContent = 'No existe una cuenta con ese email.';
-          resetBtn();
-          return;
-        }
-
-        const regDoc = snapshot.docs[0];
-        const registro = regDoc.data();
-
-        // esta página es solo para cuentas del bot de ventas. Las de la
-        // tienda y las del bot de tickets tienen su propio login.
-        if(registro.tipo === 'tienda'){
-          errorEl.textContent = 'Esa cuenta es de la tienda. Iniciá sesión en login.html.';
-          resetBtn();
-          return;
-        }
-        if(registro.tipo === 'bot'){
-          errorEl.textContent = 'Esa cuenta es del Bot de Tickets. Iniciá sesión en ticketbot.html.';
-          resetBtn();
-          return;
-        }
-
-        if(registro.estado === 'pendiente'){
-          errorEl.textContent = 'Tu cuenta todavía está pendiente de aprobación.';
-          resetBtn();
-          return;
-        }
-        if(registro.estado === 'rechazado'){
-          errorEl.textContent = 'Tu solicitud de cuenta no fue aprobada.';
-          resetBtn();
-          return;
-        }
-
-        const passHash = await hashPassword(pass);
-        if(passHash !== registro.passHash){
-          errorEl.textContent = 'Contraseña incorrecta.';
-          resetBtn();
-          return;
-        }
-
-        sessionStorage.setItem('xiterking_user', JSON.stringify({
-          id: regDoc.id,
-          nombre: registro.nombre,
-          email: registro.email,
-          saldo: registro.saldo || 0
-        }));
-
-        await reproducirSonidoLogin();
-        window.location.href = 'ventasbot.html';
+        await setDoc(CONFIG_DOC, datos, { merge: true });
+        pintarEstadoAprobacion();
+        savedMsg.style.display = 'block';
+        setTimeout(() => { savedMsg.style.display = 'none'; }, 4000);
       }catch(err){
-        console.error('Error al iniciar sesión:', err);
-        errorEl.textContent = 'Hubo un problema al iniciar sesión. Probá de nuevo.';
-        resetBtn();
+        console.error('Error al guardar tu configuración del bot de ventas:', err);
+        formError.textContent = 'No se pudo guardar. Probá de nuevo.';
+      }finally{
+        guardarBtn.disabled = false;
+        guardarBtn.textContent = 'Guardar mi configuración';
       }
     });
-
-    function resetBtn(){
-      btn.disabled = false;
-      btn.textContent = 'Iniciar sesión';
-    }
   </script>
+
+  <!-- MODAL: VARIABLES DISPONIBLES -->
+  <div class="modal-overlay" id="vb-vars-overlay" style="display:none;">
+    <div class="modal-box modal-box-wide">
+      <h2 style="margin-bottom:6px;">Variables <span>disponibles</span></h2>
+      <p class="sub" style="margin-bottom:18px;">Usalas en la descripción y en los campos del mensaje de venta — el bot las reemplaza automáticamente al cargar cada venta con <code>/venta-ticket</code>.</p>
+      <div class="tb-vars-list">
+        <div class="tb-vars-item"><span class="tb-vars-code">{vendedor}</span><span class="tb-vars-desc">Menciona (@) a quien cargó la venta.</span></div>
+        <div class="tb-vars-item"><span class="tb-vars-code">{producto}</span><span class="tb-vars-desc">El producto o servicio vendido, tal como lo cargó el vendedor.</span></div>
+        <div class="tb-vars-item"><span class="tb-vars-code">{monto}</span><span class="tb-vars-desc">El monto de la venta cargado en el comando.</span></div>
+        <div class="tb-vars-item"><span class="tb-vars-code">{cliente}</span><span class="tb-vars-desc">El nombre o usuario del cliente, si se cargó.</span></div>
+        <div class="tb-vars-item"><span class="tb-vars-code">{numero}</span><span class="tb-vars-desc">Número correlativo de la venta, nunca se repite.</span></div>
+        <div class="tb-vars-item"><span class="tb-vars-code">{fecha}</span><span class="tb-vars-desc">La fecha en que se cargó la venta.</span></div>
+        <div class="tb-vars-item"><span class="tb-vars-code">{hora}</span><span class="tb-vars-desc">La hora en que se cargó la venta.</span></div>
+      </div>
+      <button class="btn btn-secondary" style="width:100%; margin-top:6px;" id="vb-vars-close-btn">Cerrar</button>
+    </div>
+  </div>
+
   <!-- FOOTER DE CONTACTO -->
   <footer class="site-footer">
     <div class="site-footer-inner">
@@ -206,7 +556,7 @@
     </div>
   </footer>
 
-  <!-- SOPORTE FLOTANTE (visible en toda la página) -->
+  <!-- SOPORTE FLOTANTE -->
   <div class="soporte-flotante" id="soporte-flotante">
     <div class="soporte-menu" id="soporte-menu">
       <a class="soporte-opcion soporte-wsp" id="soporte-wsp-link" target="_blank" rel="noopener">
