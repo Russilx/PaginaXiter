@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XITERKING — Mi cuenta y saldo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="xiterking-saldo.css">
+</head>
+<body>
+
+<!-- =========================================================
+     BLOQUE DE DATOS — todo lo que necesitás editar está acá.
+     ========================================================= -->
+<script>
+  // Mismo relay que usa xiterking-recargas.html (para /validar-uid).
+  // Este archivo ADEMÁS necesita que agregues los endpoints nuevos
+  // de relay-saldo-endpoints.js a ese mismo relay.
+  const WORKER_URL = "https://flashtopup-relay.xiterking.shop";
+  const SITE_KEY   = "e024d865-1779-4723-9d8b-529941fddd9c";
+
+  // Worker de Mercado Pago (Cloudflare) — el que ya tenés aparte.
+  // Necesita una ruta /crear-preferencia que reciba { uid, monto }
+  // y devuelva { init_point }. Ver notas al final del chat.
+  const MP_WORKER_URL = "https://REEMPLAZAR-mp-worker.xiterking.shop";
+
+  // ⚠️ Pegá acá el firebaseConfig real de tu proyecto
+  // (el mismo objeto que ya usás en firebase-config.js).
+  const FIREBASE_CONFIG = {
+    apiKey: "REEMPLAZAR",
+    authDomain: "REEMPLAZAR.firebaseapp.com",
+    projectId: "REEMPLAZAR",
+    storageBucket: "REEMPLAZAR.appspot.com",
+    messagingSenderId: "REEMPLAZAR",
+    appId: "REEMPLAZAR"
+  };
+
+  // Mismos paquetes que xiterking-recargas.html — mantenelos iguales
+  // en los dos archivos (y en el relay) para que los precios coincidan.
+  const PAQUETES = [
+    { id: 542, diamantes: 110,  precio: 1.50, popular:false },
+    { id: 543, diamantes: 341,  precio: 4.30, popular:false },
+    { id: 544, diamantes: 572,  precio: 7.00, popular:true  },
+    { id: 545, diamantes: 1166, precio: 14.00, popular:false },
+    { id: 546, diamantes: 2398, precio: 28.00, popular:false },
+    { id: 547, diamantes: 6160, precio: 70.00, popular:false },
+  ];
+
+  // Mismos datos de cobro para "otros medios" (carga manual).
+  const PAGOS = {
+    transferencia: { titular:"Esteban Manuel San Martin", cbu:"0000003100025300789505", alias:"ELESTU2.0" },
+    paypal: { email:"noperdertelover@gmail.com" },
+    binance: { id:"847835648", email:"Xiterking" },
+  };
+
+  const WHATSAPP = "5491151042005";
+</script>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 2 L28 11 L16 30 L4 11 Z" fill="url(#g1)"/>
+        <path d="M16 2 L28 11 L16 15 Z" fill="#F9D65C"/>
+        <path d="M16 2 L4 11 L16 15 Z" fill="#F2B705"/>
+        <path d="M4 11 L16 15 L16 30 Z" fill="#E8394A"/>
+        <path d="M28 11 L16 15 L16 30 Z" fill="#9E1420"/>
+        <defs><linearGradient id="g1" x1="4" y1="2" x2="28" y2="30"><stop stop-color="#F9D65C"/><stop offset="1" stop-color="#9E1420"/></linearGradient></defs>
+      </svg>
+      <span>XITER<b>KING</b></span>
+    </div>
+    <nav class="links">
+      <a href="index.html">Recarga sin cuenta</a>
+      <a href="#" id="nav-logout" style="display:none;">Cerrar sesión</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ---------- PANTALLA DE LOGIN / REGISTRO ---------- -->
+<section id="auth-screen">
+  <div class="wrap auth-wrap">
+    <div class="auth-card">
+      <div class="eyebrow">Cuenta con saldo</div>
+      <h1 class="auth-title">Cargá saldo una vez.<br>Recargá diamantes <span class="hl">al instante</span>, siempre.</h1>
+      <p class="auth-sub">Esta cuenta es independiente del resto del sitio: es solo para guardar saldo y comprar diamantes sin esperar confirmación manual.</p>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Iniciar sesión</button>
+        <button class="auth-tab" data-tab="registro">Crear cuenta</button>
+      </div>
+
+      <form id="form-login" class="auth-form">
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="login-email" required autocomplete="email">
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="login-pass" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+        <div class="auth-error" id="login-error"></div>
+      </form>
+
+      <form id="form-registro" class="auth-form" style="display:none;">
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="reg-email" required autocomplete="email">
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="reg-pass" required minlength="6" autocomplete="new-password">
+          <span class="field-hint">Mínimo 6 caracteres.</span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Crear cuenta</button>
+        <div class="auth-error" id="reg-error"></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ---------- DASHBOARD (logueado) ---------- -->
+<section id="dashboard" style="display:none;">
+  <div class="wrap">
+
+    <div class="saldo-hero">
+      <div>
+        <div class="eyebrow">Tu saldo</div>
+        <div class="balance-big" id="saldo-actual">USDT 0.00</div>
+        <p class="saldo-sub" id="saldo-email"></p>
+      </div>
+      <button class="btn btn-diamond" id="btn-abrir-carga">Cargar saldo</button>
+    </div>
+
+    <div class="dash-grid">
+      <div class="dash-col">
+        <div class="section-head" style="margin-bottom:24px;">
+          <div class="eyebrow">Comprar diamantes</div>
+          <h2>Con saldo, es instantáneo.</h2>
+          <p>Validás tu UID, elegís el paquete y se descuenta de tu saldo al toque. Nada de comprobantes ni esperas.</p>
+        </div>
+
+        <div class="uid-box">
+          <label for="uid-input">UID de Free Fire</label>
+          <div class="uid-row">
+            <input id="uid-input" type="text" inputmode="numeric" placeholder="Ej: 123456789" autocomplete="off">
+            <button class="btn btn-diamond" id="btn-validar">Validar</button>
+          </div>
+          <div class="uid-result" id="uid-result"></div>
+        </div>
+
+        <div class="pkg-grid" id="pkg-grid" style="margin-top:24px;"></div>
+
+        <button class="btn btn-primary btn-block buy-btn" id="btn-comprar-saldo" disabled>
+          Validá tu UID y elegí un paquete
+        </button>
+        <div class="buy-status" id="buy-status"></div>
+      </div>
+
+      <div class="dash-col">
+        <div class="section-head" style="margin-bottom:24px;">
+          <div class="eyebrow">Movimientos</div>
+          <h2>Cargas y compras</h2>
+        </div>
+        <div class="mov-list" id="mov-list">
+          <p class="mov-empty">Todavía no hay movimientos.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ---------- MODAL: CARGAR SALDO ---------- -->
+<div class="modal-overlay" id="modal-carga">
+  <div class="modal">
+    <button class="modal-close" id="modal-close">✕</button>
+    <div class="eyebrow">Cargar saldo</div>
+    <h3>Elegí cómo cargar.</h3>
+
+    <div class="auth-tabs" style="margin:18px 0;">
+      <button class="auth-tab active" data-carga-tab="mp">Mercado Pago</button>
+      <button class="auth-tab" data-carga-tab="otros">Otros medios</button>
+    </div>
+
+    <div id="carga-mp">
+      <p class="modal-hint">Se acredita solo, apenas se confirma el pago. No hace falta que avises por WhatsApp.</p>
+      <div class="field">
+        <label>Monto a cargar (USDT)</label>
+        <input type="number" id="mp-monto" min="1" step="0.01" placeholder="Ej: 10.00">
+      </div>
+      <button class="btn btn-primary btn-block" id="btn-pagar-mp">Pagar con Mercado Pago</button>
+      <div class="auth-error" id="mp-error"></div>
+    </div>
+
+    <div id="carga-otros" style="display:none;">
+      <p class="modal-hint">Esta carga queda pendiente hasta que la aprobemos a mano — puede tardar un poco más.</p>
+      <div class="field">
+        <label>Medio</label>
+        <select id="otros-medio">
+          <option value="transferencia">Transferencia</option>
+          <option value="paypal">PayPal</option>
+          <option value="binance">Binance Pay</option>
+        </select>
+      </div>
+      <div class="pay-card" id="otros-datos" style="margin:14px 0;"></div>
+      <div class="field">
+        <label>Monto (USDT)</label>
+        <input type="number" id="otros-monto" min="1" step="0.01" placeholder="Ej: 10.00">
+      </div>
+      <div class="field">
+        <label>Referencia / N° de comprobante</label>
+        <input type="text" id="otros-ref" placeholder="Lo que te quede como constancia del pago">
+      </div>
+      <button class="btn btn-ghost btn-block" id="btn-enviar-otros">Enviar para revisión</button>
+      <div class="auth-error" id="otros-error"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, doc, setDoc, onSnapshot, collection, query,
+  where, orderBy, limit
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app = initializeApp(FIREBASE_CONFIG);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+function fmtUSDT(n){ return 'USDT ' + Number(n || 0).toFixed(2); }
+function toast(msg, tipo){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (tipo ? ' ' + tipo : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 4200);
+}
+
+/* ---------- tabs login / registro ---------- */
+document.querySelectorAll('.auth-tab[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.auth-tab[data-tab]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    document.getElementById('form-login').style.display = tab === 'login' ? 'flex' : 'none';
+    document.getElementById('form-registro').style.display = tab === 'registro' ? 'flex' : 'none';
+  });
+});
+
+/* ---------- registro ---------- */
+document.getElementById('form-registro').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const errEl = document.getElementById('reg-error');
+  errEl.textContent = '';
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    // Documento inicial de saldo. El campo "saldo" nunca lo vuelve a
+    // tocar el cliente directamente — mirá firestore.rules más abajo.
+    await setDoc(doc(db, 'saldo_usuarios', cred.user.uid), {
+      email, saldo: 0, creado: Date.now()
+    });
+  } catch (err) {
+    errEl.textContent = traducirErrorAuth(err);
+  }
+});
+
+/* ---------- login ---------- */
+document.getElementById('form-login').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch (err) {
+    errEl.textContent = traducirErrorAuth(err);
+  }
+});
+
+document.getElementById('nav-logout').addEventListener('click', (e) => {
+  e.preventDefault();
+  signOut(auth);
+});
+
+function traducirErrorAuth(err){
+  const c = err.code || '';
+  if (c.includes('email-already-in-use')) return 'Ese email ya tiene una cuenta.';
+  if (c.includes('invalid-credential') || c.includes('wrong-password') || c.includes('user-not-found')) return 'Email o contraseña incorrectos.';
+  if (c.includes('weak-password')) return 'La contraseña necesita al menos 6 caracteres.';
+  if (c.includes('invalid-email')) return 'Ese email no es válido.';
+  return 'Algo falló. Probá de nuevo.';
+}
+
+/* ---------- estado de sesión ---------- */
+let saldoActual = 0;
+let unsubSaldo = null, unsubMov = null;
+
+onAuthStateChanged(auth, (user) => {
+  if (unsubSaldo) unsubSaldo();
+  if (unsubMov) unsubMov();
+
+  if (user) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('nav-logout').style.display = 'inline';
+    document.getElementById('saldo-email').textContent = user.email;
+
+    unsubSaldo = onSnapshot(doc(db, 'saldo_usuarios', user.uid), (snap) => {
+      saldoActual = snap.exists() ? (snap.data().saldo || 0) : 0;
+      document.getElementById('saldo-actual').textContent = fmtUSDT(saldoActual);
+      actualizarBotonCompra();
+    });
+
+    const q = query(
+      collection(db, 'saldo_movimientos'),
+      where('usuarioUid', '==', user.uid),
+      orderBy('fecha', 'desc'),
+      limit(20)
+    );
+    unsubMov = onSnapshot(q, (snap) => {
+      const list = document.getElementById('mov-list');
+      if (snap.empty) { list.innerHTML = '<p class="mov-empty">Todavía no hay movimientos.</p>'; return; }
+      list.innerHTML = '';
+      snap.forEach(d => {
+        const m = d.data();
+        const el = document.createElement('div');
+        el.className = 'mov-item';
+        const signo = m.tipo === 'carga' ? '+' : '−';
+        const estadoClase = { completado:'tag-ok', aprobado:'tag-ok', pendiente:'tag-pending', rechazado:'tag-bad', fallido:'tag-bad' }[m.estado] || 'tag-pending';
+        el.innerHTML = `
+          <div>
+            <div class="mov-title">${m.tipo === 'carga' ? 'Carga de saldo' : 'Compra de diamantes'}${m.metodo ? ' · ' + m.metodo : ''}</div>
+            <div class="mov-date">${m.fecha ? new Date(m.fecha).toLocaleString('es-AR') : ''}</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="mov-monto ${m.tipo === 'carga' ? 'pos' : 'neg'}">${signo} ${fmtUSDT(m.monto)}</div>
+            <span class="tag ${estadoClase}">${m.estado}</span>
+          </div>`;
+        list.appendChild(el);
+      });
+    });
+  } else {
+    document.getElementById('auth-screen').style.display = 'block';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('nav-logout').style.display = 'none';
+  }
+});
+
+/* ---------- validar UID (idéntico a xiterking-recargas.html) ---------- */
+let uidValidado = null;
+let paqueteElegido = null;
+const uidInput = document.getElementById('uid-input');
+const uidBtn = document.getElementById('btn-validar');
+const uidOut = document.getElementById('uid-result');
+
+async function validarUID(){
+  const uid = uidInput.value.trim();
+  uidOut.className = 'uid-result';
+  if (uid.length < 3){ uidOut.textContent = 'Ingresá un UID válido.'; uidOut.classList.add('err'); return; }
+  uidBtn.disabled = true;
+  uidOut.innerHTML = '<span class="dot"></span> Validando contra el servidor…';
+  try{
+    const res = await fetch(WORKER_URL + '/validar-uid', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'X-Site-Key': SITE_KEY },
+      body: JSON.stringify({ uid })
+    });
+    const data = await res.json();
+    if (data.ok && data.valido){
+      uidValidado = { uid, nombre: data.nombreCuenta || '' };
+      uidOut.classList.add('ok');
+      uidOut.innerHTML = '<span class="dot"></span> Cuenta encontrada' + (data.nombreCuenta ? ': ' + data.nombreCuenta : '');
+    } else {
+      uidValidado = null;
+      uidOut.classList.add('err');
+      uidOut.innerHTML = '<span class="dot"></span> ' + (data.mensaje || 'No pudimos validar ese UID.');
+    }
+  } catch(e){
+    uidValidado = null;
+    uidOut.classList.add('err');
+    uidOut.innerHTML = '<span class="dot"></span> No se pudo conectar con el relay.';
+  } finally {
+    uidBtn.disabled = false;
+    actualizarBotonCompra();
+  }
+}
+uidBtn.addEventListener('click', validarUID);
+uidInput.addEventListener('keydown', e => { if (e.key === 'Enter') validarUID(); });
+
+/* ---------- paquetes ---------- */
+const pkgGrid = document.getElementById('pkg-grid');
+function diamondIconSVG(){
+  return `<svg class="pkg-icon" viewBox="0 0 32 32" fill="none"><path d="M16 2 L28 11 L16 30 L4 11 Z" fill="#F9D65C" fill-opacity=".9"/><path d="M16 2 L28 11 L16 15 Z" fill="#F9D65C"/><path d="M16 2 L4 11 L16 15 Z" fill="#F2B705"/><path d="M4 11 L16 15 L16 30 Z" fill="#E8394A"/><path d="M28 11 L16 15 L16 30 Z" fill="#9E1420"/></svg>`;
+}
+PAQUETES.forEach((p, i) => {
+  const card = document.createElement('div');
+  card.className = 'pkg reveal in-view' + (p.popular ? ' popular' : '');
+  card.dataset.id = p.id;
+  card.innerHTML = `
+    <div class="pkg-top">
+      ${diamondIconSVG()}
+      <div>
+        <div class="pkg-dia">${p.diamantes} <span>💎</span></div>
+        <div class="pkg-code">SERVICE_ID ${p.id}</div>
+      </div>
+    </div>
+    <div class="pkg-price">${fmtUSDT(p.precio)} <small>por paquete</small></div>
+    <button class="btn btn-ghost btn-block btn-elegir">Elegir este paquete</button>
+  `;
+  card.querySelector('.btn-elegir').addEventListener('click', () => {
+    paqueteElegido = p;
+    document.querySelectorAll('.pkg').forEach(el => el.classList.remove('selected'));
+    card.classList.add('selected');
+    actualizarBotonCompra();
+  });
+  pkgGrid.appendChild(card);
+});
+
+function actualizarBotonCompra(){
+  const btn = document.getElementById('btn-comprar-saldo');
+  if (!uidValidado){ btn.disabled = true; btn.textContent = 'Validá tu UID y elegí un paquete'; return; }
+  if (!paqueteElegido){ btn.disabled = true; btn.textContent = 'Elegí un paquete'; return; }
+  if (saldoActual < paqueteElegido.precio){ btn.disabled = true; btn.textContent = 'Saldo insuficiente — cargá saldo'; return; }
+  btn.disabled = false;
+  btn.textContent = `Comprar ${paqueteElegido.diamantes} 💎 por ${fmtUSDT(paqueteElegido.precio)}`;
+}
+
+/* ---------- comprar con saldo (instantáneo) ---------- */
+document.getElementById('btn-comprar-saldo').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-comprar-saldo');
+  const statusEl = document.getElementById('buy-status');
+  const user = auth.currentUser;
+  if (!user || !uidValidado || !paqueteElegido) return;
+
+  btn.disabled = true;
+  statusEl.className = 'buy-status';
+  statusEl.innerHTML = '<span class="dot"></span> Procesando la recarga…';
+  try{
+    const idToken = await user.getIdToken();
+    const res = await fetch(WORKER_URL + '/saldo/comprar', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + idToken, 'X-Site-Key': SITE_KEY },
+      body: JSON.stringify({ uidFF: uidValidado.uid, packageId: paqueteElegido.id })
+    });
+    const data = await res.json();
+    if (data.ok){
+      statusEl.classList.add('ok');
+      statusEl.innerHTML = '<span class="dot"></span> ¡Listo! Se acreditaron ' + paqueteElegido.diamantes + ' 💎.';
+      toast('Recarga completada', 'ok');
+      paqueteElegido = null;
+      document.querySelectorAll('.pkg').forEach(el => el.classList.remove('selected'));
+    } else {
+      statusEl.classList.add('err');
+      statusEl.innerHTML = '<span class="dot"></span> ' + (data.mensaje || 'No se pudo completar la recarga. No se descontó saldo.');
+    }
+  } catch(e){
+    statusEl.classList.add('err');
+    statusEl.innerHTML = '<span class="dot"></span> No se pudo conectar con el relay.';
+  } finally {
+    actualizarBotonCompra();
+  }
+});
+
+/* ---------- modal cargar saldo ---------- */
+const modal = document.getElementById('modal-carga');
+document.getElementById('btn-abrir-carga').addEventListener('click', () => modal.classList.add('open'));
+document.getElementById('modal-close').addEventListener('click', () => modal.classList.remove('open'));
+modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+
+document.querySelectorAll('.auth-tab[data-carga-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.auth-tab[data-carga-tab]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.cargaTab;
+    document.getElementById('carga-mp').style.display = tab === 'mp' ? 'block' : 'none';
+    document.getElementById('carga-otros').style.display = tab === 'otros' ? 'block' : 'none';
+  });
+});
+
+/* ---------- carga vía Mercado Pago ---------- */
+document.getElementById('btn-pagar-mp').addEventListener('click', async () => {
+  const monto = parseFloat(document.getElementById('mp-monto').value);
+  const errEl = document.getElementById('mp-error');
+  errEl.textContent = '';
+  if (!monto || monto <= 0){ errEl.textContent = 'Ingresá un monto válido.'; return; }
+  const user = auth.currentUser;
+  if (!user) return;
+  try{
+    const idToken = await user.getIdToken();
+    const res = await fetch(MP_WORKER_URL + '/crear-preferencia', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + idToken },
+      body: JSON.stringify({ monto })
+    });
+    const data = await res.json();
+    if (data.init_point){
+      window.location.href = data.init_point;
+    } else {
+      errEl.textContent = data.mensaje || 'No se pudo generar el pago.';
+    }
+  } catch(e){
+    errEl.textContent = 'No se pudo conectar con Mercado Pago.';
+  }
+});
+
+/* ---------- carga por otros medios (manual, queda pendiente) ---------- */
+function renderDatosOtros(){
+  const medio = document.getElementById('otros-medio').value;
+  const cont = document.getElementById('otros-datos');
+  if (medio === 'transferencia'){
+    cont.innerHTML = `<dl><div><span>Titular</span><b>${PAGOS.transferencia.titular}</b></div><div><span>CBU</span><b>${PAGOS.transferencia.cbu}</b></div><div><span>Alias</span><b>${PAGOS.transferencia.alias}</b></div></dl>`;
+  } else if (medio === 'paypal'){
+    cont.innerHTML = `<dl><div><span>Email</span><b>${PAGOS.paypal.email}</b></div></dl>`;
+  } else {
+    cont.innerHTML = `<dl><div><span>ID</span><b>${PAGOS.binance.id}</b></div><div><span>Usuario</span><b>${PAGOS.binance.email}</b></div></dl>`;
+  }
+}
+document.getElementById('otros-medio').addEventListener('change', renderDatosOtros);
+renderDatosOtros();
+
+document.getElementById('btn-enviar-otros').addEventListener('click', async () => {
+  const monto = parseFloat(document.getElementById('otros-monto').value);
+  const ref = document.getElementById('otros-ref').value.trim();
+  const medio = document.getElementById('otros-medio').value;
+  const errEl = document.getElementById('otros-error');
+  errEl.textContent = '';
+  if (!monto || monto <= 0){ errEl.textContent = 'Ingresá un monto válido.'; return; }
+  if (!ref){ errEl.textContent = 'Pegá la referencia o el número de comprobante.'; return; }
+  const user = auth.currentUser;
+  if (!user) return;
+  try{
+    const { addDoc, collection: col } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    await addDoc(col(db, 'saldo_movimientos'), {
+      usuarioUid: user.uid,
+      tipo: 'carga',
+      metodo: medio,
+      monto,
+      referencia: ref,
+      estado: 'pendiente',
+      fecha: Date.now()
+    });
+    modal.classList.remove('open');
+    toast('Carga enviada, la revisamos y te acreditamos el saldo.', 'ok');
+    document.getElementById('otros-monto').value = '';
+    document.getElementById('otros-ref').value = '';
+  } catch(e){
+    errEl.textContent = 'No se pudo enviar. Probá de nuevo.';
+  }
+});
+</script>
+
+</body>
+</html>
