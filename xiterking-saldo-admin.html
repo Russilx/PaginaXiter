@@ -56,6 +56,18 @@
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
   .toast.ok{ border-color:var(--ok); color:var(--ok); }
   .toast.err{ border-color:var(--danger); color:var(--danger); }
+  .toolbar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+  .toolbar select{
+    padding:8px 12px; border-radius:8px; border:1px solid var(--line);
+    background:var(--bg-3); color:var(--text); font-size:13px; font-family:inherit;
+  }
+  .stats-row{ display:flex; gap:14px; margin-bottom:20px; flex-wrap:wrap; }
+  .stat-box{
+    flex:1; min-width:140px; background:var(--bg-3); border:1px solid var(--line);
+    border-radius:10px; padding:14px 16px;
+  }
+  .stat-box .stat-num{ font-family:var(--font-display); font-size:22px; color:var(--diamond); }
+  .stat-box .stat-label{ font-size:12px; color:var(--text-faint); margin-top:2px; }
 </style>
 </head>
 <body>
@@ -109,6 +121,7 @@
 
     <div class="admin-tabs">
       <button class="admin-tab active" data-tab="pendientes">Cargas pendientes</button>
+      <button class="admin-tab" data-tab="actividad">Actividad reciente</button>
       <button class="admin-tab" data-tab="usuario">Buscar usuario</button>
       <button class="admin-tab" data-tab="salir" style="margin-left:auto; color:var(--danger);">Salir</button>
     </div>
@@ -123,7 +136,53 @@
           </div>
           <button class="btn btn-ghost btn-sm" id="btn-refrescar-pendientes">Refrescar</button>
         </div>
+
+        <div class="stats-row" id="pendientes-stats"></div>
+
+        <div class="toolbar">
+          <select id="pendientes-filtro-metodo">
+            <option value="">Todos los medios</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="paypal">PayPal</option>
+            <option value="binance">Binance</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" id="btn-exportar-pendientes" style="margin-left:auto;">Exportar CSV</button>
+        </div>
+
         <div id="pendientes-list"><p class="empty-note">Cargando…</p></div>
+      </div>
+    </div>
+
+    <!-- Tab: actividad reciente -->
+    <div id="tab-actividad" style="display:none;">
+      <div class="admin-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+          <div>
+            <div class="eyebrow">Vistazo global</div>
+            <h2 style="margin-top:6px;">Actividad reciente (últimos 50)</h2>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btn-refrescar-actividad">Refrescar</button>
+        </div>
+
+        <div class="toolbar">
+          <select id="actividad-filtro-tipo">
+            <option value="">Todos los tipos</option>
+            <option value="carga">Cargas</option>
+            <option value="compra">Compras</option>
+          </select>
+          <select id="actividad-filtro-estado">
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="completado">Completado</option>
+            <option value="aprobado">Aprobado</option>
+            <option value="rechazado">Rechazado</option>
+            <option value="fallido">Fallido</option>
+            <option value="procesando">Procesando</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" id="btn-exportar-actividad" style="margin-left:auto;">Exportar CSV</button>
+        </div>
+
+        <div class="mov-list" id="actividad-list" style="max-height:none;"><p class="empty-note">Cargando…</p></div>
       </div>
     </div>
 
@@ -172,7 +231,10 @@
         </div>
 
         <div>
-          <div class="eyebrow" style="margin-bottom:12px;">Últimos movimientos</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div class="eyebrow" style="margin-bottom:0;">Últimos movimientos</div>
+            <button class="btn btn-ghost btn-sm" id="btn-exportar-usuario">Exportar CSV</button>
+          </div>
           <div class="mov-list" id="usuario-movs"></div>
         </div>
       </div>
@@ -245,19 +307,50 @@ document.querySelectorAll('.admin-tab[data-tab]').forEach(btn => {
     document.querySelectorAll('.admin-tab[data-tab]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('tab-pendientes').style.display = btn.dataset.tab === 'pendientes' ? 'block' : 'none';
+    document.getElementById('tab-actividad').style.display = btn.dataset.tab === 'actividad' ? 'block' : 'none';
     document.getElementById('tab-usuario').style.display = btn.dataset.tab === 'usuario' ? 'block' : 'none';
+    if (btn.dataset.tab === 'actividad' && !actividadCargada) cargarActividad();
   });
 });
 
+/* ---------- helper: exportar filas a CSV ---------- */
+function exportarCSV(nombreArchivo, columnas, filas){
+  if (!filas.length){ toast('No hay datos para exportar.', 'err'); return; }
+  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lineas = [columnas.map(c => esc(c.label)).join(',')];
+  filas.forEach(fila => {
+    lineas.push(columnas.map(c => esc(c.get(fila))).join(','));
+  });
+  const blob = new Blob(['\uFEFF' + lineas.join('\r\n')], { type:'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = nombreArchivo;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 /* ---------- cargas pendientes ---------- */
+let pendientesActuales = [];
+
 function renderPendientes(pendientes){
+  pendientesActuales = pendientes || [];
+  const filtro = document.getElementById('pendientes-filtro-metodo').value;
+  const filtradas = filtro ? pendientesActuales.filter(p => p.metodo === filtro) : pendientesActuales;
+
+  const statsCont = document.getElementById('pendientes-stats');
+  const total = filtradas.reduce((acc, p) => acc + Number(p.monto || 0), 0);
+  statsCont.innerHTML = `
+    <div class="stat-box"><div class="stat-num">${filtradas.length}</div><div class="stat-label">cargas por revisar</div></div>
+    <div class="stat-box"><div class="stat-num">${fmtUSDT(total)}</div><div class="stat-label">monto total pendiente</div></div>
+  `;
+
   const cont = document.getElementById('pendientes-list');
-  if (!pendientes || !pendientes.length){
-    cont.innerHTML = '<p class="empty-note">No hay cargas pendientes por revisar.</p>';
+  if (!filtradas.length){
+    cont.innerHTML = '<p class="empty-note">No hay cargas pendientes' + (filtro ? ' con ese medio de pago.' : ' por revisar.') + '</p>';
     return;
   }
   cont.innerHTML = '';
-  pendientes.forEach(p => {
+  filtradas.forEach(p => {
     const el = document.createElement('div');
     el.className = 'pend-item';
     el.innerHTML = `
@@ -290,6 +383,19 @@ async function cargarPendientes(){
   }
 }
 document.getElementById('btn-refrescar-pendientes').addEventListener('click', cargarPendientes);
+document.getElementById('pendientes-filtro-metodo').addEventListener('change', () => renderPendientes(pendientesActuales));
+document.getElementById('btn-exportar-pendientes').addEventListener('click', () => {
+  const filtro = document.getElementById('pendientes-filtro-metodo').value;
+  const filtradas = filtro ? pendientesActuales.filter(p => p.metodo === filtro) : pendientesActuales;
+  exportarCSV('cargas-pendientes.csv', [
+    { label:'Email', get:p => p.email || p.usuarioUid },
+    { label:'UID', get:p => p.usuarioUid },
+    { label:'Metodo', get:p => p.metodo || '' },
+    { label:'Monto', get:p => p.monto },
+    { label:'Referencia', get:p => p.referencia || '' },
+    { label:'Fecha', get:p => fmtFecha(p.fecha) },
+  ], filtradas);
+});
 
 async function procesarCarga(movimientoId, accion){
   let motivo = '';
@@ -312,6 +418,71 @@ async function procesarCarga(movimientoId, accion){
   }
 }
 
+/* ---------- actividad reciente ---------- */
+let actividadCargada = false;
+let actividadActual = [];
+
+function renderActividad(movimientos){
+  actividadActual = movimientos || [];
+  const tipo = document.getElementById('actividad-filtro-tipo').value;
+  const estado = document.getElementById('actividad-filtro-estado').value;
+  const filtrados = actividadActual.filter(m =>
+    (!tipo || m.tipo === tipo) && (!estado || m.estado === estado)
+  );
+
+  const cont = document.getElementById('actividad-list');
+  if (!filtrados.length){
+    cont.innerHTML = '<p class="empty-note">No hay movimientos con esos filtros.</p>';
+    return;
+  }
+  cont.innerHTML = '';
+  filtrados.forEach(m => {
+    const signo = m.tipo === 'carga' ? '+' : '−';
+    const estadoClase = { completado:'tag-ok', aprobado:'tag-ok', pendiente:'tag-pending', rechazado:'tag-bad', fallido:'tag-bad' }[m.estado] || 'tag-pending';
+    const el = document.createElement('div');
+    el.className = 'mov-item';
+    el.innerHTML = `
+      <div>
+        <div class="mov-title">${m.email || m.usuarioUid}</div>
+        <div class="mov-date">${m.tipo === 'carga' ? 'Carga' : 'Compra'}${m.metodo ? ' · ' + m.metodo : ''} · ${fmtFecha(m.fecha)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="mov-monto ${m.tipo === 'carga' ? 'pos' : 'neg'}">${signo} ${fmtUSDT(m.monto)}</div>
+        <span class="tag ${estadoClase}">${m.estado}</span>
+      </div>`;
+    cont.appendChild(el);
+  });
+}
+
+async function cargarActividad(){
+  const cont = document.getElementById('actividad-list');
+  cont.innerHTML = '<p class="empty-note">Cargando…</p>';
+  try{
+    const data = await llamarRelay('/saldo/admin/movimientos-recientes?limit=50');
+    actividadCargada = true;
+    if (data.ok) renderActividad(data.movimientos);
+    else cont.innerHTML = `<p class="empty-note">${data.mensaje || 'No se pudo cargar la actividad.'}</p>`;
+  } catch(e){
+    cont.innerHTML = `<p class="empty-note">${e.message || 'No se pudo conectar con el relay.'}</p>`;
+  }
+}
+document.getElementById('btn-refrescar-actividad').addEventListener('click', cargarActividad);
+document.getElementById('actividad-filtro-tipo').addEventListener('change', () => renderActividad(actividadActual));
+document.getElementById('actividad-filtro-estado').addEventListener('change', () => renderActividad(actividadActual));
+document.getElementById('btn-exportar-actividad').addEventListener('click', () => {
+  const tipo = document.getElementById('actividad-filtro-tipo').value;
+  const estado = document.getElementById('actividad-filtro-estado').value;
+  const filtrados = actividadActual.filter(m => (!tipo || m.tipo === tipo) && (!estado || m.estado === estado));
+  exportarCSV('actividad-reciente.csv', [
+    { label:'Email', get:m => m.email || m.usuarioUid },
+    { label:'Tipo', get:m => m.tipo },
+    { label:'Metodo', get:m => m.metodo || '' },
+    { label:'Monto', get:m => m.monto },
+    { label:'Estado', get:m => m.estado },
+    { label:'Fecha', get:m => fmtFecha(m.fecha) },
+  ], filtrados);
+});
+
 /* ---------- buscar usuario ---------- */
 document.getElementById('btn-buscar-usuario').addEventListener('click', async () => {
   const uid = document.getElementById('buscar-uid').value.trim();
@@ -330,12 +501,16 @@ document.getElementById('btn-buscar-usuario').addEventListener('click', async ()
   }
 });
 
+let usuarioMovsActuales = [];
+
 function renderUsuario(data){
   document.getElementById('usuario-resultado').style.display = 'block';
   document.getElementById('usuario-email').textContent = data.usuario.email || '(sin email)';
   document.getElementById('usuario-uid').textContent = data.uid;
   document.getElementById('usuario-saldo').textContent = fmtUSDT(data.usuario.saldo);
   document.getElementById('usuario-resultado').dataset.uid = data.uid;
+  document.getElementById('usuario-resultado').dataset.email = data.usuario.email || '';
+  usuarioMovsActuales = data.movimientos || [];
 
   const movCont = document.getElementById('usuario-movs');
   if (!data.movimientos.length){
@@ -360,6 +535,17 @@ function renderUsuario(data){
     movCont.appendChild(el);
   });
 }
+
+document.getElementById('btn-exportar-usuario').addEventListener('click', () => {
+  const email = document.getElementById('usuario-resultado').dataset.email;
+  exportarCSV('movimientos-' + (email || 'usuario') + '.csv', [
+    { label:'Tipo', get:m => m.tipo },
+    { label:'Metodo', get:m => m.metodo || '' },
+    { label:'Monto', get:m => m.monto },
+    { label:'Estado', get:m => m.estado },
+    { label:'Fecha', get:m => fmtFecha(m.fecha) },
+  ], usuarioMovsActuales);
+});
 
 document.getElementById('btn-ajustar-saldo').addEventListener('click', async () => {
   const uid = document.getElementById('usuario-resultado').dataset.uid;
