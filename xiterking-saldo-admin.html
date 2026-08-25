@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XITERKING — Panel de admin (Saldo)</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  /* Estilos propios de este panel — reusan las variables de style.css */
+  .admin-wrap{ max-width:980px; margin:48px auto; padding:0 24px; }
+  .admin-card{
+    background:var(--bg-2); border:1px solid var(--line); border-radius:var(--radius);
+    padding:28px; margin-bottom:22px;
+  }
+  .admin-tabs{ display:flex; gap:8px; margin-bottom:22px; }
+  .admin-tab{
+    padding:10px 18px; border-radius:999px; border:1px solid var(--line);
+    background:transparent; color:var(--text-dim); font-weight:600; font-size:14px;
+  }
+  .admin-tab.active{ background:var(--bg-3); color:var(--text); border-color:var(--line-strong); }
+  .pend-item{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
+    padding:16px 0; border-bottom:1px solid var(--line);
+  }
+  .pend-item:last-child{ border-bottom:none; }
+  .pend-main .correo{ font-weight:600; }
+  .pend-main .meta{ color:var(--text-faint); font-size:12.5px; margin-top:4px; }
+  .pend-main .ref{ font-family:var(--font-mono); font-size:13px; color:var(--text-dim); margin-top:6px; word-break:break-all; }
+  .pend-monto{ font-family:var(--font-mono); font-size:19px; color:var(--diamond); white-space:nowrap; }
+  .pend-actions{ display:flex; gap:8px; margin-top:10px; }
+  .btn-sm{ padding:8px 14px; font-size:13px; }
+  .btn-danger{ background:transparent; border-color:var(--danger); color:var(--danger); }
+  .btn-danger:hover{ background:rgba(255,97,97,.1); }
+  .empty-note{ color:var(--text-faint); font-size:14px; padding:8px 0; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:13px; color:var(--text-dim); margin-bottom:6px; }
+  .field input, .field select{
+    width:100%; padding:11px 14px; border-radius:10px; border:1px solid var(--line);
+    background:var(--bg-3); color:var(--text); font-family:inherit; font-size:14px;
+  }
+  .field input:focus, .field select:focus{ outline:none; border-color:var(--diamond); }
+  .inline-fields{ display:flex; gap:12px; }
+  .inline-fields .field{ flex:1; }
+  .saldo-line{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px; }
+  .saldo-line .num{ font-family:var(--font-display); font-size:28px; color:var(--diamond); }
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--bg-3); border:1px solid var(--line-strong); border-radius:10px;
+    padding:12px 20px; font-size:14px; opacity:0; pointer-events:none; transition:.25s;
+    z-index:50;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.ok{ border-color:var(--ok); color:var(--ok); }
+  .toast.err{ border-color:var(--danger); color:var(--danger); }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 2 L28 11 L16 30 L4 11 Z" fill="url(#g1)"/>
+        <path d="M16 2 L28 11 L16 15 Z" fill="#F9D65C"/>
+        <path d="M16 2 L4 11 L16 15 Z" fill="#F2B705"/>
+        <path d="M4 11 L16 15 L16 30 Z" fill="#E8394A"/>
+        <path d="M28 11 L16 15 L16 30 Z" fill="#9E1420"/>
+        <defs><linearGradient id="g1" x1="4" y1="2" x2="28" y2="30"><stop stop-color="#F9D65C"/><stop offset="1" stop-color="#9E1420"/></linearGradient></defs>
+      </svg>
+      <span>XITER<b>KING</b> <span style="color:var(--text-faint); font-weight:400; font-size:13px;">/ admin</span></span>
+    </div>
+    <nav class="links">
+      <a href="index.html">Volver al sitio</a>
+    </nav>
+  </div>
+</header>
+
+<div class="admin-wrap">
+
+  <!-- ---------- PANTALLA: pedir admin key ---------- -->
+  <section id="gate-screen">
+    <div class="admin-card" style="max-width:420px; margin:60px auto 0;">
+      <div class="eyebrow">Acceso restringido</div>
+      <h2 style="margin:10px 0 6px;">Panel de admin</h2>
+      <p style="color:var(--text-dim); font-size:14px; margin-bottom:20px;">
+        Ingresá la <b>Admin Key</b> del relay (la misma variable <code>ADMIN_KEY</code>
+        de <code>relay-saldo-endpoints.js</code>). No se guarda en ningún lado —
+        se usa solo mientras esta pestaña esté abierta.
+      </p>
+      <div class="field">
+        <label>Admin Key</label>
+        <input type="password" id="admin-key-input" placeholder="••••••••••••" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>URL del relay</label>
+        <input type="text" id="worker-url-input" value="https://flashtopup-relay.xiterking.shop">
+      </div>
+      <button class="btn btn-primary btn-block" id="btn-entrar">Entrar</button>
+      <div class="auth-error" id="gate-error" style="margin-top:10px; color:var(--danger); font-size:13.5px;"></div>
+    </div>
+  </section>
+
+  <!-- ---------- PANEL (una vez con admin key) ---------- -->
+  <section id="panel-screen" style="display:none;">
+
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-tab="pendientes">Cargas pendientes</button>
+      <button class="admin-tab" data-tab="usuario">Buscar usuario</button>
+      <button class="admin-tab" data-tab="salir" style="margin-left:auto; color:var(--danger);">Salir</button>
+    </div>
+
+    <!-- Tab: pendientes -->
+    <div id="tab-pendientes">
+      <div class="admin-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+          <div>
+            <div class="eyebrow">Por revisar</div>
+            <h2 style="margin-top:6px;">Cargas manuales pendientes</h2>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btn-refrescar-pendientes">Refrescar</button>
+        </div>
+        <div id="pendientes-list"><p class="empty-note">Cargando…</p></div>
+      </div>
+    </div>
+
+    <!-- Tab: buscar usuario -->
+    <div id="tab-usuario" style="display:none;">
+      <div class="admin-card">
+        <div class="eyebrow">Consulta</div>
+        <h2 style="margin:6px 0 18px;">Buscar usuario</h2>
+        <div class="inline-fields">
+          <div class="field">
+            <label>UID</label>
+            <input type="text" id="buscar-uid" placeholder="UID de Firebase Auth">
+          </div>
+          <div class="field">
+            <label>o Email</label>
+            <input type="text" id="buscar-email" placeholder="email@ejemplo.com">
+          </div>
+        </div>
+        <button class="btn btn-primary" id="btn-buscar-usuario">Buscar</button>
+        <div class="auth-error" id="buscar-error" style="margin-top:10px; color:var(--danger); font-size:13.5px;"></div>
+      </div>
+
+      <div class="admin-card" id="usuario-resultado" style="display:none;">
+        <div class="saldo-line">
+          <div>
+            <div class="eyebrow">Cuenta</div>
+            <div id="usuario-email" style="font-weight:600; margin-top:4px;"></div>
+            <div id="usuario-uid" style="color:var(--text-faint); font-size:12px; font-family:var(--font-mono);"></div>
+          </div>
+          <div class="num" id="usuario-saldo">USDT 0.00</div>
+        </div>
+
+        <div style="border-top:1px solid var(--line); padding-top:18px; margin-bottom:18px;">
+          <div class="eyebrow" style="margin-bottom:12px;">Ajustar saldo manualmente</div>
+          <div class="inline-fields">
+            <div class="field">
+              <label>Monto (positivo suma, negativo resta)</label>
+              <input type="number" id="ajuste-monto" step="0.01" placeholder="Ej: 5.00 o -5.00">
+            </div>
+            <div class="field">
+              <label>Motivo</label>
+              <input type="text" id="ajuste-motivo" placeholder="Ej: corrección de carga duplicada">
+            </div>
+          </div>
+          <button class="btn btn-ghost" id="btn-ajustar-saldo">Aplicar ajuste</button>
+        </div>
+
+        <div>
+          <div class="eyebrow" style="margin-bottom:12px;">Últimos movimientos</div>
+          <div class="mov-list" id="usuario-movs"></div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let WORKER_URL = '';
+let ADMIN_KEY = '';
+
+function fmtUSDT(n){ return 'USDT ' + Number(n || 0).toFixed(2); }
+function fmtFecha(ms){ return ms ? new Date(ms).toLocaleString('es-AR') : ''; }
+function toast(msg, tipo){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (tipo ? ' ' + tipo : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 4200);
+}
+
+async function llamarRelay(path, opciones){
+  const res = await fetch(WORKER_URL + path, {
+    ...opciones,
+    headers: { 'Content-Type':'application/json', 'X-Admin-Key': ADMIN_KEY, ...(opciones && opciones.headers) }
+  });
+  const data = await res.json().catch(() => ({ ok:false, mensaje:'Respuesta inválida del relay.' }));
+  if (res.status === 403) throw new Error('ADMIN_KEY inválida — volvé a entrar.');
+  return data;
+}
+
+/* ---------- entrar ---------- */
+document.getElementById('btn-entrar').addEventListener('click', async () => {
+  const key = document.getElementById('admin-key-input').value.trim();
+  const url = document.getElementById('worker-url-input').value.trim().replace(/\/$/, '');
+  const errEl = document.getElementById('gate-error');
+  errEl.textContent = '';
+  if (!key || !url){ errEl.textContent = 'Completá la Admin Key y la URL del relay.'; return; }
+
+  ADMIN_KEY = key;
+  WORKER_URL = url;
+
+  // Probamos la key contra el endpoint de pendientes antes de mostrar el panel.
+  try{
+    const data = await llamarRelay('/saldo/admin/pendientes');
+    if (!data.ok){ errEl.textContent = data.mensaje || 'No se pudo validar la Admin Key.'; ADMIN_KEY = ''; return; }
+    document.getElementById('gate-screen').style.display = 'none';
+    document.getElementById('panel-screen').style.display = 'block';
+    renderPendientes(data.pendientes);
+  } catch(e){
+    errEl.textContent = e.message || 'No se pudo conectar con el relay.';
+    ADMIN_KEY = '';
+  }
+});
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.admin-tab[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.tab === 'salir'){
+      ADMIN_KEY = '';
+      document.getElementById('panel-screen').style.display = 'none';
+      document.getElementById('gate-screen').style.display = 'block';
+      document.getElementById('admin-key-input').value = '';
+      return;
+    }
+    document.querySelectorAll('.admin-tab[data-tab]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-pendientes').style.display = btn.dataset.tab === 'pendientes' ? 'block' : 'none';
+    document.getElementById('tab-usuario').style.display = btn.dataset.tab === 'usuario' ? 'block' : 'none';
+  });
+});
+
+/* ---------- cargas pendientes ---------- */
+function renderPendientes(pendientes){
+  const cont = document.getElementById('pendientes-list');
+  if (!pendientes || !pendientes.length){
+    cont.innerHTML = '<p class="empty-note">No hay cargas pendientes por revisar.</p>';
+    return;
+  }
+  cont.innerHTML = '';
+  pendientes.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'pend-item';
+    el.innerHTML = `
+      <div class="pend-main">
+        <div class="correo">${p.email || p.usuarioUid}</div>
+        <div class="meta">${p.metodo || ''} · ${fmtFecha(p.fecha)}</div>
+        <div class="ref">Ref: ${p.referencia || '—'}</div>
+        <div class="pend-actions">
+          <button class="btn btn-primary btn-sm" data-accion="aprobar">Aprobar</button>
+          <button class="btn btn-danger btn-sm" data-accion="rechazar">Rechazar</button>
+        </div>
+      </div>
+      <div class="pend-monto">+ ${fmtUSDT(p.monto)}</div>
+    `;
+    el.querySelector('[data-accion="aprobar"]').addEventListener('click', () => procesarCarga(p.id, 'aprobar'));
+    el.querySelector('[data-accion="rechazar"]').addEventListener('click', () => procesarCarga(p.id, 'rechazar'));
+    cont.appendChild(el);
+  });
+}
+
+async function cargarPendientes(){
+  const cont = document.getElementById('pendientes-list');
+  cont.innerHTML = '<p class="empty-note">Cargando…</p>';
+  try{
+    const data = await llamarRelay('/saldo/admin/pendientes');
+    if (data.ok) renderPendientes(data.pendientes);
+    else cont.innerHTML = `<p class="empty-note">${data.mensaje || 'No se pudo cargar la lista.'}</p>`;
+  } catch(e){
+    cont.innerHTML = `<p class="empty-note">${e.message || 'No se pudo conectar con el relay.'}</p>`;
+  }
+}
+document.getElementById('btn-refrescar-pendientes').addEventListener('click', cargarPendientes);
+
+async function procesarCarga(movimientoId, accion){
+  let motivo = '';
+  if (accion === 'rechazar'){
+    motivo = prompt('Motivo del rechazo (opcional):') || '';
+  }
+  try{
+    const data = await llamarRelay(accion === 'aprobar' ? '/saldo/aprobar-carga' : '/saldo/rechazar-carga', {
+      method:'POST',
+      body: JSON.stringify({ movimientoId, motivo })
+    });
+    if (data.ok){
+      toast(accion === 'aprobar' ? 'Carga aprobada y saldo acreditado.' : 'Carga rechazada.', 'ok');
+      cargarPendientes();
+    } else {
+      toast(data.mensaje || 'No se pudo procesar.', 'err');
+    }
+  } catch(e){
+    toast(e.message || 'No se pudo conectar con el relay.', 'err');
+  }
+}
+
+/* ---------- buscar usuario ---------- */
+document.getElementById('btn-buscar-usuario').addEventListener('click', async () => {
+  const uid = document.getElementById('buscar-uid').value.trim();
+  const email = document.getElementById('buscar-email').value.trim();
+  const errEl = document.getElementById('buscar-error');
+  errEl.textContent = '';
+  if (!uid && !email){ errEl.textContent = 'Ingresá un UID o un email.'; return; }
+
+  try{
+    const params = uid ? ('uid=' + encodeURIComponent(uid)) : ('email=' + encodeURIComponent(email));
+    const data = await llamarRelay('/saldo/admin/usuario?' + params);
+    if (!data.ok){ errEl.textContent = data.mensaje || 'No se encontró ese usuario.'; document.getElementById('usuario-resultado').style.display = 'none'; return; }
+    renderUsuario(data);
+  } catch(e){
+    errEl.textContent = e.message || 'No se pudo conectar con el relay.';
+  }
+});
+
+function renderUsuario(data){
+  document.getElementById('usuario-resultado').style.display = 'block';
+  document.getElementById('usuario-email').textContent = data.usuario.email || '(sin email)';
+  document.getElementById('usuario-uid').textContent = data.uid;
+  document.getElementById('usuario-saldo').textContent = fmtUSDT(data.usuario.saldo);
+  document.getElementById('usuario-resultado').dataset.uid = data.uid;
+
+  const movCont = document.getElementById('usuario-movs');
+  if (!data.movimientos.length){
+    movCont.innerHTML = '<p class="mov-empty">Todavía no hay movimientos.</p>';
+    return;
+  }
+  movCont.innerHTML = '';
+  data.movimientos.forEach(m => {
+    const signo = m.tipo === 'carga' ? '+' : '−';
+    const estadoClase = { completado:'tag-ok', aprobado:'tag-ok', pendiente:'tag-pending', rechazado:'tag-bad', fallido:'tag-bad' }[m.estado] || 'tag-pending';
+    const el = document.createElement('div');
+    el.className = 'mov-item';
+    el.innerHTML = `
+      <div>
+        <div class="mov-title">${m.tipo === 'carga' ? 'Carga de saldo' : 'Compra de diamantes'}${m.metodo ? ' · ' + m.metodo : ''}</div>
+        <div class="mov-date">${fmtFecha(m.fecha)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="mov-monto ${m.tipo === 'carga' ? 'pos' : 'neg'}">${signo} ${fmtUSDT(m.monto)}</div>
+        <span class="tag ${estadoClase}">${m.estado}</span>
+      </div>`;
+    movCont.appendChild(el);
+  });
+}
+
+document.getElementById('btn-ajustar-saldo').addEventListener('click', async () => {
+  const uid = document.getElementById('usuario-resultado').dataset.uid;
+  const monto = parseFloat(document.getElementById('ajuste-monto').value);
+  const motivo = document.getElementById('ajuste-motivo').value.trim();
+  if (!uid || !monto){ toast('Ingresá un monto distinto de cero.', 'err'); return; }
+  if (!confirm(`¿Confirmás ${monto > 0 ? 'sumar' : 'restar'} ${fmtUSDT(Math.abs(monto))} al saldo de este usuario?`)) return;
+
+  try{
+    const data = await llamarRelay('/saldo/admin/ajustar-saldo', {
+      method:'POST',
+      body: JSON.stringify({ uid, monto, motivo })
+    });
+    if (data.ok){
+      toast('Saldo ajustado.', 'ok');
+      document.getElementById('ajuste-monto').value = '';
+      document.getElementById('ajuste-motivo').value = '';
+      const data2 = await llamarRelay('/saldo/admin/usuario?uid=' + encodeURIComponent(uid));
+      if (data2.ok) renderUsuario(data2);
+    } else {
+      toast(data.mensaje || 'No se pudo ajustar el saldo.', 'err');
+    }
+  } catch(e){
+    toast(e.message || 'No se pudo conectar con el relay.', 'err');
+  }
+});
+</script>
+
+</body>
+</html>
