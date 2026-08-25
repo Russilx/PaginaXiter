@@ -50,7 +50,7 @@ const MP_SHARED_SECRET = process.env.MP_SHARED_SECRET || 'REEMPLAZAR-generar-uno
 // Key de admin para aprobar cargas manuales (transferencia/PayPal/Binance)
 // y para todo lo demás del panel de admin (pendientes, ajustar saldo, etc.)
 // Usala vos mismo desde el panel — nunca desde el frontend público.
-const ADMIN_KEY = process.env.ADMIN_KEY || 'REEMPLAZAR-otra-clave-larga';
+const ADMIN_KEY = XITERKINGELMEJOR || 'REEMPLAZAR-otra-clave-larga';
 
 // REEMPLAZAR: esta función tiene que llamar a la MISMA API de
 // FlashTopup que ya usa tu ruta /validar-uid, pero para EJECUTAR
@@ -337,6 +337,38 @@ module.exports = function registrarEndpointsSaldo(app) {
       res.json({ ok:true });
     } catch (e) {
       res.status(400).json({ ok:false, mensaje: e.message === 'NO_EXISTE' ? 'No se encontró ese usuario.' : 'No se pudo ajustar el saldo.' });
+    }
+  });
+
+  /**
+   * GET /saldo/admin/movimientos-recientes?limit=50
+   * Header: X-Admin-Key
+   *
+   * Actividad global (cargas Y compras, de todos los estados) para
+   * la pestaña "Actividad reciente" del panel de admin — pensada
+   * para un vistazo rápido, no para auditoría exhaustiva.
+   */
+  app.get('/saldo/admin/movimientos-recientes', requireAdminKey, async (req, res) => {
+    try {
+      const limite = Math.min(Number(req.query.limit) || 50, 200);
+      const snap = await db.collection('saldo_movimientos')
+        .orderBy('fecha', 'desc')
+        .limit(limite)
+        .get();
+
+      const uids = [...new Set(snap.docs.map(d => d.data().usuarioUid))];
+      const emailsPorUid = {};
+      await Promise.all(uids.map(async (uid) => {
+        const uSnap = await db.collection('saldo_usuarios').doc(uid).get();
+        emailsPorUid[uid] = uSnap.exists ? (uSnap.data().email || '') : '';
+      }));
+
+      const movimientos = snap.docs.map(d => ({
+        id: d.id, ...d.data(), email: emailsPorUid[d.data().usuarioUid] || ''
+      }));
+      res.json({ ok:true, movimientos });
+    } catch (e) {
+      res.status(500).json({ ok:false, mensaje:'No se pudo cargar la actividad reciente.' });
     }
   });
 
