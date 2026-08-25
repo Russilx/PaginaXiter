@@ -11,6 +11,12 @@
  *
  * Y que reemplaces los 3 bloques marcados con "REEMPLAZAR:" por
  * tu configuración real / tus funciones reales de FlashTopup.
+ *
+ * NOVEDAD: se agregaron los endpoints /saldo/admin/* que usa
+ * xiterking-saldo-admin.html (panel de admin) para ver cargas
+ * pendientes, aprobarlas/rechazarlas, buscar un usuario por UID
+ * y ajustar su saldo a mano. Todos piden X-Admin-Key — nunca los
+ * llames desde una página pública, solo desde el panel de admin.
  * ============================================================
  */
 
@@ -41,8 +47,9 @@ const PAQUETES = {
 // ponelo también como variable de entorno en ese worker.
 const MP_SHARED_SECRET = process.env.MP_SHARED_SECRET || 'REEMPLAZAR-generar-uno-largo';
 
-// Key de admin para aprobar cargas manuales (transferencia/PayPal/Binance).
-// Usala vos mismo desde un panel, curl, o Postman — nunca desde el frontend público.
+// Key de admin para aprobar cargas manuales (transferencia/PayPal/Binance)
+// y para todo lo demás del panel de admin (pendientes, ajustar saldo, etc.)
+// Usala vos mismo desde el panel — nunca desde el frontend público.
 const ADMIN_KEY = process.env.ADMIN_KEY || 'REEMPLAZAR-otra-clave-larga';
 
 // REEMPLAZAR: esta función tiene que llamar a la MISMA API de
@@ -74,6 +81,15 @@ async function requireAuth(req, res, next) {
   } catch (e) {
     res.status(401).json({ ok:false, mensaje:'Sesión inválida o vencida.' });
   }
+}
+
+// Mismo chequeo que ya usaban /saldo/aprobar-carga, ahora reutilizado
+// por todas las rutas /saldo/admin/*.
+function requireAdminKey(req, res, next) {
+  if (req.headers['x-admin-key'] !== ADMIN_KEY) {
+    return res.status(403).json({ ok:false, mensaje:'No autorizado.' });
+  }
+  next();
 }
 
 module.exports = function registrarEndpointsSaldo(app) {
@@ -139,13 +155,11 @@ module.exports = function registrarEndpointsSaldo(app) {
    * Header: X-Admin-Key
    * Body: { movimientoId }
    *
-   * Usalo vos (no el frontend público) para aprobar una carga por
-   * transferencia/PayPal/Binance una vez que verificaste el comprobante.
+   * Usalo desde el panel de admin (o a mano) para aprobar una carga
+   * por transferencia/PayPal/Binance una vez que verificaste el
+   * comprobante. Acredita el monto en saldo_usuarios.
    */
-  app.post('/saldo/aprobar-carga', async (req, res) => {
-    if (req.headers['x-admin-key'] !== ADMIN_KEY) {
-      return res.status(403).json({ ok:false, mensaje:'No autorizado.' });
-    }
+  app.post('/saldo/aprobar-carga', requireAdminKey, async (req, res) => {
     const { movimientoId } = req.body || {};
     const movRef = db.collection('saldo_movimientos').doc(movimientoId);
 
@@ -158,6 +172,33 @@ module.exports = function registrarEndpointsSaldo(app) {
         const userRef = db.collection('saldo_usuarios').doc(mov.usuarioUid);
         tx.update(userRef, { saldo: admin.firestore.FieldValue.increment(mov.monto) });
         tx.update(movRef, { estado: 'aprobado' });
+      });
+      res.json({ ok:true });
+    } catch (e) {
+      res.status(400).json({ ok:false, mensaje: e.message === 'YA_PROCESADA' ? 'Esa carga ya fue procesada.' : 'No se encontró la carga.' });
+    }
+  });
+
+  /**
+   * POST /saldo/rechazar-carga
+   * Header: X-Admin-Key
+   * Body: { movimientoId, motivo }
+   *
+   * Contraparte de /saldo/aprobar-carga: marca la carga pendiente
+   * como "rechazada" y NO toca el saldo. Usalo cuando el comprobante
+   * no cierra (monto distinto, referencia inválida, etc.).
+   */
+  app.post('/saldo/rechazar-carga', requireAdminKey, async (req, res) => {
+    const { movimientoId, motivo } = req.body || {};
+    const movRef = db.collection('saldo_movimientos').doc(movimientoId);
+
+    try {
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(movRef);
+        if (!snap.exists) throw new Error('NO_EXISTE');
+        const mov = snap.data();
+        if (mov.estado !== 'pendiente') throw new Error('YA_PROCESADA');
+        tx.update(movRef, { estado: 'rechazado', motivoRechazo: motivo || '' });
       });
       res.json({ ok:true });
     } catch (e) {
@@ -194,6 +235,143 @@ module.exports = function registrarEndpointsSaldo(app) {
     res.json({ ok:true });
   });
 
+  /**
+   * GET /saldo/admin/pendientes
+   * Header: X-Admin-Key
+   *
+   * Devuelve las cargas manuales (transferencia/PayPal/Binance) que
+   * están esperando aprobación, con el email del usuario incluido
+   * para que el panel de admin no tenga que adivinar de quién es.
+   */
+  app.get('/saldo/admin/pendientes', requireAdminKey, async (req, res) => {
+    try {
+      const snap = await db.collection('saldo_movimientos')
+        .where('estado', '==', 'pendiente')
+        .orderBy('fecha', 'asc')
+        .get();
+
+      const uids = [...new Set(snap.docs.map(d => d.data().usuarioUid))];
+      const emailsPorUid = {};
+      await Promise.all(uids.map(async (uid) => {
+        const uSnap = await db.collection('saldo_usuarios').doc(uid).get();
+        emailsPorUid[uid] = uSnap.exists ? (uSnap.data().email || '') : '';
+      }));
+
+      const pendientes = snap.docs.map(d => ({
+        id: d.id, ...d.data(), email: emailsPorUid[d.data().usuarioUid] || ''
+      }));
+      res.json({ ok:true, pendientes });
+    } catch (e) {
+      res.status(500).json({ ok:false, mensaje:'No se pudieron cargar las cargas pendientes.' });
+    }
+  });
+
+  /**
+   * GET /saldo/admin/usuario?uid=... o ?email=...
+   * Header: X-Admin-Key
+   *
+   * Devuelve el saldo y los últimos 30 movimientos de un usuario,
+   * para la pestaña "Buscar usuario" del panel de admin.
+   */
+  app.get('/saldo/admin/usuario', requireAdminKey, async (req, res) => {
+    try {
+      let { uid, email } = req.query || {};
+
+      if (!uid && email) {
+        const q = await db.collection('saldo_usuarios').where('email', '==', email).limit(1).get();
+        if (q.empty) return res.status(404).json({ ok:false, mensaje:'No se encontró ningún usuario con ese email.' });
+        uid = q.docs[0].id;
+      }
+      if (!uid) return res.status(400).json({ ok:false, mensaje:'Falta uid o email.' });
+
+      const uSnap = await db.collection('saldo_usuarios').doc(uid).get();
+      if (!uSnap.exists) return res.status(404).json({ ok:false, mensaje:'No se encontró ese usuario.' });
+
+      const movSnap = await db.collection('saldo_movimientos')
+        .where('usuarioUid', '==', uid)
+        .orderBy('fecha', 'desc')
+        .limit(30)
+        .get();
+
+      res.json({
+        ok:true,
+        uid,
+        usuario: uSnap.data(),
+        movimientos: movSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+      });
+    } catch (e) {
+      res.status(500).json({ ok:false, mensaje:'No se pudo cargar ese usuario.' });
+    }
+  });
+
+  /**
+   * POST /saldo/admin/ajustar-saldo
+   * Header: X-Admin-Key
+   * Body: { uid, monto, motivo }
+   *
+   * Ajuste manual de saldo (positivo para sumar, negativo para
+   * descontar). Para correcciones puntuales — errores de carga,
+   * compensaciones, etc. Queda registrado como movimiento tipo
+   * "ajuste" para que se vea en el historial.
+   */
+  app.post('/saldo/admin/ajustar-saldo', requireAdminKey, async (req, res) => {
+    const { uid, monto, motivo } = req.body || {};
+    const montoNum = Number(monto);
+    if (!uid || !montoNum) {
+      return res.status(400).json({ ok:false, mensaje:'Faltan datos (uid y monto son obligatorios).' });
+    }
+
+    const userRef = db.collection('saldo_usuarios').doc(uid);
+    const movRef = db.collection('saldo_movimientos').doc();
+
+    try {
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(userRef);
+        if (!snap.exists) throw new Error('NO_EXISTE');
+        tx.update(userRef, { saldo: admin.firestore.FieldValue.increment(montoNum) });
+        tx.set(movRef, {
+          usuarioUid: uid, tipo: 'carga', metodo: 'ajuste-admin',
+          monto: montoNum, motivo: motivo || '', estado: 'completado', fecha: Date.now()
+        });
+      });
+      res.json({ ok:true });
+    } catch (e) {
+      res.status(400).json({ ok:false, mensaje: e.message === 'NO_EXISTE' ? 'No se encontró ese usuario.' : 'No se pudo ajustar el saldo.' });
+    }
+  });
+
+  /**
+   * GET /saldo/admin/movimientos-recientes?limit=50
+   * Header: X-Admin-Key
+   *
+   * Actividad global (cargas Y compras, de todos los estados) para
+   * la pestaña "Actividad reciente" del panel de admin — pensada
+   * para un vistazo rápido, no para auditoría exhaustiva.
+   */
+  app.get('/saldo/admin/movimientos-recientes', requireAdminKey, async (req, res) => {
+    try {
+      const limite = Math.min(Number(req.query.limit) || 50, 200);
+      const snap = await db.collection('saldo_movimientos')
+        .orderBy('fecha', 'desc')
+        .limit(limite)
+        .get();
+
+      const uids = [...new Set(snap.docs.map(d => d.data().usuarioUid))];
+      const emailsPorUid = {};
+      await Promise.all(uids.map(async (uid) => {
+        const uSnap = await db.collection('saldo_usuarios').doc(uid).get();
+        emailsPorUid[uid] = uSnap.exists ? (uSnap.data().email || '') : '';
+      }));
+
+      const movimientos = snap.docs.map(d => ({
+        id: d.id, ...d.data(), email: emailsPorUid[d.data().usuarioUid] || ''
+      }));
+      res.json({ ok:true, movimientos });
+    } catch (e) {
+      res.status(500).json({ ok:false, mensaje:'No se pudo cargar la actividad reciente.' });
+    }
+  });
+
 };
 
 /**
@@ -201,4 +379,11 @@ module.exports = function registrarEndpointsSaldo(app) {
  *
  *   const registrarEndpointsSaldo = require('./relay-saldo-endpoints');
  *   registrarEndpointsSaldo(app);
+ *
+ * Índices de Firestore que probablemente te va a pedir crear la
+ * primera vez que uses /saldo/admin/pendientes y /saldo/admin/usuario
+ * (Firestore te tira un link directo en el error de consola — solo
+ * hace falta clickearlo la primera vez):
+ *   - saldo_movimientos: estado ASC, fecha ASC
+ *   - saldo_movimientos: usuarioUid ASC, fecha DESC
  */
