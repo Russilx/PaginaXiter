@@ -1,6 +1,0 @@
-name = "xiterking-telegram-worker"
-main = "worker.js"
-compatibility_date = "2024-01-01"
-
-# Estas variables se cargan como "secrets" (paso a paso en LEEME.md),
-# no hace falta escribirlas acá.
