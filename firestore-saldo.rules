@@ -1,0 +1,27 @@
+// Agregá esto a tu firestore.rules existente (dentro del mismo
+// bloque service cloud.firestore { match /databases/{db}/documents { ... } }).
+//
+// Idea central: el cliente puede LEER su propio saldo y movimientos,
+// y puede CREAR una carga manual pendiente — pero nunca puede
+// modificar el campo "saldo" ni cambiar el estado de un movimiento.
+// Eso solo lo hace el relay con Admin SDK, que se salta estas reglas.
+
+match /saldo_usuarios/{uid} {
+  allow read: if request.auth != null && request.auth.uid == uid;
+  // Se crea una sola vez, al registrarse, siempre en 0.
+  allow create: if request.auth != null && request.auth.uid == uid
+                && request.resource.data.saldo == 0;
+  allow update: if false; // el saldo solo lo mueve el relay (Admin SDK)
+  allow delete: if false;
+}
+
+match /saldo_movimientos/{id} {
+  allow read: if request.auth != null && request.auth.uid == resource.data.usuarioUid;
+  // El cliente solo puede crear cargas manuales, y siempre en "pendiente".
+  allow create: if request.auth != null
+                && request.auth.uid == request.resource.data.usuarioUid
+                && request.resource.data.tipo == 'carga'
+                && request.resource.data.estado == 'pendiente';
+  allow update: if false; // aprobar/rechazar/completar es cosa del relay
+  allow delete: if false;
+}
