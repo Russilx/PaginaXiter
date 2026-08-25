@@ -1,8 +1,0 @@
-name = "mercadopago-proxy"
-main = "mercadopago-worker.js"
-compatibility_date = "2024-01-01"
-
-# Estas variables se cargan como "secrets" desde el dashboard de
-# Cloudflare (Settings → Variables and Secrets), no hace falta
-# escribirlas acá. Ver el encabezado de mercadopago-worker.js para
-# la lista completa y el paso a paso.
