@@ -45,7 +45,7 @@ const PAQUETES = {
 // Secreto compartido para que el worker de Mercado Pago (Cloudflare)
 // pueda pedirle al relay que acredite saldo. Generá uno propio y
 // ponelo también como variable de entorno en ese worker.
-const MP_SHARED_SECRET = XITERKINGELMEJOR;
+const MP_SHARED_SECRET = process.env.MP_SHARED_SECRET || 'XITERKINGELMEJOR';
 
 // Key de admin para aprobar cargas manuales (transferencia/PayPal/Binance)
 // y para todo lo demás del panel de admin (pendientes, ajustar saldo, etc.)
