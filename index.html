@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recargas de diamantes</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header><div class="logo"><svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,6 86,34 50,94 14,34" fill="#5ad6ff"/><polygon points="50,6 86,34 50,38 14,34" fill="#d6f6ff"/><polygon points="14,34 50,38 50,94" fill="#1fa8e0"/><polygon points="86,34 50,38 50,94" fill="#1279b5"/></svg> Tienda de diamantes</div><div id="acct"></div></header>
+
+  <section class="hero">
+    <div class="icon"><svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,6 86,34 50,94 14,34" fill="#5ad6ff"/><polygon points="50,6 86,34 50,38 14,34" fill="#d6f6ff"/><polygon points="14,34 50,38 50,94" fill="#1fa8e0"/><polygon points="86,34 50,38 50,94" fill="#1279b5"/></svg></div>
+    <h1>Recargá tus <span>diamantes</span> al toque</h1>
+    <p>Cargá saldo, elegí tu paquete y recibí tus diamantes.</p>
+    <a class="btn" href="free-fire-latam.html">Ver recargas</a>
+  </section>
+
+
+
+  <section class="rv">
+    <h2>Productos disponibles</h2>
+    <div class="products">
+      <a class="product" href="free-fire-latam.html">
+        <div class="art"><span class="badge">Disponible</span><b>FREE FIRE</b><svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,6 86,34 50,94 14,34" fill="#5ad6ff"/><polygon points="50,6 86,34 50,38 14,34" fill="#d6f6ff"/><polygon points="14,34 50,38 50,94" fill="#1fa8e0"/><polygon points="86,34 50,38 50,94" fill="#1279b5"/></svg></div>
+        <div class="info">
+          <div><strong>Free Fire LATAM</strong><br><small>Recarga de diamantes</small></div>
+          <span class="go">›</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <section class="rv">
+    <h2>Cómo comprar</h2>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><strong>Creá tu cuenta y cargá saldo</strong><p>Registrate gratis y sumá saldo a tu cuenta.</p></div>
+      <div class="step"><div class="n">2</div><strong>Elegí tu paquete</strong><p>Entrá a Free Fire LATAM, escribí tu ID y elegí los diamantes.</p></div>
+      <div class="step"><div class="n">3</div><strong>Recibí tus diamantes</strong><p>Confirmás la compra y te recargamos tu ID.</p></div>
+    </div>
+  </section>
+
+  <section class="rv">
+    <h2>Comprá con tranquilidad</h2>
+    <div class="steps plain">
+      <div class="step"><strong>Entrega automática</strong><p>Tu pedido se envía solo apenas confirmás. Algunos tardan un poco más y los ves como "En proceso".</p></div>
+      <div class="step"><strong>Verificamos tu ID</strong><p>Cuando el juego lo permite, te mostramos el nombre del jugador antes de comprar.</p></div>
+      <div class="step"><strong>Si falla, te devolvemos el saldo</strong><p>Si un pedido no se puede entregar, el saldo vuelve a tu cuenta automáticamente.</p></div>
+      <div class="step"><strong>Precios claros en USDT</strong><p>Ves el precio final y tu saldo antes de confirmar. Sin cotizaciones ni sorpresas.</p></div>
+    </div>
+  </section>
+
+  <section class="faq rv">
+    <h2>Preguntas frecuentes</h2>
+    <details><summary>¿Qué necesito para recargar?</summary><p>Tu ID de jugador de Free Fire y saldo en la página.</p></details>
+    <details><summary>¿Cómo cargo saldo?</summary><p>Desde Free Fire LATAM, tocando "Cargar saldo": pagás en USDT por Binance Pay (mínimo 5 USDT) y lo acreditamos al revisar tu pago.</p></details>
+    <details><summary>¿Qué hago si tengo un problema con mi compra?</summary><p>Tocá el botón Soporte y contanos qué pasó con tu ID y el paquete que pediste.</p></details>
+  </section>
+
+
+  <footer>Free Fire es marca de sus respectivos dueños. Este sitio no está afiliado a Garena.<br><button type="button" id="adm" style="background:none;border:0;color:var(--muted);font:inherit;font-size:.8rem;text-decoration:underline;cursor:pointer;margin-top:10px;opacity:.7">Acceso administrador</button></footer>
+</div>
+  <!-- Cambiá el número por el tuyo (código de país + número, sin + ni espacios) -->
+  <a class="wa" href="https://wa.me/5491151042005?text=Hola%2C%20tuve%20un%20problema%20con%20mi%20compra" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>Soporte</a>
+<div id="ov"><div class="modal" id="modal"></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  const ov = document.getElementById("ov"), modal = document.getElementById("modal");
+  const cerrar = () => ov.classList.remove("open");
+  ov.addEventListener("click", e => { if(e.target===ov) cerrar(); });
+  document.addEventListener("keydown", e => { if(e.key==="Escape") cerrar(); });
+
+  document.getElementById("adm").onclick = async () => {
+    await Auth.listo;
+    if(Auth.actual() && Auth.actual().es_admin){ location.href = "admin.html"; return; }
+    modal.innerHTML = `
+      <h3>Acceso administrador</h3>
+      <div class="field"><label for="ae">Email</label><input id="ae" type="email" autocomplete="username"></div>
+      <div class="field"><label for="ap">Clave</label><input id="ap" type="password" autocomplete="current-password"></div>
+      <div class="msg" id="am" role="alert"></div>
+      <div class="acts">
+        <button class="btn ghost" type="button" id="ac">Cancelar</button>
+        <button class="btn" type="button" id="ag">Entrar</button>
+      </div>`;
+    ov.classList.add("open");
+    document.getElementById("ae").focus();
+    document.getElementById("ac").onclick = cerrar;
+    const ir = async () => {
+      const email = document.getElementById("ae").value, pass = document.getElementById("ap").value;
+      const msg = document.getElementById("am"), b = document.getElementById("ag");
+      if(!email || !pass){ msg.textContent = "Escribí tu email y tu clave."; return; }
+      b.disabled = true; b.innerHTML = '<span class="spin"></span>'; msg.textContent = "";
+      try{
+        await Auth.entrar(email, pass);
+        await Auth.cargarPerfil();
+        if(Auth.actual() && Auth.actual().es_admin){ location.href = "admin.html"; return; }
+        await sb.auth.signOut(); Auth.u = null; Auth.renderAcct();
+        msg.textContent = "Esa cuenta no es de administrador.";
+      }catch(err){
+        msg.textContent = err.message==="datos" ? "Email o clave incorrectos." : err.message==="sinconfirmar" ? "Primero confirmá tu email." : "No se pudo conectar: "+(Auth.detalle||"error desconocido");
+      }
+      b.disabled = false; b.textContent = "Entrar";
+    };
+    document.getElementById("ag").onclick = ir;
+    modal.addEventListener("keydown", e => { if(e.key==="Enter") ir(); });
+  };
+</script>
+</body>
+</html>

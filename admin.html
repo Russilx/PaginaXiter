@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Tienda de diamantes</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header><a class="back" href="index.html">‹ Volver al inicio</a><div id="acct"></div></header>
+  <div class="page-title"><h1>Panel de administrador</h1></div>
+  <div id="panel" style="margin-top:26px"><p style="color:var(--muted)">Cargando…</p></div>
+</div>
+<div id="ov"><div class="modal" id="modal"></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  const panel = document.getElementById("panel");
+  Auth.listo.then(()=>{
+    const u = Auth.actual();
+    if(!u) return location.replace("cuenta.html?volver=admin.html");
+    if(!u.es_admin){ panel.innerHTML = '<p>No tenés acceso a esta página.</p>'; return; }
+    cargar();
+  });
+  const quien = p => `${esc(p?.nombre)} <span style="color:var(--muted)">(${esc(p?.email)})</span>`;
+  const fecha = t => new Date(t).toLocaleString("es-AR",{dateStyle:"short",timeStyle:"short"});
+
+  async function cargar(){
+    await sb.functions.invoke("co",{body:{action:"sync"}}).catch(()=>{});
+    const [q,d,p] = await Promise.all([
+      sb.from("paquetes").select("diamantes,precio").order("diamantes"),
+      sb.from("depositos").select("id,metodo,monto,referencia,creado,perfiles(nombre,email)").eq("estado","pendiente").order("creado"),
+      sb.from("pedidos").select("id,diamantes,precio,id_jugador,creado,co_reference,motivo,perfiles(nombre,email)").eq("estado","pendiente").order("creado")
+    ]);
+    const deps = d.data || [], peds = p.data || [], paqs = q.data || [];
+    panel.innerHTML = `
+      <button class="btn ghost" type="button" id="rec" style="margin-bottom:22px">Actualizar</button> <button class="btn ghost" type="button" id="cat" style="margin-bottom:22px">Catálogo y saldo de Central One</button><div id="catout" style="margin-bottom:30px"></div>
+      <h2>Precios de paquetes</h2>
+      <div class="adm" style="margin-bottom:44px">${paqs.map(x=>`
+        <div class="step" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <b style="flex:1;min-width:130px">${x.diamantes.toLocaleString("es-AR")} diamantes</b>
+          <input inputmode="decimal" value="${esc(x.precio)}" style="max-width:150px" aria-label="Precio de ${x.diamantes} diamantes">
+          <button class="btn" type="button" data-pq="${x.diamantes}">Guardar</button>
+        </div>`).join("") || '<p style="color:var(--muted)">No hay paquetes.</p>'}</div>
+      <h2>Cargas de saldo pendientes (${deps.length})</h2>
+      <div class="adm" style="margin-bottom:44px">${deps.map(x=>`
+        <div class="step" data-dep="${x.id}">
+          <div class="row"><b>${quien(x.perfiles)}</b></div>
+          <div class="row"><span>Método</span><b>${x.metodo==="binance"?"Binance":"Mercado Pago"}</b></div>
+          <div class="row"><span>Declaró</span><b>${x.metodo==="binance"?esc(x.monto)+" USDT":fmt(x.monto)}</b></div>
+          <div class="row"><span>Comprobante</span><b>${esc(x.referencia)}</b></div>
+          <div class="row"><span>Fecha</span><b>${fecha(x.creado)}</b></div>
+          <input inputmode="decimal" placeholder="Saldo a acreditar (USDT)" value="${esc(x.monto)}">
+          <div class="acts"><button class="btn" data-a="ok">Aprobar</button><button class="btn ghost" data-a="no">Rechazar</button></div>
+        </div>`).join("") || '<p style="color:var(--muted)">No hay cargas pendientes.</p>'}</div>
+      <h2>Pedidos de diamantes pendientes (${peds.length})</h2>
+      <div class="adm">${peds.map(x=>`
+        <div class="step" data-ped="${x.id}">
+          <div class="row"><b>${quien(x.perfiles)}</b></div>
+          <div class="row"><span>Diamantes</span><b>${x.diamantes.toLocaleString("es-AR")}</b></div>
+          <div class="row"><span>ID de jugador</span><b>${esc(x.id_jugador)}</b></div>
+          <div class="row"><span>Pagó</span><b>${fmt(x.precio)}</b></div>
+          <div class="row"><span>Central One</span><b>${esc(x.co_reference||"sin enviar")}${x.motivo?" · "+esc(x.motivo):""}</b></div>
+          <div class="row"><span>Fecha</span><b>${fecha(x.creado)}</b></div>
+          <div class="acts" style="margin-top:12px"><button class="btn" data-a="ok">Entregado</button><button class="btn ghost" data-a="no">Rechazar y devolver</button></div>
+        </div>`).join("") || '<p style="color:var(--muted)">No hay pedidos pendientes.</p>'}</div>`;
+    document.getElementById("rec").onclick = cargar;
+    document.getElementById("cat").onclick = async ()=>{
+      const out = document.getElementById("catout");
+      out.innerHTML = '<p style="color:var(--muted)">Cargando…</p>';
+      const [c, pk] = await Promise.all([
+        sb.functions.invoke("co",{ body:{ action:"catalog" } }),
+        sb.from("paquetes").select("diamantes,co_product_id").order("diamantes")
+      ]);
+      const data = c.data;
+      if(!data || !data.ok){ out.innerHTML = '<p>No se pudo leer el catálogo.</p>'; return; }
+      const txt = i => [i.name,i.product_family_name,i.region,i.market].join(" ").toLowerCase();
+      let items = data.items.filter(i=>txt(i).includes("free fire") && !/\bPIN\b/.test(i.name));
+      const la = items.filter(i=>txt(i).includes("latam"));
+      if(la.length) items = la;
+      let aviso = "";
+      if(!items.length){ items = data.items; aviso = '<p style="color:var(--muted)">No encontré productos de Free Fire LATAM; muestro todo el catálogo.</p>'; }
+      const paq = pk.data || [], sql = [];
+      if(pk.error) aviso += '<p style="color:#ff5a5a">No pude leer tus paquetes (' + esc(pk.error.message) + '). ¿Ejecutaste migracion-api.sql?</p>';
+      const filas = items.map(i=>{
+        const nums = (i.name.match(/\d[\d.,]*/)||[]).slice(0,1).map(n=>n.replace(/[.,]/g,""));
+        const p = paq.find(p=>nums.includes(String(p.diamantes)));
+        if(p && p.co_product_id!==i.product_id) sql.push(`update paquetes set co_product_id = '${i.product_id}' where diamantes = ${p.diamantes};`);
+        const estado = p ? (p.co_product_id===i.product_id ? "✓ Vinculado" : "Paquete de "+p.diamantes+" sin vincular") : "Sin paquete igual";
+        return `<div class="step" style="padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+          <div><b>${esc(i.name)}</b><br><span style="color:var(--muted);font-size:.8rem">${esc(i.region||"")} · ${esc(i.reseller_price)} USD · ${i.in_stock?"con stock":"sin stock"}</span></div>
+          <span style="font-size:.8rem;font-weight:800">${estado}</span></div>`;
+      }).join("");
+      out.innerHTML = `<div class="step" style="padding:14px 16px;margin-bottom:14px"><div class="row"><span>Saldo en Central One</span><b>${esc(data.balance && data.balance.available_balance)} USD</b></div></div>
+        ${aviso}${filas}
+        ${sql.length ? `<p style="margin:18px 0 8px">SQL para vincular (${sql.length}):</p><textarea id="sqlout" readonly rows="${Math.min(sql.length+1,10)}" style="width:100%;font-family:monospace;font-size:.8rem;padding:10px;border-radius:10px">${esc(sql.join("\n"))}</textarea><button class="btn ghost" type="button" id="sqlcp" style="margin-top:8px">Copiar SQL</button>` : ""}`;
+      const cp = document.getElementById("sqlcp");
+      if(cp) cp.onclick = ()=>navigator.clipboard.writeText(sql.join("\n")).then(()=>toast("SQL copiado"), ()=>toast("No se pudo copiar"));
+    };
+  }
+
+  panel.addEventListener("click", async e=>{
+    const g = e.target.closest("button[data-pq]"); if(!g) return;
+    const precio = parseFloat(g.previousElementSibling.value.replace(",","."));
+    if(!(precio>0)) return toast("Escribí un precio válido");
+    g.disabled = true;
+    const r = await sb.rpc("actualizar_precio",{ p_diamantes:+g.dataset.pq, p_precio:precio });
+    g.disabled = false;
+    toast(r.error ? "No se pudo guardar" : "Precio guardado");
+  });
+  panel.addEventListener("click", async e=>{
+    const b = e.target.closest("button[data-a]"); if(!b) return;
+    const card = b.closest(".step"), ok = b.dataset.a==="ok";
+    let r;
+    if(card.dataset.dep){
+      const monto = parseFloat(card.querySelector("input").value.replace(",","."));
+      if(ok && !(monto>0)) return toast("Escribí el saldo a acreditar");
+      if(!ok && !confirm("¿Rechazar esta carga?")) return;
+      r = await sb.rpc("resolver_deposito",{ p_id:+card.dataset.dep, p_aprobar:ok, p_credito: ok ? monto : null });
+    } else {
+      if(!ok && !confirm("¿Rechazar el pedido y devolver el saldo al cliente?")) return;
+      r = await sb.rpc("resolver_pedido",{ p_id:+card.dataset.ped, p_ok:ok });
+    }
+    toast(r.error ? "No se pudo (¿ya estaba resuelto?)" : "Listo");
+    cargar();
+  });
+</script>
+</body>
+</html>
