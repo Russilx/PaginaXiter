@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XITERKING · Diamantes y torneos</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+/* Pantalla de carga */
+#intro{position:fixed;inset:0;z-index:9999;overflow:hidden;transition:visibility 0s linear 1.1s;animation:introAuto .6s ease 8s forwards}
+#intro.out{visibility:hidden}
+#intro .door{position:absolute;top:0;bottom:0;width:50.5%;transition:transform 1s cubic-bezier(.77,0,.18,1)}
+#intro .dl{left:0;background:repeating-linear-gradient(0deg,#ffffff07 0 1px,transparent 1px 3px),radial-gradient(circle 75vmax at 100% 45%,#2a0608 0,#0a0505 42%,#000 100%)}
+#intro .dr{right:0;background:repeating-linear-gradient(0deg,#ffffff07 0 1px,transparent 1px 3px),radial-gradient(circle 75vmax at 0% 45%,#2a0608 0,#0a0505 42%,#000 100%)}
+#intro.out .dl{transform:translateX(-101%)}
+#intro.out .dr{transform:translateX(101%)}
+#intro .box{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:transform .8s ease,opacity .5s ease;animation:introShake .55s linear .8s}
+#intro.out .box{transform:scale(1.15);opacity:0}
+#intro .embers{position:absolute;inset:0;z-index:1;pointer-events:none;transition:opacity .3s ease}
+#intro.out .embers{opacity:0}
+#intro .emblem{position:relative;width:clamp(130px,34vw,180px);aspect-ratio:1;display:grid;place-items:center;animation:introIn .9s cubic-bezier(.2,.9,.3,1.2) both}
+#intro .emblem::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 55%,var(--red,#e10600) 100%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));animation:introSpin 1.9s linear infinite}
+#intro .emblem::after{content:"";position:absolute;inset:0;border-radius:50%;border:1px solid #ffffff14;box-shadow:0 0 60px #e1060033 inset;animation:introGlow 2.2s ease-in-out .9s infinite}
+#intro .r2{position:absolute;inset:-16px;border-radius:50%;border:1px dashed #e1060077;animation:introSpin 7s linear infinite reverse}
+#intro .wave{position:absolute;inset:0;border-radius:50%;border:2px solid var(--red,#e10600);opacity:0;animation:introWave 1s ease-out .75s both}
+#intro .emblem img{height:62%;width:auto;filter:drop-shadow(0 0 22px #e10600aa);animation:introPulse 2.2s ease-in-out .9s infinite}
+#intro .nm{display:flex;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:.3em;font-size:clamp(1.6rem,7vw,2.3rem);color:#fff;padding-left:.3em;animation:introGlitch .45s steps(1) 2.45s 1}
+#intro .nm span{display:inline-block;opacity:0;transform:translateY(16px) scale(1.2);animation:introLetter .55s ease forwards;animation-delay:calc(.9s + var(--i) * .1s)}
+#intro .nm span:nth-child(n+6){color:var(--red,#e10600);text-shadow:0 0 18px #e1060088}
+#intro .tag{font-size:.72rem;letter-spacing:.4em;text-transform:uppercase;color:#b9a9a9;padding-left:.4em;opacity:0;animation:introFade .9s ease 2s forwards}
+#intro .load{width:min(260px,66vw);display:flex;flex-direction:column;align-items:center;gap:9px;opacity:0;animation:introFade .6s ease 1.2s forwards}
+#intro .bar{width:100%;height:6px;background:#ffffff1a;-webkit-mask:repeating-linear-gradient(90deg,#000 0 9px,transparent 9px 12px);mask:repeating-linear-gradient(90deg,#000 0 9px,transparent 9px 12px)}
+#intro .bar i{display:block;height:100%;width:100%;transform-origin:left;transform:scaleX(0);background:linear-gradient(90deg,#8a0500,var(--red,#e10600),#ff6a4d)}
+#intro .pct{font-size:.72rem;letter-spacing:.25em;color:#d8c9c9;font-variant-numeric:tabular-nums}
+#intro .em{position:absolute;bottom:-10px;border-radius:50%;background:var(--red,#e10600);box-shadow:0 0 8px #e10600;opacity:0;animation:introEmber linear infinite}
+#intro .rays{position:absolute;left:50%;top:calc(50% - 90px);width:170vmax;height:170vmax;margin:-85vmax 0 0 -85vmax;background:repeating-conic-gradient(from 0deg,#e1060030 0 5deg,transparent 5deg 15deg);-webkit-mask:radial-gradient(circle closest-side,#000 0,transparent 70%);mask:radial-gradient(circle closest-side,#000 0,transparent 70%);opacity:0;animation:introFade 1.2s ease .2s forwards,introSpin 50s linear infinite}
+#intro .fire{position:absolute;left:0;right:0;bottom:0;height:46vh;-webkit-mask:linear-gradient(to top,#000 35%,transparent);mask:linear-gradient(to top,#000 35%,transparent);opacity:0;animation:introFade 1.4s ease .3s forwards}
+#intro .fire i{position:absolute;bottom:-12vh;left:var(--x);width:36vw;height:48vh;margin-left:-18vw;background:radial-gradient(ellipse 50% 70% at 50% 100%,#ffb12b 0,#ff4a1a 30%,#e10600 52%,transparent 76%);filter:blur(14px);transform-origin:50% 100%;animation:introFlame var(--d) ease-in-out infinite alternate}
+#intro .flash{position:absolute;inset:0;z-index:3;pointer-events:none;background:radial-gradient(circle at 50% calc(50% - 90px),#fff 0,#ffb199 30%,transparent 70%);opacity:0;animation:introFlash .7s ease-out .8s}
+@keyframes introFlash{0%{opacity:0}10%{opacity:.95}100%{opacity:0}}
+@keyframes introShake{0%,100%{transform:none}12%{transform:translate(-9px,5px)}25%{transform:translate(8px,-6px)}38%{transform:translate(-6px,-4px)}52%{transform:translate(5px,4px)}68%{transform:translate(-3px,2px)}84%{transform:translate(2px,-1px)}}
+@keyframes introFlame{0%{transform:scale(1,.7) translateX(-2vw)}100%{transform:scale(1.12,1.15) translateX(2vw)}}
+@keyframes introIn{from{opacity:0;transform:scale(.5) rotate(-12deg)}to{opacity:1;transform:none}}
+@keyframes introSpin{to{transform:rotate(360deg)}}
+@keyframes introWave{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(2.6)}}
+@keyframes introGlow{0%,100%{box-shadow:0 0 40px #e1060022 inset,0 0 20px #e1060022}50%{box-shadow:0 0 70px #e1060055 inset,0 0 50px #e1060044}}
+@keyframes introPulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 16px #e1060088)}50%{transform:scale(1.07);filter:drop-shadow(0 0 32px #e10600dd)}}
+@keyframes introLetter{to{opacity:1;transform:none}}
+@keyframes introFade{to{opacity:1}}
+@keyframes introGlitch{0%{transform:translate(-3px,0);text-shadow:3px 0 #e10600,-3px 0 #2ee6ff}25%{transform:translate(3px,1px);text-shadow:-3px 0 #e10600,3px 0 #2ee6ff}50%{transform:translate(-2px,-1px);text-shadow:2px 0 #e10600,-2px 0 #2ee6ff}75%{transform:translate(2px,0);text-shadow:-2px 0 #e10600,2px 0 #2ee6ff}100%{transform:none;text-shadow:none}}
+@keyframes introEmber{0%{transform:translateY(0) scale(1);opacity:0}15%{opacity:.9}100%{transform:translateY(-100vh) scale(.4);opacity:0}}
+@keyframes introAuto{to{opacity:0;visibility:hidden}}
+@media (prefers-reduced-motion:reduce){#intro .rays,#intro .fire i,#intro .flash,#intro .box,#intro .emblem::before,#intro .emblem::after,#intro .r2,#intro .wave,#intro .emblem img,#intro .em,#intro .nm{animation:none}}
+</style>
+</head>
+<body>
+<div id="intro" role="status" aria-label="Cargando">
+  <div class="door dl"></div><div class="door dr"></div>
+  <div class="embers" id="introEmbers"><div class="rays"></div><div class="fire"><i style="--x:5%;--d:1.3s;animation-delay:-0.2s"></i><i style="--x:20%;--d:1.0s;animation-delay:-0.7s"></i><i style="--x:35%;--d:1.5s;animation-delay:-0.4s"></i><i style="--x:50%;--d:1.1s;animation-delay:-0.9s"></i><i style="--x:65%;--d:1.4s;animation-delay:-0.1s"></i><i style="--x:80%;--d:1.0s;animation-delay:-0.6s"></i><i style="--x:95%;--d:1.3s;animation-delay:-0.3s"></i></div></div>
+  <div class="box">
+    <div class="emblem"><span class="r2"></span><span class="wave"></span><img src="assets/logo.png" alt=""></div>
+    <div class="nm" aria-hidden="true"><span style="--i:0">X</span><span style="--i:1">I</span><span style="--i:2">T</span><span style="--i:3">E</span><span style="--i:4">R</span><span style="--i:5">K</span><span style="--i:6">I</span><span style="--i:7">N</span><span style="--i:8">G</span></div>
+    <div class="tag">Diamantes · Torneos</div>
+    <div class="load"><div class="bar"><i id="introBar"></i></div><div class="pct" id="introPct">0%</div></div>
+  </div>
+  <div class="flash"></div>
+</div>
+<script>
+  // Dura unos 2,8 s; si la página tarda más en cargar, espera en 90% hasta que termine
+  (function(){
+    var el = document.getElementById("intro"), bar = document.getElementById("introBar"), pct = document.getElementById("introPct"), em = document.getElementById("introEmbers");
+    var DUR = 2800, t0 = Date.now(), listo = document.readyState === "complete";
+    if(!listo) window.addEventListener("load", function(){ listo = true; });
+    for(var k = 0; k < 22; k++){
+      var d = document.createElement("i"), z = 2 + Math.random()*4; d.className = "em";
+      d.style.cssText = "left:" + (Math.random()*100) + "%;width:" + z + "px;height:" + z + "px;animation-duration:" + (3 + Math.random()*4) + "s;animation-delay:" + (-Math.random()*5) + "s";
+      em.appendChild(d);
+    }
+    function paso(){
+      var p = Math.min((Date.now() - t0) / DUR, 1);
+      if(!listo) p = Math.min(p, .9);
+      p = 1 - Math.pow(1 - p, 1.6);   // arranca rápido y frena al final
+      if(listo && Date.now() - t0 >= DUR) p = 1;
+      bar.style.transform = "scaleX(" + p + ")";
+      pct.textContent = Math.round(p * 100) + "%";
+      if(p < 1) return requestAnimationFrame(paso);
+      setTimeout(function(){ el.classList.add("out"); setTimeout(function(){ el.remove(); }, 1200); }, 300);
+    }
+    paso();
+  })();
+</script>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <linearGradient id="gA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff6f2"/><stop offset="1" stop-color="#ffc2a6"/></linearGradient>
+  <linearGradient id="gB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9a7a"/><stop offset="1" stop-color="#ff5a2e"/></linearGradient>
+  <linearGradient id="gC" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a3a"/><stop offset="1" stop-color="#e10600"/></linearGradient>
+  <linearGradient id="gD" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d90a00"/><stop offset="1" stop-color="#9c0500"/></linearGradient>
+  <linearGradient id="gE" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a10500"/><stop offset="1" stop-color="#5e0300"/></linearGradient>
+  <symbol id="gem" viewBox="0 0 100 96"><g stroke="#ffffff" stroke-opacity=".6" stroke-width=".9" stroke-linejoin="round">
+    <polygon points="4,34 28,8 27,34" fill="url(#gB)"/>
+    <polygon points="28,8 50,8 27,34" fill="url(#gA)"/>
+    <polygon points="50,8 27,34 50,34" fill="url(#gA)"/>
+    <polygon points="50,8 50,34 73,34" fill="url(#gB)"/>
+    <polygon points="50,8 72,8 73,34" fill="url(#gC)"/>
+    <polygon points="72,8 96,34 73,34" fill="url(#gD)"/>
+    <polygon points="4,34 27,34 50,92" fill="url(#gC)"/>
+    <polygon points="27,34 50,34 50,92" fill="url(#gB)"/>
+    <polygon points="50,34 73,34 50,92" fill="url(#gD)"/>
+    <polygon points="73,34 96,34 50,92" fill="url(#gE)"/>
+  </g>
+  <polygon points="12,31 29,13 33,13 18,31" fill="#fff" opacity=".45"/>
+  <path d="M80 7l2 7 7 2-7 2-2 7-2-7-7-2 7-2z" fill="#fff"/></symbol>
+</defs></svg>
+<div class="wrap">
+  <header><div class="logo"><img src="assets/logo.png" alt="" width="34" height="38"> XITERKING</div><div id="acct"></div></header>
+
+  <section class="hero">
+    <div class="hero-emblem"><span class="glow"></span><span class="orb"></span><span class="orb o2"></span><img src="assets/logo.png" alt="XITERKING" width="112" height="126"></div>
+    <h1>Bienvenido a <span>XITERKING</span></h1>
+    <p>Diamantes de Free Fire al toque y torneos para demostrar quién manda.</p>
+    <a class="btn" href="free-fire-latam.html">Ver recargas</a>
+  </section>
+
+
+
+  <section class="rv">
+    <h2>Productos disponibles</h2>
+    <div class="products">
+      <a class="product" href="free-fire-latam.html">
+        <div class="art ff"><span class="badge">Disponible</span><div class="aflames"><span style="--x:5%;--d:1.3s;animation-delay:-0.2s"></span><span style="--x:25%;--d:1.0s;animation-delay:-0.7s"></span><span style="--x:45%;--d:1.5s;animation-delay:-0.4s"></span><span style="--x:65%;--d:1.1s;animation-delay:-0.9s"></span><span style="--x:85%;--d:1.4s;animation-delay:-0.1s"></span><span style="--x:100%;--d:1.2s;animation-delay:-0.6s"></span></div><span class="prays"></span>
+          <div class="ffname"><b>FREE<br>FIRE</b><span class="chip"><svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="currentColor" d="M12 2c1 4-3 5-3 9a4 4 0 0 0 8 0c0-2-1-3-1-5 2 1 4 4 4 7a8 8 0 0 1-16 0c0-6 6-7 8-11z"/></svg>LATAM</span></div>
+          <img class="plogo" src="assets/logo.png" alt=""></div>
+        <div class="info">
+          <div><strong>Recargas de diamantes</strong><br><small>Entrega automática · Pagás en USDT</small></div>
+          <span class="cta">Recargar <span aria-hidden="true">›</span></span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <section class="rv" id="torneos">
+    <h2>Torneos</h2>
+    <div class="arena">
+      <div class="arena-top">
+        <div>
+          <span class="arena-tag">⚔ Competitivo · Free Fire</span>
+          <div class="arena-title">Arena XITERKING</div>
+          <p>Elegí tu modo: Solo, Dúo o Escuadra. Anotá tu nombre y tu ID, juntá a tu equipo y peleá por premios reales.</p>
+        </div>
+        <div class="arena-stats">
+          <div><b id="st-t">0</b><span>Torneos</span></div>
+          <div><b id="st-e">0</b><span>Inscriptos</span></div>
+          <div><b id="st-p">—</b><span>Próxima fecha</span></div>
+        </div>
+      </div>
+      <ol class="arena-steps">
+        <li><div><b>Creá tu cuenta</b>Es gratis y te lleva un minuto.</div></li>
+        <li><div><b>Inscribite</b>Poné el nombre e ID de cada jugador.</div></li>
+        <li><div><b>Jugá y ganá</b>Entrá a la sala a la hora indicada.</div></li>
+      </ol>
+    </div>
+    <div class="tn-fil" id="tfil">
+      <button type="button" data-f="todos" class="on">Todos</button>
+      <button type="button" data-f="1">Solo</button>
+      <button type="button" data-f="2">Dúo</button>
+      <button type="button" data-f="4">Escuadra</button>
+    </div>
+    <div class="tornos" id="tornos"><div class="tvacio">Cargando torneos…</div></div>
+  </section>
+
+
+
+
+
+  <footer>© 2026 XITERKING · Tienda independiente.<br><button type="button" id="adm" style="background:none;border:0;color:var(--muted);font:inherit;font-size:.8rem;text-decoration:underline;cursor:pointer;margin-top:10px;opacity:.7">Acceso administrador</button></footer>
+</div>
+  <!-- Cambiá el número por el tuyo (código de país + número, sin + ni espacios) -->
+  <a class="wa" href="https://wa.me/5491151042005?text=Hola%2C%20tuve%20un%20problema%20con%20mi%20compra" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>Soporte</a>
+<div id="ov"><div class="modal" id="modal"></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  const ov = document.getElementById("ov"), modal = document.getElementById("modal");
+  const cerrar = () => { ov.classList.remove("open"); modal.classList.remove("wide"); };
+  ov.addEventListener("click", e => { if(e.target===ov) cerrar(); });
+  document.addEventListener("keydown", e => { if(e.key==="Escape") cerrar(); });
+
+  // ---- Torneos (los crea el admin desde admin.html) ----
+  (function torneos(){
+    const $ = id => document.getElementById(id);
+    const box = $("tornos"), fil = $("tfil");
+    const NJ = { "solo":1, "dúo":2, "duo":2, "escuadra":4 };
+    const nj = m => NJ[String(m||"").toLowerCase()] || 4;
+    const pad = n => String(n).padStart(2,"0");
+    const mon = (n,m) => m === "USDT" ? Number(n).toLocaleString("es-AR") + " USDT" : "$" + Number(n).toLocaleString("es-AR");
+    const icono = n => '<span class="tn-ic">' + '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/></svg>'.repeat(n) + '</span>';
+    let LISTA = [], CUP = {}, MIS = {}, filtro = "todos", timer = null;
+
+    async function cargar(){
+      await Auth.listo;
+      const u = Auth.actual();
+      const [t, c, m] = await Promise.all([
+        sb.from("torneos").select("id,titulo,modo,fecha,premio,premio2,premio3,mapa,formato,reglas,cupos,costo,descripcion,estado,tipo,pago_kill,moneda").neq("estado","finalizado").order("fecha"),
+        sb.rpc("inscriptos_torneos"),
+        u ? sb.from("inscripciones").select("id,torneo_id,equipo,estado,monto").eq("usuario",u.id).in("estado",["pendiente","confirmada"]) : Promise.resolve({ data:[] })
+      ]);
+      if(t.error){ console.error(t.error); box.innerHTML = '<div class="tvacio">No pudimos cargar los torneos. Probá de nuevo en un momento.</div>'; return; }
+      LISTA = t.data || [];
+      CUP = {}; (c.data || []).forEach(x => CUP[x.torneo_id] = x.equipos);
+      MIS = {}; (m.data || []).forEach(x => MIS[x.torneo_id] = x);
+      render();
+    }
+
+    function card(t){
+      const d = new Date(t.fecha), vivo = t.estado === "en_curso", n = nj(t.modo);
+      const costoN = Number(t.costo) || 0;
+      const costo = costoN > 0 ? mon(costoN, t.moneda) : "Gratis";
+      const insc = CUP[t.id] || 0, lleno = t.cupos && insc >= t.cupos, mi = MIS[t.id];
+      const unidad = n > 1 ? "equipos" : "jugadores";
+      const pct = t.cupos ? Math.min(100, Math.round(insc / t.cupos * 100)) : 0;
+      const fecha = d.toLocaleDateString("es-AR",{ weekday:"long", day:"numeric", month:"long" });
+      const hora = d.toLocaleTimeString("es-AR",{ hour:"2-digit", minute:"2-digit" });
+
+      const kills = t.tipo === "kills", pk = Number(t.pago_kill) || 0, nf = x => x.toLocaleString("es-AR");
+      let pod = "";
+      if(kills){
+        const eq = costoN > 0 && pk > 0 ? Math.ceil(costoN / pk) : 0;
+        pod = `<div class="tn-kill"><div class="k1"><span>Cada kill vale</span><b>${mon(pk, t.moneda)}</b></div><div class="k2">Pagás <b>${costo}</b> y cobrás por cada baja que hagas.${eq ? ` Con <b>${eq} kill${eq > 1 ? "s" : ""}</b> ya recuperás la inscripción.` : ""} Más kills, más ganás: te pagamos tus kills al terminar, a la cuenta que indiques al inscribirte.</div></div>`;
+      } else if(t.premio2 || t.premio3){
+        const p = (k,l,v) => v ? `<div class="pd p${k}"><span>${l}</span><b>${esc(v)}</b></div>` : "";
+        pod = `<div class="tn-pod">${p(2,"2º",t.premio2)}${p(1,"1º",t.premio)}${p(3,"3º",t.premio3)}</div>`;
+      } else if(t.premio){
+        pod = `<div class="tn-pod solo"><div class="pd p1"><span>Premio</span><b>${esc(t.premio)}</b></div></div>`;
+      }
+
+      const info = [
+        ["Fecha", fecha], ["Hora", hora + " hs"],
+        ["Jugadores", n === 1 ? "Individual" : n + " por equipo"],
+        ["Mapa", t.mapa], ["Formato", t.formato], ["Inscripción", costo], kills ? ["Pago por kill", mon(pk, t.moneda)] : []
+      ].filter(x => x[1]).map(x => `<div><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join("");
+
+      const cup = t.cupos
+        ? `<div class="tn-cup"><div class="tn-bar"><i style="width:${pct}%"></i></div><small>${insc} / ${t.cupos} ${unidad} · ${lleno ? "¡Cupos agotados!" : "quedan " + (t.cupos - insc)}</small></div>`
+        : (insc ? `<div class="tn-cup"><small>${insc} ${unidad} inscriptos · sin límite de cupos</small></div>` : "");
+
+      const reglas = (t.reglas || "").split("\n").map(x => x.trim()).filter(Boolean);
+      const regHtml = reglas.length ? `<details class="tn-det"><summary>Reglas y requisitos</summary><ul>${reglas.map(r => `<li>${esc(r)}</li>`).join("")}</ul></details>` : "";
+      const rkHtml = kills ? `<details class="tn-det" data-rank="${t.id}"><summary>Ranking de kills</summary><div class="tn-plist">Cargando…</div></details>` : "";
+      const parHtml = insc ? `<details class="tn-det" data-part="${t.id}"><summary>Quiénes ya se anotaron (${insc})</summary><div class="tn-plist">Cargando…</div></details>` : "";
+
+      let cta;
+      if(mi){
+        const pend = mi.estado === "pendiente", pagada = mi.estado === "confirmada" && Number(mi.monto) > 0;
+        cta = pend
+          ? `<div class="tn-ok pend">⏳ Pago en revisión · te confirmamos el lugar enseguida</div>`
+          : `<div class="tn-ok">✓ Ya estás inscripto${mi.equipo ? " como <b>" + esc(mi.equipo) + "</b>" : ""}</div>`;
+        if(!vivo && !pagada) cta += `<button class="btn ghost sm" type="button" data-can="${mi.id}">Cancelar inscripción</button>`;
+      } else if(vivo){ cta = '<button class="btn" type="button" disabled>Inscripciones cerradas</button>'; }
+      else if(lleno){ cta = '<button class="btn" type="button" disabled>Cupos agotados</button>'; }
+      else { cta = `<button class="btn" type="button" data-ins="${t.id}">Inscribirme · ${costo}</button>`; }
+
+      return `<article class="tn${vivo ? " vivo" : ""}">
+        <div class="tn-head"><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="tn-badge">${icono(n)}${esc(t.modo)}</span>${kills ? '<span class="tn-kt">💀 Por kills</span>' : ""}</div><span class="tn-st">${vivo ? "En vivo" : "Próximamente"}</span></div>
+        <h3>${esc(t.titulo)}</h3>
+        ${t.descripcion ? `<p class="tn-desc">${esc(t.descripcion)}</p>` : ""}
+        ${vivo ? '<div class="tn-live">🔥 Torneo en juego</div>'
+               : `<div class="tn-cd" data-cd="${d.getTime()}"><div><b>00</b><span>días</span></div><div><b>00</b><span>hs</span></div><div><b>00</b><span>min</span></div><div><b>00</b><span>seg</span></div></div>`}
+        ${pod}
+        <div class="tn-grid">${info}</div>
+        ${cup}${regHtml}${rkHtml}${parHtml}
+        <div class="tn-cta">${cta}</div>
+      </article>`;
+    }
+
+    function render(){
+      clearInterval(timer);
+      const prox = LISTA.filter(t => t.estado === "proximo")[0];
+      $("st-t").textContent = LISTA.length;
+      $("st-e").textContent = LISTA.reduce((a,t) => a + (CUP[t.id] || 0), 0);
+      $("st-p").textContent = prox ? new Date(prox.fecha).toLocaleDateString("es-AR",{ day:"numeric", month:"short" }).replace(".","") : "—";
+      fil.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.f === filtro));
+      if(!LISTA.length){ box.innerHTML = '<div class="tvacio"><b>Próximamente</b>Estamos preparando los primeros torneos de XITERKING. ¡Volvé pronto!</div>'; return; }
+      const vis = LISTA.filter(t => filtro === "todos" || nj(t.modo) === +filtro);
+      if(!vis.length){ box.innerHTML = '<div class="tvacio"><b>Sin torneos de este modo</b>Probá con otro modo o volvé pronto.</div>'; return; }
+      box.innerHTML = vis.map(card).join("");
+      const tick = () => document.querySelectorAll("[data-cd]").forEach(el => {
+        const s = Math.floor((+el.dataset.cd - Date.now()) / 1000);
+        if(s <= 0){ el.outerHTML = '<div class="tn-go">¡Es la hora! Pronto abrimos la sala</div>'; return; }
+        const v = [Math.floor(s/86400), Math.floor(s%86400/3600), Math.floor(s%3600/60), s%60];
+        el.querySelectorAll("b").forEach((b,i) => b.textContent = pad(v[i]));
+      });
+      tick(); timer = setInterval(tick, 1000);
+    }
+
+    fil.addEventListener("click", e => {
+      const b = e.target.closest("button[data-f]"); if(!b) return;
+      filtro = b.dataset.f; render();
+    });
+
+    // lista pública de equipos (solo nombres, nunca IDs)
+    box.addEventListener("toggle", async e => {
+      const d = e.target;
+      if(!d.dataset || !d.open || d.dataset.ok) return;
+      if(d.dataset.part){
+        d.dataset.ok = "1";
+        const r = await sb.rpc("participantes_torneo",{ p_id: +d.dataset.part });
+        d.querySelector(".tn-plist").innerHTML = (r.error || !(r.data || []).length)
+          ? "Todavía no hay equipos."
+          : r.data.map((x,i) => `<span><i>${i+1}</i>${esc(x.etiqueta)}</span>`).join("");
+      } else if(d.dataset.rank){
+        d.dataset.ok = "1";
+        const r = await sb.rpc("ranking_kills",{ p_id: +d.dataset.rank });
+        d.querySelector(".tn-plist").innerHTML = (r.error || !(r.data || []).length)
+          ? "Todavía no hay resultados. El ranking aparece cuando termina el torneo."
+          : r.data.map((x,i) => `<span><i>${i+1}º</i>${esc(x.etiqueta)} · ${x.kills} kill${x.kills === 1 ? "" : "s"} · ${Number(x.premio).toLocaleString("es-AR")} USDT</span>`).join("");
+      }
+    }, true);
+
+    box.addEventListener("click", async e => {
+      const bi = e.target.closest("button[data-ins]");
+      if(bi){ const t = LISTA.find(x => String(x.id) === bi.dataset.ins); if(t) abrir(t); return; }
+      const bc = e.target.closest("button[data-can]");
+      if(bc){
+        if(!confirm("¿Cancelar tu inscripción?")) return;
+        bc.disabled = true;
+        const r = await sb.rpc("cancelar_inscripcion",{ p_id: +bc.dataset.can });
+        toast(r.error ? "No se pudo cancelar" : "Inscripción cancelada");
+        cargar();
+      }
+    });
+
+    const ERR = {
+      sesion:"Tu sesión venció. Volvé a ingresar.",
+      lleno:"Se agotaron los cupos.", ya:"Ya estás inscripto en este torneo.",
+      duplicado:"Alguno de esos IDs ya está inscripto en este torneo.", cerrado:"Las inscripciones ya cerraron.",
+      jugadores:"Faltan datos de jugadores.", nombre:"Revisá los nombres (2 a 30 caracteres).", id:"Revisá los IDs (solo números).",
+      torneo:"El torneo ya no existe.", metodo:"Método de pago inválido.", referencia:"Escribí el número de comprobante.",
+      cobro:"Escribí dónde querés cobrar tus kills.", pagada:"Tu inscripción ya está pagada. Escribinos por soporte si necesitás cancelarla."
+    };
+    const errTxt = m => { const k = Object.keys(ERR).find(k => String(m).trim() === k) || Object.keys(ERR).find(k => String(m).includes(k)); return k ? ERR[k] : "No se pudo inscribir. Probá de nuevo."; };
+
+    function abrir(t){
+      const u = Auth.actual(), n = nj(t.modo), costo = Number(t.costo) || 0, kills = t.tipo === "kills", usdt = t.moneda === "USDT";
+      modal.classList.remove("wide");
+      if(!u){
+        modal.innerHTML = `<h3>Necesitás una cuenta</h3><p>Para inscribirte en <b>${esc(t.titulo)}</b> primero ingresá o creá tu cuenta gratis.</p>
+          <div class="acts"><a class="btn ghost" href="cuenta.html?volver=index.html">Ingresar</a><a class="btn" href="cuenta.html?modo=registro&volver=index.html">Crear cuenta</a></div>`;
+        ov.classList.add("open"); return;
+      }
+      modal.classList.add("wide");
+      const jug = Array.from({ length:n }, (_,i) => `<div class="tn-pl">
+          <div class="tn-pn">${n === 1 ? "Tu cuenta de Free Fire" : i === 0 ? "Jugador 1 · Capitán" : "Jugador " + (i+1)}</div>
+          <div class="tn-pg">
+            <div class="field"><label for="n${i}">Nombre en el juego</label><input id="n${i}" maxlength="30" autocomplete="off"></div>
+            <div class="field"><label for="i${i}">ID de jugador</label><input id="i${i}" inputmode="numeric" maxlength="15" autocomplete="off" placeholder="Ej: 123456789"></div>
+          </div></div>`).join("");
+      const cobro = kills ? `<div class="field"><label for="ico">${usdt ? "ID de Binance Pay" : "Alias de Mercado Pago"} donde cobrar tus kills</label><input id="ico" maxlength="100" autocomplete="off"></div>` : "";
+      const pago = costo <= 0 ? "" : `<div class="tn-pay">
+          <div class="tn-pn">Pagá ${mon(costo, t.moneda)} ${usdt ? "por Binance Pay" : "por Mercado Pago"}</div>
+          ${usdt
+            ? `<div class="row"><span>Pay ID</span><b>${esc(PAGOS.binance.payId)}</b></div><div class="row"><span>Moneda</span><b>${esc(PAGOS.binance.nota)}</b></div><img src="${esc(PAGOS.binance.qr)}" alt="QR de Binance Pay">`
+            : `<div class="row"><span>Alias</span><b>${esc(PAGOS.mp.alias)}</b></div><div class="row"><span>Titular</span><b>${esc(PAGOS.mp.titular)}</b></div>`}
+          <div class="field" style="margin-top:12px"><label for="ir">Nº de comprobante / operación</label><input id="ir" maxlength="100" autocomplete="off"></div>
+        </div>`;
+      modal.innerHTML = `<h3>Inscripción · ${esc(t.modo)}</h3>
+        <p style="margin-bottom:14px"><b style="color:var(--text)">${esc(t.titulo)}</b></p>
+        ${n > 1 ? '<div class="field"><label for="ie">Nombre del equipo (opcional)</label><input id="ie" maxlength="30" autocomplete="off" placeholder="Ej: Los Diablos"></div>' : ""}
+        ${jug}${cobro}${pago}
+        <div class="row"><span>Inscripción</span><b>${costo > 0 ? mon(costo, t.moneda) : "Gratis"}</b></div>
+        ${costo > 0 ? '<p class="note">Revisamos tu pago y te confirmamos el lugar. Este pago no usa tu saldo de diamantes.</p>' : ""}
+        <div class="msg" id="im" role="alert" style="margin-top:12px"></div>
+        <div class="acts" style="margin-top:6px"><button class="btn ghost" type="button" id="ic">Cancelar</button><button class="btn" type="button" id="ig">${costo > 0 ? "Enviar inscripción" : "Confirmar inscripción"}</button></div>`;
+      ov.classList.add("open");
+      $("n0").focus();
+      $("ic").onclick = cerrar;
+      $("ig").onclick = async () => {
+        const msg = $("im"), b = $("ig"), jugadores = [];
+        for(let i = 0; i < n; i++){
+          const nombre = $("n"+i).value.trim(), id = $("i"+i).value.replace(/\s/g,"");
+          if(nombre.length < 2){ msg.textContent = n === 1 ? "Escribí tu nombre en el juego." : "Escribí el nombre del jugador " + (i+1) + "."; return; }
+          if(!/^[0-9]{5,15}$/.test(id)){ msg.textContent = "El ID del jugador " + (i+1) + " no es válido (solo números, 5 a 15 dígitos)."; return; }
+          jugadores.push({ nombre, id });
+        }
+        if(new Set(jugadores.map(j => j.id)).size < n){ msg.textContent = "Hay IDs repetidos en el equipo."; return; }
+        const co = kills ? $("ico").value.trim() : "", ref = costo > 0 ? $("ir").value.trim() : "";
+        if(kills && co.length < 3){ msg.textContent = "Escribí dónde querés cobrar tus kills."; return; }
+        if(costo > 0 && ref.length < 4){ msg.textContent = "Escribí el número de comprobante de tu pago."; return; }
+        msg.textContent = ""; b.disabled = true; b.innerHTML = '<span class="spin"></span>';
+        const r = await sb.rpc("inscribir_torneo",{
+          p_torneo: t.id, p_equipo: n > 1 ? $("ie").value.trim() : null, p_jugadores: jugadores,
+          p_metodo: costo > 0 ? (usdt ? "binance" : "mercadopago") : null, p_ref: ref || null, p_cobro: co || null
+        });
+        if(r.error){ b.disabled = false; b.textContent = costo > 0 ? "Enviar inscripción" : "Confirmar inscripción"; msg.textContent = errTxt(r.error.message); return; }
+        modal.classList.remove("wide");
+        modal.innerHTML = `<h3>${costo > 0 ? "¡Inscripción enviada!" : "¡Inscripción confirmada!"}</h3>
+          <p>${costo > 0 ? "Vamos a revisar tu pago y te confirmamos el lugar en <b style=\"color:var(--text)\">" + esc(t.titulo) + "</b>. Vas a verlo en la tarjeta del torneo." : "Ya estás anotado en <b style=\"color:var(--text)\">" + esc(t.titulo) + "</b>."}</p>
+          ${jugadores.map((j,i) => `<div class="row"><span>${n === 1 ? "Jugador" : "Jugador " + (i+1)}</span><b>${esc(j.nombre)} · ${esc(j.id)}</b></div>`).join("")}
+          <p class="note">Torneo: ${new Date(t.fecha).toLocaleDateString("es-AR",{ day:"numeric", month:"long" })} a las ${new Date(t.fecha).toLocaleTimeString("es-AR",{ hour:"2-digit", minute:"2-digit" })} hs.</p>
+          <div class="acts"><button class="btn" type="button" id="iok">Listo</button></div>`;
+        $("iok").onclick = cerrar;
+        cargar();
+      };
+    }
+
+    cargar();
+  })();
+
+  document.getElementById("adm").onclick = async () => {
+    await Auth.listo;
+    if(Auth.actual() && Auth.actual().es_admin){ location.href = "admin.html"; return; }
+    modal.innerHTML = `
+      <h3>Acceso administrador</h3>
+      <div class="field"><label for="ae">Email</label><input id="ae" type="email" autocomplete="username"></div>
+      <div class="field"><label for="ap">Clave</label><input id="ap" type="password" autocomplete="current-password"></div>
+      <div class="msg" id="am" role="alert"></div>
+      <div class="acts">
+        <button class="btn ghost" type="button" id="ac">Cancelar</button>
+        <button class="btn" type="button" id="ag">Entrar</button>
+      </div>`;
+    ov.classList.add("open");
+    document.getElementById("ae").focus();
+    document.getElementById("ac").onclick = cerrar;
+    const ir = async () => {
+      const email = document.getElementById("ae").value, pass = document.getElementById("ap").value;
+      const msg = document.getElementById("am"), b = document.getElementById("ag");
+      if(!email || !pass){ msg.textContent = "Escribí tu email y tu clave."; return; }
+      b.disabled = true; b.innerHTML = '<span class="spin"></span>'; msg.textContent = "";
+      try{
+        await Auth.entrar(email, pass);
+        await Auth.cargarPerfil();
+        if(Auth.actual() && Auth.actual().es_admin){ location.href = "admin.html"; return; }
+        await sb.auth.signOut(); Auth.u = null; Auth.renderAcct();
+        msg.textContent = "Esa cuenta no es de administrador.";
+      }catch(err){
+        msg.textContent = err.message==="datos" ? "Email o clave incorrectos." : err.message==="sinconfirmar" ? "Primero confirmá tu email." : "No se pudo conectar: "+(Auth.detalle||"error desconocido");
+      }
+      b.disabled = false; b.textContent = "Entrar";
+    };
+    document.getElementById("ag").onclick = ir;
+    modal.addEventListener("keydown", e => { if(e.key==="Enter") ir(); });
+  };
+</script>
+</body>
+</html>

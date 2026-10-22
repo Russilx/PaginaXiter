@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi cuenta · Tienda de diamantes</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header><a class="back" href="index.html">‹ Volver al inicio</a></header>
+
+  <div class="auth" id="auth">
+    <img class="authlogo" src="assets/logo.png" alt="Logo de la tienda">
+    <div class="tabs" id="tabs">
+      <button type="button" data-m="login" class="on">Ingresar</button>
+      <button type="button" data-m="reg">Crear cuenta</button>
+    </div>
+    <form id="f" novalidate>
+      <div class="field only-reg"><label for="nombre">Nombre</label><input id="nombre" autocomplete="name"></div>
+      <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email"></div>
+      <div class="field"><label for="pass">Contraseña</label><input id="pass" type="password" autocomplete="current-password"></div>
+      <div class="field only-reg"><label for="pass2">Repetí la contraseña</label><input id="pass2" type="password" autocomplete="new-password"></div>
+      <div class="msg" id="msg" role="alert"></div>
+      <button class="btn" type="submit" id="go">Ingresar</button>
+    </form>
+    <div id="cod" hidden>
+      <h3>Confirmá tu email</h3>
+      <p class="note" id="codtxt" style="margin-bottom:16px"></p>
+      <div class="field"><label for="codigo">Código de 6 dígitos</label><input id="codigo" class="codeinput" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></div>
+      <p class="aviso">Tenés <b>3 minutos</b> para escribir el código. Si no lo ves en tu bandeja de entrada, <b>revisá la carpeta de spam</b> o correo no deseado y también el correo que escribiste, por si tiene algún error.</p>
+      <div class="msg" id="cmsg" role="alert"></div>
+      <button class="btn" type="button" id="cgo">Confirmar</button>
+      <button class="btn ghost" type="button" id="cre" style="margin-top:10px" disabled>Reenviar código</button>
+      <button class="linkbtn" type="button" id="cvolver">‹ Volver</button>
+    </div>
+    
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  const params = new URLSearchParams(location.search);
+  const destino = params.get("volver") || "index.html";
+  Auth.listo.then(()=>{ if(Auth.actual()) location.replace(destino); });
+
+  const box = document.getElementById("auth"), tabs = document.getElementById("tabs");
+  const msg = document.getElementById("msg"), go = document.getElementById("go");
+  let modo = "login";
+  function poner(m){
+    modo = m;
+    box.classList.toggle("reg", m==="reg"); tabs.classList.toggle("reg", m==="reg");
+    tabs.querySelectorAll("button").forEach(b=>b.classList.toggle("on", b.dataset.m===m));
+    go.textContent = m==="reg" ? "Crear cuenta" : "Ingresar";
+    document.getElementById("pass").autocomplete = m==="reg" ? "new-password" : "current-password";
+    msg.textContent = "";
+  }
+  tabs.querySelectorAll("button").forEach(b=>b.onclick=()=>poner(b.dataset.m));
+  if(params.get("modo")==="registro") poner("reg");
+
+  function error(t){
+    msg.textContent = t;
+    box.classList.remove("shake"); void box.offsetWidth; box.classList.add("shake");
+  }
+  document.getElementById("f").addEventListener("submit", async e=>{
+    e.preventDefault();
+    const nombre = document.getElementById("nombre").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const pass = document.getElementById("pass").value;
+    const pass2 = document.getElementById("pass2").value;
+    if(!/^\S+@\S+\.\S+$/.test(email)) return error("Escribí un email válido.");
+    if(modo==="reg"){
+      if(nombre.length<2) return error("Escribí tu nombre.");
+      if(pass.length<6) return error("La contraseña debe tener al menos 6 caracteres.");
+      if(pass!==pass2) return error("Las contraseñas no coinciden.");
+    } else if(!pass) return error("Escribí tu contraseña.");
+    go.disabled = true; go.innerHTML = '<span class="spin"></span>';
+    try{
+      if(modo==="reg") await Auth.registrar(nombre,email,pass); else await Auth.entrar(email,pass);
+      location.href = destino;
+    }catch(err){
+      go.disabled = false; go.textContent = modo==="reg" ? "Crear cuenta" : "Ingresar";
+      if(err.message==="confirmar"){ pasoCodigo(email,false); return; }
+      if(err.message==="sinconfirmar"){ pasoCodigo(email,true); return; }
+      msg.style.color = "";
+      error(err.message==="existe" ? "Ya hay una cuenta con ese email." : err.message==="datos" ? "Email o contraseña incorrectos." : err.message==="sinconfirmar" ? "Primero confirmá tu email." : "No se pudo conectar: "+(Auth.detalle||"error desconocido"));
+    }
+  });
+  // ---- Confirmar email con código (vence en 1 minuto) ----
+  const $ = id => document.getElementById(id);
+  const VIDA = 180;   // segundos que dura el código (igual que "Email OTP Expiration" en Supabase)
+  let tmr, fin = 0, mailCod = "";
+  function tick(){
+    const s = Math.max(0, Math.ceil((fin - Date.now())/1000)), venc = s===0;
+    $("codtxt").textContent = venc ? "El código venció. Pedí uno nuevo." : "Te enviamos un código a " + mailCod + ". Vence en " + Math.floor(s/60) + ":" + String(s%60).padStart(2,"0") + ".";
+    $("cre").disabled = s > VIDA - 60;   // se puede pedir otro código pasado 1 minuto
+    if(venc) clearInterval(tmr);
+  }
+  function arrancar(){ fin = Date.now() + VIDA*1000; clearInterval(tmr); tick(); tmr = setInterval(tick, 1000); }
+  function cerror(t){ $("cmsg").textContent = t; box.classList.remove("shake"); void box.offsetWidth; box.classList.add("shake"); }
+  async function reenviar(){
+    $("cre").disabled = true; $("cmsg").textContent = "";
+    try{ await Auth.reenviar(mailCod); arrancar(); }
+    catch(err){
+      if(err.message==="espera"){ arrancar(); $("cmsg").textContent = "Ya te enviamos un código hace un momento. Revisá tu email."; }
+      else { $("cre").disabled = false; cerror("No se pudo enviar el código: " + (Auth.detalle || "error desconocido")); }
+    }
+  }
+  function pasoCodigo(email, enviar){
+    mailCod = email;
+    tabs.style.display = "none"; $("f").style.display = "none"; $("cod").hidden = false;
+    $("codigo").value = ""; $("cmsg").textContent = "";
+    if(enviar){ $("codtxt").textContent = "Enviando código…"; $("cre").disabled = true; reenviar(); } else arrancar();
+    $("codigo").focus();
+  }
+  async function confirmar(){
+    const c = $("codigo").value.replace(/\D/g,"");
+    if(c.length!==6) return cerror("Escribí los 6 dígitos del código.");
+    const b = $("cgo"); b.disabled = true; b.innerHTML = '<span class="spin"></span>'; $("cmsg").textContent = "";
+    try{ await Auth.verificar(mailCod, c); location.href = destino; }
+    catch(err){
+      b.disabled = false; b.textContent = "Confirmar";
+      cerror(err.message==="codigo" ? "Código incorrecto o vencido. Pedí uno nuevo." : "No se pudo conectar: " + (Auth.detalle || "error desconocido"));
+    }
+  }
+  $("cgo").onclick = confirmar;
+  $("cre").onclick = reenviar;
+  $("codigo").addEventListener("input", e=>{ e.target.value = e.target.value.replace(/\D/g,""); if(e.target.value.length===6) confirmar(); });
+  $("cvolver").onclick = ()=>{ clearInterval(tmr); $("cod").hidden = true; tabs.style.display = ""; $("f").style.display = ""; };
+</script>
+</body>
+</html>

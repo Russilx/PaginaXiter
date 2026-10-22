@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Tienda de diamantes</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header><a class="back" href="index.html">‹ Volver al inicio</a><div id="acct"></div></header>
+  <div class="page-title"><h1>Panel de administrador</h1></div>
+  <div id="panel" style="margin-top:26px"><p style="color:var(--muted)">Cargando…</p></div>
+</div>
+<div id="ov"><div class="modal" id="modal"></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  const panel = document.getElementById("panel");
+  Auth.listo.then(()=>{
+    const u = Auth.actual();
+    if(!u) return location.replace("cuenta.html?volver=admin.html");
+    if(!u.es_admin){ panel.innerHTML = '<p>No tenés acceso a esta página.</p>'; return; }
+    cargar();
+  });
+  const quien = p => `${esc(p?.nombre)} <span style="color:var(--muted)">(${esc(p?.email)})</span>`;
+  const fecha = t => new Date(t).toLocaleString("es-AR",{dateStyle:"short",timeStyle:"short"});
+
+  let editId = null, TORN = {}, INSC = {}, PEND = [];
+  const mon = (n,m) => m==="USDT" ? Number(n).toLocaleString("es-AR")+" USDT" : "$"+Number(n).toLocaleString("es-AR");
+  const ESTADOS = { proximo:"Próximo", en_curso:"En curso", finalizado:"Finalizado" };
+  const aLocal = t => { const d = new Date(t); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0,16); };
+
+  async function cargar(){
+    await sb.functions.invoke("co",{body:{action:"sync"}}).catch(()=>{});
+    editId = null;
+    const [q,d,p,tn,ins] = await Promise.all([
+      sb.from("paquetes").select("diamantes,precio").order("diamantes"),
+      sb.from("depositos").select("id,metodo,monto,referencia,creado,perfiles(nombre,email)").eq("estado","pendiente").order("creado"),
+      sb.from("pedidos").select("id,diamantes,precio,id_jugador,creado,co_reference,motivo,perfiles(nombre,email)").eq("estado","pendiente").order("creado"),
+      sb.from("torneos").select("id,titulo,modo,fecha,premio,premio2,premio3,mapa,formato,reglas,cupos,costo,descripcion,estado,tipo,pago_kill,moneda").order("fecha",{ascending:false}),
+      sb.from("inscripciones").select("id,torneo_id,equipo,monto,metodo,referencia,cobro,estado,kills,premio_kills,premio_pagado,creado,perfiles(nombre,email),torneos(titulo,moneda),inscripcion_jugadores(nombre,id_jugador)").in("estado",["pendiente","confirmada"]).order("creado")
+    ]);
+    const deps = d.data || [], peds = p.data || [], paqs = q.data || [], torn = tn.data || [];
+    TORN = {}; torn.forEach(t=>TORN[t.id]=t);
+    INSC = {}; PEND = []; (ins.data || []).forEach(i=>{ if(i.estado==="pendiente") PEND.push(i); else (INSC[i.torneo_id] = INSC[i.torneo_id] || []).push(i); });
+    panel.innerHTML = `
+      <button class="btn ghost" type="button" id="rec" style="margin-bottom:22px">Actualizar</button> <button class="btn ghost" type="button" id="cat" style="margin-bottom:22px">Catálogo y saldo de Central One</button><div id="catout" style="margin-bottom:30px"></div>
+      <h2>Precios de paquetes</h2>
+      <div class="adm" style="margin-bottom:44px">${paqs.map(x=>`
+        <div class="step" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <b style="flex:1;min-width:130px">${x.diamantes.toLocaleString("es-AR")} diamantes</b>
+          <input inputmode="decimal" value="${esc(x.precio)}" style="max-width:150px" aria-label="Precio de ${x.diamantes} diamantes">
+          <button class="btn" type="button" data-pq="${x.diamantes}">Guardar</button>
+        </div>`).join("") || '<p style="color:var(--muted)">No hay paquetes.</p>'}</div>
+      <h2>Torneos</h2>
+      ${tn.error ? '<p style="color:#ff5a5a">No pude leer los torneos (' + esc(tn.error.message) + '). ¿Ejecutaste torneos-pro.sql?</p>' : ""}
+      <div class="step tf" id="tform" style="margin-bottom:22px">
+        <h3 id="thead" style="margin-bottom:14px;font-size:1.05rem">Crear torneo</h3>
+        <div class="tfg">
+          <div><label for="t_titulo">Nombre</label><input id="t_titulo" maxlength="80" placeholder="Ej: Torneo de Escuadras XITERKING"></div>
+          <div><label for="t_tipo">Tipo de torneo</label><select id="t_tipo"><option value="clasico" selected>Clásico (premios por puesto)</option><option value="kills">Por kills (cada kill paga)</option></select></div>
+          <div id="w_pk" style="display:none"><label for="t_pk">Pago por kill (misma moneda)</label><input id="t_pk" inputmode="decimal" placeholder="Ej: 1000"></div>
+          <div><label for="t_modo">Modo</label><select id="t_modo"><option>Solo</option><option>Dúo</option><option selected>Escuadra</option></select></div>
+          <div><label for="t_fecha">Fecha y hora</label><input id="t_fecha" type="datetime-local"></div>
+          <div><label for="t_estado">Estado</label><select id="t_estado"><option value="proximo">Próximo</option><option value="en_curso">En curso</option><option value="finalizado">Finalizado (se oculta)</option></select></div>
+          <div><label for="t_premio">Premio</label><input id="t_premio" maxlength="80" placeholder="Ej: 50 USDT o 1.166 diamantes"></div>
+          <div><label for="t_costo">Inscripción (0 = gratis)</label><input id="t_costo" inputmode="decimal" value="0"></div>
+          <div><label for="t_moneda">Cobrás en</label><select id="t_moneda"><option value="ARS" selected>Pesos · Mercado Pago</option><option value="USDT">USDT · Binance Pay</option></select></div>
+          <div><label for="t_cupos">Cupos (equipos; vacío = sin límite)</label><input id="t_cupos" inputmode="numeric"></div>
+          <div><label for="t_premio2">Premio 2º puesto</label><input id="t_premio2" maxlength="80"></div>
+          <div><label for="t_premio3">Premio 3º puesto</label><input id="t_premio3" maxlength="80"></div>
+          <div><label for="t_mapa">Mapa</label><input id="t_mapa" maxlength="60" placeholder="Ej: Bermuda"></div>
+          <div><label for="t_formato">Formato</label><input id="t_formato" maxlength="80" placeholder="Ej: 3 partidas · suma de puntos"></div>
+        </div>
+        <label for="t_desc">Descripción</label>
+        <textarea id="t_desc" rows="3" maxlength="300" placeholder="Presentación del torneo…"></textarea>
+        <label for="t_reglas">Reglas y requisitos (una por línea)</label>
+        <textarea id="t_reglas" rows="5" maxlength="1200" placeholder="Nivel mínimo 40&#10;Prohibido usar hacks&#10;Llegar 10 minutos antes"></textarea>
+        <div class="acts" style="margin-top:6px"><button class="btn" type="button" id="tsave">Crear torneo</button><button class="btn ghost" type="button" id="tcancel" style="display:none">Cancelar</button></div>
+      </div>
+      <div class="adm" style="margin-bottom:44px">${torn.map(t=>`
+        <div class="step">
+          <div class="row"><b>${esc(t.titulo)}</b></div>
+          <div class="row"><span>Modo</span><b>${esc(t.modo)}</b></div>
+          <div class="row"><span>Fecha</span><b>${fecha(t.fecha)}</b></div>
+          <div class="row"><span>Estado</span><b>${ESTADOS[t.estado]||esc(t.estado)}</b></div>
+          <div class="row"><span>Inscriptos</span><b>${(INSC[t.id]||[]).length}${t.cupos?" / "+t.cupos:""}</b></div>
+          ${(INSC[t.id]||[]).length ? `<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Ver inscriptos</summary>${INSC[t.id].map(i=>`
+            <div style="border-top:1px solid var(--line);margin-top:10px;padding-top:10px">
+              <div class="row"><b>${esc(i.equipo || (i.inscripcion_jugadores[0]||{}).nombre || "Sin nombre")}</b><span>${quien(i.perfiles)}</span></div>
+              ${(i.inscripcion_jugadores||[]).map(j=>`<div class="row"><span>${esc(j.nombre)}</span><b>${esc(j.id_jugador)}</b></div>`).join("")}
+              <div class="row"><span>Pagó</span><b>${Number(i.monto)>0?mon(i.monto,t.moneda)+" · "+(i.metodo==="binance"?"Binance":"Mercado Pago"):"Gratis"}</b></div>
+              ${t.tipo==="kills" ? `<div class="row"><span>Cobra en</span><b>${esc(i.cobro||"—")}</b></div>` + (i.kills===null
+                ? `<div style="display:flex;gap:8px;align-items:center;margin-top:8px"><input inputmode="numeric" placeholder="Kills totales" style="max-width:140px" aria-label="Kills"><button class="btn sm" type="button" data-ck="${i.id}">Guardar kills</button></div>`
+                : `<div class="row"><span>Kills</span><b>${i.kills} · debés pagar ${mon(i.premio_kills,t.moneda)}</b></div>` + (i.premio_pagado
+                    ? '<div class="row"><span>Premio</span><b style="color:var(--wa)">✓ Pagado</b></div>'
+                    : `<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap"><input inputmode="numeric" value="${i.kills}" style="max-width:110px" aria-label="Kills"><button class="btn ghost sm" type="button" data-ck="${i.id}">Corregir kills</button><button class="btn sm" type="button" data-pp="${i.id}">Marcar premio pagado</button></div>`)) : ""}
+              <button class="btn ghost sm" type="button" data-ci="${i.id}" style="margin-top:8px">Quitar inscripción</button>
+            </div>`).join("")}
+            <button class="btn ghost sm" type="button" data-cp="${t.id}" style="margin-top:12px">Copiar lista (nombre + ID)</button></details>` : ""}
+          <div class="acts" style="margin-top:12px"><button class="btn" type="button" data-te="${t.id}">Editar</button><button class="btn ghost" type="button" data-td="${t.id}">Eliminar</button></div>
+        </div>`).join("") || '<p style="color:var(--muted)">Todavía no creaste torneos.</p>'}</div>
+      <h2>Inscripciones a torneos pendientes (${PEND.length})</h2>
+      <div class="adm" style="margin-bottom:44px">${PEND.map(x=>`
+        <div class="step" data-insc="${x.id}">
+          <div class="row"><b>${quien(x.perfiles)}</b></div>
+          <div class="row"><span>Torneo</span><b>${esc(x.torneos && x.torneos.titulo)}</b></div>
+          <div class="row"><span>${x.equipo?esc(x.equipo):"Jugadores"}</span><b>${(x.inscripcion_jugadores||[]).map(j=>esc(j.nombre)+" ("+esc(j.id_jugador)+")").join(", ")}</b></div>
+          <div class="row"><span>Debe pagar</span><b>${mon(x.monto, x.torneos && x.torneos.moneda)} · ${x.metodo==="binance"?"Binance":"Mercado Pago"}</b></div>
+          <div class="row"><span>Comprobante</span><b>${esc(x.referencia)}</b></div>
+          ${x.cobro?`<div class="row"><span>Cobra en</span><b>${esc(x.cobro)}</b></div>`:""}
+          <div class="row"><span>Fecha</span><b>${fecha(x.creado)}</b></div>
+          <div class="acts"><button class="btn" type="button" data-ra="ok">Aprobar pago</button><button class="btn ghost" type="button" data-ra="no">Rechazar</button></div>
+        </div>`).join("") || '<p style="color:var(--muted)">No hay inscripciones pendientes.</p>'}</div>
+      <h2>Cargas de saldo pendientes (${deps.length})</h2>
+      <div class="adm" style="margin-bottom:44px">${deps.map(x=>`
+        <div class="step" data-dep="${x.id}">
+          <div class="row"><b>${quien(x.perfiles)}</b></div>
+          <div class="row"><span>Método</span><b>${x.metodo==="binance"?"Binance":"Mercado Pago"}</b></div>
+          <div class="row"><span>Declaró</span><b>${x.metodo==="binance"?esc(x.monto)+" USDT":fmt(x.monto)}</b></div>
+          <div class="row"><span>Comprobante</span><b>${esc(x.referencia)}</b></div>
+          <div class="row"><span>Fecha</span><b>${fecha(x.creado)}</b></div>
+          <input inputmode="decimal" placeholder="Saldo a acreditar (USDT)" value="${esc(x.monto)}">
+          <div class="acts"><button class="btn" data-a="ok">Aprobar</button><button class="btn ghost" data-a="no">Rechazar</button></div>
+        </div>`).join("") || '<p style="color:var(--muted)">No hay cargas pendientes.</p>'}</div>
+      <h2>Pedidos de diamantes pendientes (${peds.length})</h2>
+      <div class="adm">${peds.map(x=>`
+        <div class="step" data-ped="${x.id}">
+          <div class="row"><b>${quien(x.perfiles)}</b></div>
+          <div class="row"><span>Diamantes</span><b>${x.diamantes.toLocaleString("es-AR")}</b></div>
+          <div class="row"><span>ID de jugador</span><b>${esc(x.id_jugador)}</b></div>
+          <div class="row"><span>Pagó</span><b>${fmt(x.precio)}</b></div>
+          <div class="row"><span>Central One</span><b>${esc(x.co_reference||"sin enviar")}${x.motivo?" · "+esc(x.motivo):""}</b></div>
+          <div class="row"><span>Fecha</span><b>${fecha(x.creado)}</b></div>
+          <div class="acts" style="margin-top:12px"><button class="btn" data-a="ok">Entregado</button><button class="btn ghost" data-a="no">Rechazar y devolver</button></div>
+        </div>`).join("") || '<p style="color:var(--muted)">No hay pedidos pendientes.</p>'}</div>`;
+    document.getElementById("rec").onclick = cargar;
+    document.getElementById("cat").onclick = async ()=>{
+      const out = document.getElementById("catout");
+      out.innerHTML = '<p style="color:var(--muted)">Cargando…</p>';
+      const [c, pk] = await Promise.all([
+        sb.functions.invoke("co",{ body:{ action:"catalog" } }),
+        sb.from("paquetes").select("diamantes,co_product_id").order("diamantes")
+      ]);
+      const data = c.data;
+      if(!data || !data.ok){ out.innerHTML = '<p>No se pudo leer el catálogo.</p>'; return; }
+      const txt = i => [i.name,i.product_family_name,i.region,i.market].join(" ").toLowerCase();
+      let items = data.items.filter(i=>txt(i).includes("free fire") && !/\bPIN\b/.test(i.name));
+      const la = items.filter(i=>txt(i).includes("latam"));
+      if(la.length) items = la;
+      let aviso = "";
+      if(!items.length){ items = data.items; aviso = '<p style="color:var(--muted)">No encontré productos de Free Fire LATAM; muestro todo el catálogo.</p>'; }
+      const paq = pk.data || [], sql = [];
+      if(pk.error) aviso += '<p style="color:#ff5a5a">No pude leer tus paquetes (' + esc(pk.error.message) + '). ¿Ejecutaste migracion-api.sql?</p>';
+      const filas = items.map(i=>{
+        const nums = (i.name.match(/\d[\d.,]*/)||[]).slice(0,1).map(n=>n.replace(/[.,]/g,""));
+        const p = paq.find(p=>nums.includes(String(p.diamantes)));
+        if(p && p.co_product_id!==i.product_id) sql.push(`update paquetes set co_product_id = '${i.product_id}' where diamantes = ${p.diamantes};`);
+        const estado = p ? (p.co_product_id===i.product_id ? "✓ Vinculado" : "Paquete de "+p.diamantes+" sin vincular") : "Sin paquete igual";
+        return `<div class="step" style="padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+          <div><b>${esc(i.name)}</b><br><span style="color:var(--muted);font-size:.8rem">${esc(i.region||"")} · ${esc(i.reseller_price)} USD · ${i.in_stock?"con stock":"sin stock"}</span></div>
+          <span style="font-size:.8rem;font-weight:800">${estado}</span></div>`;
+      }).join("");
+      out.innerHTML = `<div class="step" style="padding:14px 16px;margin-bottom:14px"><div class="row"><span>Saldo en Central One</span><b>${esc(data.balance && data.balance.available_balance)} USD</b></div></div>
+        ${aviso}${filas}
+        ${sql.length ? `<p style="margin:18px 0 8px">SQL para vincular (${sql.length}):</p><textarea id="sqlout" readonly rows="${Math.min(sql.length+1,10)}" style="width:100%;font-family:monospace;font-size:.8rem;padding:10px;border-radius:10px">${esc(sql.join("\n"))}</textarea><button class="btn ghost" type="button" id="sqlcp" style="margin-top:8px">Copiar SQL</button>` : ""}`;
+      const cp = document.getElementById("sqlcp");
+      if(cp) cp.onclick = ()=>navigator.clipboard.writeText(sql.join("\n")).then(()=>toast("SQL copiado"), ()=>toast("No se pudo copiar"));
+    };
+  }
+
+  // ---- Torneos: crear, editar, borrar ----
+  const tipoUI = () => { const k = document.getElementById("t_tipo").value === "kills"; document.getElementById("w_pk").style.display = k ? "" : "none"; };
+  panel.addEventListener("change", e=>{ if(e.target.id==="t_tipo") tipoUI(); });
+  panel.addEventListener("click", async e=>{
+    const $ = id => document.getElementById(id);
+    const sv = e.target.closest("#tsave");
+    if(sv){
+      const titulo = $("t_titulo").value.trim();
+      if(titulo.length < 3) return toast("Escribí el nombre del torneo");
+      if(!$("t_fecha").value) return toast("Elegí fecha y hora");
+      const costo = parseFloat(($("t_costo").value || "0").replace(",","."));
+      if(!(costo >= 0)) return toast("Inscripción inválida");
+      const cs = $("t_cupos").value.trim(), cupos = cs ? parseInt(cs,10) : null;
+      if(cs && !(cupos > 0)) return toast("Cupos inválidos");
+      const pk = $("t_tipo").value === "kills" ? parseFloat(($("t_pk").value || "0").replace(",",".")) : null;
+      if($("t_tipo").value === "kills" && !(pk > 0)) return toast("Escribí cuánto paga cada kill");
+      sv.disabled = true;
+      const r = await sb.rpc("guardar_torneo",{
+        p_id: editId, p_titulo: titulo, p_modo: $("t_modo").value,
+        p_fecha: new Date($("t_fecha").value).toISOString(),
+        p_premio: $("t_premio").value.trim() || null, p_cupos: cupos, p_costo: costo,
+        p_descripcion: $("t_desc").value.trim() || null, p_estado: $("t_estado").value,
+        p_premio2: $("t_premio2").value.trim() || null, p_premio3: $("t_premio3").value.trim() || null,
+        p_mapa: $("t_mapa").value.trim() || null, p_formato: $("t_formato").value.trim() || null,
+        p_reglas: $("t_reglas").value.trim() || null,
+        p_tipo: $("t_tipo").value, p_pago_kill: pk, p_moneda: $("t_moneda").value
+      });
+      sv.disabled = false;
+      if(r.error) return toast("No se pudo guardar");
+      toast(editId ? "Torneo actualizado" : "Torneo creado");
+      cargar(); return;
+    }
+    if(e.target.closest("#tcancel")){ cargar(); return; }
+    const ed = e.target.closest("button[data-te]");
+    if(ed){
+      const t = TORN[ed.dataset.te]; if(!t) return;
+      editId = t.id;
+      $("t_titulo").value = t.titulo; $("t_modo").value = t.modo; $("t_fecha").value = aLocal(t.fecha);
+      $("t_estado").value = t.estado; $("t_premio").value = t.premio || ""; $("t_costo").value = t.costo;
+      $("t_cupos").value = t.cupos || ""; $("t_desc").value = t.descripcion || "";
+      $("t_moneda").value = t.moneda || "ARS"; $("t_tipo").value = t.tipo || "clasico"; $("t_pk").value = t.pago_kill || ""; tipoUI();
+      $("t_premio2").value = t.premio2 || ""; $("t_premio3").value = t.premio3 || "";
+      $("t_mapa").value = t.mapa || ""; $("t_formato").value = t.formato || ""; $("t_reglas").value = t.reglas || "";
+      $("thead").textContent = "Editar torneo"; $("tsave").textContent = "Guardar cambios"; $("tcancel").style.display = "";
+      $("tform").scrollIntoView({ behavior:"smooth", block:"center" });
+      return;
+    }
+    const ck = e.target.closest("button[data-ck]");
+    if(ck){
+      const k = parseInt(ck.parentElement.querySelector("input").value, 10);
+      if(!(k >= 0)) return toast("Escribí las kills");
+      ck.disabled = true;
+      const r = await sb.rpc("cargar_kills",{ p_id: +ck.dataset.ck, p_kills: k });
+      toast(r.error ? "No se pudo guardar" : "Kills guardadas");
+      cargar(); return;
+    }
+    const pp = e.target.closest("button[data-pp]");
+    if(pp){
+      if(!confirm("¿Ya le pagaste el premio a este jugador? Se marca como pagado y no se puede cambiar.")) return;
+      const r = await sb.rpc("marcar_premio_pagado",{ p_id: +pp.dataset.pp });
+      toast(r.error ? "No se pudo marcar" : "Premio marcado como pagado");
+      cargar(); return;
+    }
+    const ra = e.target.closest("button[data-ra]");
+    if(ra){
+      const ok = ra.dataset.ra === "ok";
+      if(!ok && !confirm("¿Rechazar esta inscripción? Se libera el cupo y los IDs.")) return;
+      const r = await sb.rpc("resolver_inscripcion",{ p_id: +ra.closest(".step").dataset.insc, p_aprobar: ok });
+      toast(r.error ? "No se pudo (¿ya estaba resuelta?)" : "Listo");
+      cargar(); return;
+    }
+    const qi = e.target.closest("button[data-ci]");
+    if(qi){
+      if(!confirm("¿Quitar esta inscripción? Si ya pagó, devolvele la plata vos (no usa el saldo de la web).")) return;
+      const r = await sb.rpc("cancelar_inscripcion",{ p_id: +qi.dataset.ci });
+      toast(r.error ? "No se pudo quitar" : "Inscripción quitada");
+      cargar(); return;
+    }
+    const cp = e.target.closest("button[data-cp]");
+    if(cp){
+      const txt = (INSC[cp.dataset.cp]||[]).map(i=>(i.equipo ? i.equipo+": " : "") + (i.inscripcion_jugadores||[]).map(j=>j.nombre+" ("+j.id_jugador+")").join(", ")).join("\n");
+      navigator.clipboard.writeText(txt).then(()=>toast("Lista copiada"), ()=>toast("No se pudo copiar"));
+      return;
+    }
+    const del = e.target.closest("button[data-td]");
+    if(del){
+      if(!confirm("¿Eliminar este torneo?")) return;
+      const r = await sb.rpc("borrar_torneo",{ p_id: +del.dataset.td });
+      toast(r.error ? "No se pudo eliminar" : "Torneo eliminado");
+      cargar();
+    }
+  });
+  panel.addEventListener("click", async e=>{
+    const g = e.target.closest("button[data-pq]"); if(!g) return;
+    const precio = parseFloat(g.previousElementSibling.value.replace(",","."));
+    if(!(precio>0)) return toast("Escribí un precio válido");
+    g.disabled = true;
+    const r = await sb.rpc("actualizar_precio",{ p_diamantes:+g.dataset.pq, p_precio:precio });
+    g.disabled = false;
+    toast(r.error ? "No se pudo guardar" : "Precio guardado");
+  });
+  panel.addEventListener("click", async e=>{
+    const b = e.target.closest("button[data-a]"); if(!b) return;
+    const card = b.closest(".step"), ok = b.dataset.a==="ok";
+    let r;
+    if(card.dataset.dep){
+      const monto = parseFloat(card.querySelector("input").value.replace(",","."));
+      if(ok && !(monto>0)) return toast("Escribí el saldo a acreditar");
+      if(!ok && !confirm("¿Rechazar esta carga?")) return;
+      r = await sb.rpc("resolver_deposito",{ p_id:+card.dataset.dep, p_aprobar:ok, p_credito: ok ? monto : null });
+    } else {
+      if(!ok && !confirm("¿Rechazar el pedido y devolver el saldo al cliente?")) return;
+      r = await sb.rpc("resolver_pedido",{ p_id:+card.dataset.ped, p_ok:ok });
+    }
+    toast(r.error ? "No se pudo (¿ya estaba resuelto?)" : "Listo");
+    cargar();
+  });
+</script>
+</body>
+</html>
