@@ -28,7 +28,7 @@
     <div id="cod" hidden>
       <h3>Confirmá tu email</h3>
       <p class="note" id="codtxt" style="margin-bottom:16px"></p>
-      <div class="field"><label for="codigo">Código de 6 dígitos</label><input id="codigo" class="codeinput" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></div>
+      <div class="field"><label for="codigo" id="codlabel">Código de verificación</label><input id="codigo" class="codeinput" inputmode="numeric" autocomplete="one-time-code"></div>
       <p class="aviso">Tenés <b>3 minutos</b> para escribir el código. Si no lo ves en tu bandeja de entrada, <b>revisá la carpeta de spam</b> o correo no deseado y también el correo que escribiste, por si tiene algún error.</p>
       <div class="msg" id="cmsg" role="alert"></div>
       <button class="btn" type="button" id="cgo">Confirmar</button>
@@ -89,6 +89,8 @@
   });
   // ---- Confirmar email con código (vence en 1 minuto) ----
   const $ = id => document.getElementById(id);
+  const LARGO = 8;    // cantidad de dígitos del código (igual que "Email OTP Length" en Supabase > Authentication > Providers > Email)
+  $("codlabel").textContent = "Código de " + LARGO + " dígitos"; $("codigo").maxLength = LARGO; $("codigo").placeholder = "0".repeat(LARGO);
   const VIDA = 180;   // segundos que dura el código (igual que "Email OTP Expiration" en Supabase)
   let tmr, fin = 0, mailCod = "";
   function tick(){
@@ -116,7 +118,7 @@
   }
   async function confirmar(){
     const c = $("codigo").value.replace(/\D/g,"");
-    if(c.length!==6) return cerror("Escribí los 6 dígitos del código.");
+    if(c.length!==LARGO) return cerror("Escribí los " + LARGO + " dígitos del código.");
     const b = $("cgo"); b.disabled = true; b.innerHTML = '<span class="spin"></span>'; $("cmsg").textContent = "";
     try{ await Auth.verificar(mailCod, c); location.href = destino; }
     catch(err){
@@ -126,7 +128,7 @@
   }
   $("cgo").onclick = confirmar;
   $("cre").onclick = reenviar;
-  $("codigo").addEventListener("input", e=>{ e.target.value = e.target.value.replace(/\D/g,""); if(e.target.value.length===6) confirmar(); });
+  $("codigo").addEventListener("input", e=>{ e.target.value = e.target.value.replace(/\D/g,""); if(e.target.value.length===LARGO) confirmar(); });
   $("cvolver").onclick = ()=>{ clearInterval(tmr); $("cod").hidden = true; tabs.style.display = ""; $("f").style.display = ""; };
 </script>
 </body>
