@@ -428,3 +428,50 @@ textarea{color:var(--text)}
 @keyframes hflota{50%{transform:translateY(-7px)}}
 @media (prefers-reduced-motion:reduce){.hero-emblem *,.hero-emblem::before,.hero-emblem::after{animation:none!important}}
 @media (max-width:400px){.hero-emblem{width:170px;height:170px}.hero-emblem img{width:94px}}
+
+/* Cierre de inscripciones */
+.tn-lock{display:inline-block;margin:0 0 16px;padding:9px 16px;border-radius:12px;font-size:.88rem;font-weight:700;color:#ff8a8a;background:#e1060018;border:1px solid #e1060055}
+.tn-lock.open{color:var(--gold);background:#f6c3431a;border-color:#f6c34355}
+.tn-lock b{font-variant-numeric:tabular-nums;color:var(--text)}
+
+/* Pozo, mínimo, ranking y resultados */
+.tn-pozo{margin-bottom:14px;border:1px solid #f6c34388;border-radius:16px;padding:16px 20px;background:linear-gradient(120deg,#f6c34322,#0009 70%)}
+.tn-pozo span{display:block;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:#ffd766;font-weight:800}
+.tn-pozo b{display:block;font-family:Anton,sans-serif;font-weight:400;font-size:2.6rem;line-height:1.05;color:var(--gold);text-shadow:0 0 22px #f6c34355}
+.tn-pozo small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
+.tn-min{margin:0 0 16px;padding:10px 16px;border-radius:12px;font-size:.86rem;color:var(--muted);background:#ffffff08;border:1px solid var(--line2)}
+.tn-min b{color:var(--text)}.tn-min.ok{color:var(--wa);border-color:#25d36655;background:#25d3660f}
+.rk-box{border:1px solid var(--line);border-radius:22px;padding:20px;background:linear-gradient(160deg,#1a0d0d,var(--card) 60%)}
+.rk-h,.rk-r{display:grid;grid-template-columns:44px 1fr 56px 56px 56px;gap:8px;align-items:center;padding:10px 12px;font-size:.92rem}
+.rk-h{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.rk-r{border-top:1px solid var(--line)}.rk-r span{text-align:center}.rk-h span{text-align:center}
+.rk-r b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk-r.top b{color:var(--gold)}.rk-r:nth-child(2){background:linear-gradient(90deg,#f6c34314,transparent)}
+.rk-pts{margin-top:14px;font-size:.78rem;color:var(--muted)}
+.res-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+.res-c{border:1px solid var(--line);border-radius:18px;padding:16px 18px;background:linear-gradient(160deg,#1a0d0d,var(--card) 60%)}
+.res-h{display:flex;flex-direction:column;margin-bottom:10px}.res-h b{font-family:"Russo One",sans-serif;font-size:1.05rem}.res-h span{font-size:.78rem;color:var(--muted)}
+.res-r{display:grid;grid-template-columns:34px 1fr auto auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:.9rem}
+.res-r em{font-style:normal;color:var(--muted);font-size:.8rem}.res-r u{text-decoration:none;color:var(--gold);font-weight:700}
+
+/* Torneos terminados */
+.res-r b small{display:block;color:var(--muted);font-weight:400;font-size:.74rem}
+.res-sub{color:var(--muted);margin:-6px 0 18px;max-width:560px}
+.hist{border:1px solid var(--line);border-radius:22px;padding:22px 22px 18px;margin-bottom:18px;background:linear-gradient(160deg,#1a0d0d,var(--card) 60%)}
+.hist-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start;margin-bottom:14px}
+.hist-h h3{font-size:1.4rem;line-height:1.1}
+.hist-h span{font-size:.8rem;color:var(--muted)}
+.hist-chip{display:inline-block;font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#ffb35a;border:1px solid #ff8a1f55;border-radius:999px;padding:4px 12px;margin:0 6px 6px 0}
+.win{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px 14px;margin-bottom:8px;border-radius:14px;border:1px solid var(--line2);background:#0007}
+.win .wm{font-size:1.7rem;text-align:center}
+.win b{display:block;font-size:1.05rem}.win small{display:block;color:var(--muted);font-size:.78rem}
+.win u{text-decoration:none;color:var(--gold);font-weight:800;font-size:1rem;text-align:right}
+.win .wk{color:#ff8a6a;font-size:.78rem;font-weight:700}
+.win.w1{border-color:#f6c34399;background:linear-gradient(90deg,#f6c34326,#0009)}
+.win.w1 b{font-size:1.25rem;color:var(--gold)}.win.w1 .wm{font-size:2.1rem}
+@media (max-width:480px){.win{grid-template-columns:36px 1fr}.win u{grid-column:2;text-align:left}}
+
+/* Cargar kills en el admin */
+.rs-row{display:grid;grid-template-columns:1fr 84px minmax(90px,150px);gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.rs-row b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rs-pos{font-size:.85rem;font-weight:700;color:var(--gold);text-align:right}

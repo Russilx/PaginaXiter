@@ -97,7 +97,7 @@ const Auth = {
     const box = document.getElementById("acct"); if(!box) return;
     const u = Auth.u;
     box.innerHTML = u
-      ? `${u.es_admin ? '<a class="pill plain" href="admin.html">Admin</a>' : ""}<a class="pill" href="free-fire-latam.html">Saldo: <b data-saldo></b></a><div class="user"><span class="av">${esc((u.nombre.trim().charAt(0)||"?").toUpperCase())}</span><b>${esc(u.nombre)}</b><button type="button" id="salir">Cerrar sesión</button></div>`
+      ? `${u.es_admin ? '<a class="pill plain" href="admin.html">Admin</a>' : ""}<a class="pill plain" href="mis-torneos.html">Mis torneos</a><a class="pill" href="free-fire-latam.html">Saldo: <b data-saldo></b></a><div class="user"><span class="av">${esc((u.nombre.trim().charAt(0)||"?").toUpperCase())}</span><b>${esc(u.nombre)}</b><button type="button" id="salir">Cerrar sesión</button></div>`
       : `<a class="pill plain" href="cuenta.html">Ingresar</a><a class="btn sm" href="cuenta.html?modo=registro">Crear cuenta</a>`;
     const b = document.getElementById("salir"); if(b) b.onclick = Auth.salir;
   }
@@ -111,3 +111,16 @@ const Saldo = {
   }
 };
 Auth.listo = Auth.init().then(()=>{ Auth.renderAcct(); Saldo.render(); });
+// Recordatorios y bajas por check-in: se procesan al abrir cualquier página
+Auth.listo = Auth.listo.then(()=>sb.rpc("procesar_checkins")).then(()=>{},()=>{});
+// Aviso cuando se libera un lugar en un torneo de la lista de espera
+Auth.listo.then(async()=>{
+  if(!Auth.u) return;
+  const { data } = await sb.from("notificaciones").select("id,mensaje,enlace").eq("leida",false).order("creado",{ascending:false}).limit(3);
+  if(!data || !data.length) return;
+  const d = document.createElement("div");
+  d.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:9000;background:#e10600;color:#fff;padding:12px 16px;text-align:center;font-weight:700;font-size:.9rem";
+  d.innerHTML = data.map(n => esc(n.mensaje)).join("<br>") + ' <a href="' + esc(data[0].enlace || "index.html") + '" style="color:#fff;text-decoration:underline;margin-left:8px">Ver</a><button type="button" style="margin-left:10px;background:#0004;border:0;color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer">✕</button>';
+  d.querySelector("button").onclick = async()=>{ d.remove(); await sb.rpc("marcar_notificaciones_leidas"); };
+  document.body.appendChild(d);
+});

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mis torneos · XITERKING</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header><a class="back" href="index.html">‹ Volver al inicio</a><div id="acct"></div></header>
+  <div class="page-title"><h1>Mis torneos</h1></div>
+  <div id="aviso"></div>
+  <div id="stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:18px 0"></div>
+  <div id="lista"><div class="tvacio">Cargando…</div></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const ESTADO = { proximo:"Próximo", en_curso:"En vivo", finalizado:"Terminado" }, MED = ["🥇","🥈","🥉"];
+  const mon = (n,m) => m === "USDT" ? Number(n).toLocaleString("es-AR") + " USDT" : "$" + Number(n).toLocaleString("es-AR");
+  let CAPN = {};
+
+  async function cargar(){
+    const u = Auth.actual();
+    const [i, e, c, fl] = await Promise.all([
+      sb.from("inscripciones").select("id,estado,equipo,checkin,puesto,kills,premio_kills,premio_pagado,creado,torneos(id,titulo,modo,fecha,estado,tipo,moneda,cancelado,link_vivo)").eq("usuario",u.id).in("estado",["pendiente","confirmada"]).order("creado",{ascending:false}),
+      sb.from("lista_espera").select("torneo_id,torneos(titulo,fecha)").eq("usuario",u.id),
+      sb.from("capturas").select("inscripcion_id").eq("usuario",u.id),
+      sb.from("faltas").select("id").eq("usuario",u.id).gte("creado", new Date(Date.now() - 30 * 864e5).toISOString())
+    ]);
+    const nf = (fl.data || []).length;
+    if(i.error){ $("lista").innerHTML = '<div class="tvacio">No pudimos cargar tus torneos. Probá de nuevo en un momento.</div>'; return; }
+    CAPN = {}; (c.data || []).forEach(x => CAPN[x.inscripcion_id] = (CAPN[x.inscripcion_id] || 0) + 1);
+    const L = i.data || [], jug = L.filter(x => x.estado === "confirmada" && x.torneos && x.torneos.estado === "finalizado" && !x.torneos.cancelado && x.kills !== null);
+    const st = [["Torneos jugados", jug.length], ["Victorias", jug.filter(x => x.puesto === 1).length], ["Kills totales", jug.reduce((a,x) => a + (x.kills || 0), 0)], ["Mejor puesto", jug.some(x => x.puesto) ? Math.min(...jug.filter(x => x.puesto).map(x => x.puesto)) + "º" : "—"]];
+    $("aviso").innerHTML = nf ? `<div class="tn-min" style="margin:0 0 14px">⚠ Tenés <b>${nf} falta${nf > 1 ? "s" : ""}</b> en los últimos 30 días por no presentarte a torneos.${nf >= 2 ? " Por ahora solo podés anotarte a torneos con inscripción paga." : " Con 2 faltas no podés anotarte a torneos gratis."}</div>` : "";
+    $("stats").innerHTML = st.map(x => `<div class="step" style="padding:14px;text-align:center"><b style="font-size:1.5rem;display:block">${x[1]}</b><span style="color:var(--muted);font-size:.8rem">${x[0]}</span></div>`).join("");
+    const esp = (e.data || []).map(x => `<article class="hist"><div class="hist-h"><div><h3>${esc(x.torneos && x.torneos.titulo)}</h3><span>⏳ En lista de espera · te avisamos si se libera un lugar</span></div></div></article>`).join("");
+    const cards = L.map(x => {
+      const t = x.torneos || {}, fin = t.estado === "finalizado", pend = x.estado === "pendiente";
+      const res = fin && x.kills !== null ? `<div class="win w${x.puesto || 9}"><span class="wm">${MED[(x.puesto || 9) - 1] || (x.puesto || "·") + "º"}</span><div><b>${x.puesto ? x.puesto + "º puesto" : "Sin puesto"}</b><span class="wk">${x.kills} kill${x.kills === 1 ? "" : "s"}</span></div>${t.tipo === "kills" && Number(x.premio_kills) > 0 ? `<u>${mon(x.premio_kills, t.moneda)}${x.premio_pagado ? " ✓ pagado" : ""}</u>` : ""}</div>` : "";
+      const fT = new Date(t.fecha).getTime(), cfin = fT - 1800000, cini = fT - 3600000, ahora = Date.now(), hh = ms => new Date(ms).toLocaleTimeString("es-AR",{ hour:"2-digit", minute:"2-digit" });
+      const ck = x.estado === "confirmada" && t.estado === "proximo" && !t.cancelado && new Date(x.creado).getTime() < cfin
+        ? (x.checkin ? '<div class="tn-ok" style="margin-top:12px">✅ Check-in hecho</div>' : ahora >= cini && ahora < cfin ? `<button class="btn" type="button" data-ck="${x.id}" style="margin-top:12px">✅ Confirmar que juego (hasta las ${hh(cfin)})</button>` : ahora < cini ? `<div class="tn-min" style="margin-top:12px">🕐 Check-in obligatorio: de ${hh(cini)} a ${hh(cfin)} hs. Si no lo hacés, perdés tu lugar.</div>` : "") : "";
+      const sube = !pend && !t.cancelado && (t.estado === "en_curso" || fin);
+      return `<article class="hist">
+        <div class="hist-h"><div><h3>${esc(t.titulo)}</h3><span>${esc(t.modo)} · ${new Date(t.fecha).toLocaleString("es-AR",{ dateStyle:"medium", timeStyle:"short" })}</span></div></div>
+        <div style="margin-bottom:10px"><span class="hist-chip">${t.cancelado ? "❌ Cancelado" : ESTADO[t.estado] || ""}</span>${pend ? '<span class="hist-chip">⏳ Pago en revisión</span>' : ""}${x.equipo ? `<span class="hist-chip">${esc(x.equipo)}</span>` : ""}${/^https:\/\//.test(t.link_vivo || "") ? `<a class="hist-chip" href="${esc(t.link_vivo)}" target="_blank" rel="noopener">📺 Transmisión</a>` : ""}</div>
+        ${res}${ck}
+        ${sube ? `<div style="margin-top:12px"><label class="btn ghost sm" style="cursor:pointer">📎 Subir captura de resultados${CAPN[x.id] ? " (" + CAPN[x.id] + " subida" + (CAPN[x.id] > 1 ? "s" : "") + ")" : ""}<input type="file" accept="image/*" data-up="${x.id}" hidden></label><small style="display:block;color:var(--muted);margin-top:6px">Subí la captura de la pantalla final de cada partida: sirve para verificar las kills.</small></div>` : ""}
+      </article>`;
+    }).join("");
+    $("lista").innerHTML = (esp + cards) || '<div class="tvacio"><b>Todavía no te anotaste a ningún torneo</b>Cuando te inscribas, vas a ver acá tu historial y tus estadísticas.</div>';
+  }
+
+  $("lista").addEventListener("click", async e => {
+    const b = e.target.closest("button[data-ck]"); if(!b) return;
+    b.disabled = true; const r = await sb.rpc("hacer_checkin",{ p_id: +b.dataset.ck });
+    toast(r.error ? "El check-in se abre 1 hora antes y cierra 30 minutos antes" : "¡Check-in hecho!"); cargar();
+  });
+  $("lista").addEventListener("change", async e => {
+    const inp = e.target.closest("input[data-up]"); if(!inp || !inp.files[0]) return;
+    const f = inp.files[0];
+    if(!/^image\/(png|jpe?g|webp)$/.test(f.type)) return toast("Solo imágenes PNG, JPG o WEBP");
+    if(f.size > 5 * 1024 * 1024) return toast("La imagen pesa más de 5 MB");
+    toast("Subiendo…");
+    const uid = Auth.actual().id, ruta = `${uid}/${inp.dataset.up}-${Date.now()}.${f.type.split("/")[1].replace("jpeg","jpg")}`;
+    const s = await sb.storage.from("capturas").upload(ruta, f, { contentType: f.type });
+    if(s.error) return toast("No se pudo subir la captura");
+    const r = await sb.from("capturas").insert({ inscripcion_id: +inp.dataset.up, ruta });
+    toast(r.error ? "No se pudo registrar la captura" : "¡Captura enviada!"); cargar();
+  });
+
+  Auth.listo.then(() => { if(!Auth.actual()) return location.replace("cuenta.html?volver=mis-torneos.html"); cargar(); });
+</script>
+</body>
+</html>

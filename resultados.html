@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Torneos terminados · XITERKING</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header><a class="back" href="index.html">‹ Volver al inicio</a><div id="acct"></div></header>
+  <div class="page-title"><h1>Torneos terminados</h1></div>
+  <p class="res-sub">Todos los ganadores de los torneos de XITERKING, con el nombre del equipo y el premio que se llevaron.</p>
+  <div class="tn-fil" id="mf">
+    <button type="button" data-m="todos" class="on">Todos</button>
+    <button type="button" data-m="Solo">Solo</button>
+    <button type="button" data-m="Dúo">Dúo</button>
+    <button type="button" data-m="Escuadra">Escuadra</button>
+  </div>
+  <div id="lista"><div class="tvacio">Cargando…</div></div>
+  <div style="text-align:center;margin:22px 0 40px"><button class="btn ghost" type="button" id="mas" hidden>Ver más torneos</button></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const MED = ["🥇","🥈","🥉"], PAGE = 8;
+  const mon = (n,m) => m === "USDT" ? Number(n).toLocaleString("es-AR") + " USDT" : "$" + Number(n).toLocaleString("es-AR");
+  let modo = "todos", off = 0, CF = {};
+
+  function card(x, L){
+    const kills = x.tipo === "kills", rep = String(x.reparto || "50/30/20").split("/").map(Number);
+    const pozo = Number(x.pozo_base || 0) + (CF[x.id] || 0) * Number(x.costo || 0) * Number(x.pozo_pct || 0) / 100;
+    const textos = [x.premio, x.premio2, x.premio3];
+    const premio = (f, pos) => kills ? (f.premio ? mon(f.premio, x.moneda) : "")
+      : (Number(x.pozo_pct) > 0 && rep[pos-1] ? mon(Math.floor(pozo * rep[pos-1] / 100), x.moneda) : (pos <= 3 ? (textos[pos-1] || "") : ""));
+    const rows = L.map((f,i) => ({ f, pos: f.puesto || (kills ? i + 1 : null) }));
+    const podio = rows.filter(r => r.pos && r.pos <= 3), resto = rows.filter(r => !(r.pos && r.pos <= 3));
+    const fila = r => {
+      const f = r.f, pr = premio(f, r.pos), mem = f.integrantes && f.integrantes !== f.etiqueta ? f.integrantes : "";
+      return `<div class="win w${r.pos}"><span class="wm">${MED[r.pos-1]}</span><div><b>${esc(f.etiqueta || "—")}</b>${mem ? `<small>${esc(mem)}</small>` : ""}${f.kills !== null ? `<span class="wk">${f.kills} kill${f.kills === 1 ? "" : "s"}</span>` : ""}</div>${pr ? `<u>${esc(pr)}</u>` : ""}</div>`;
+    };
+    const chips = [kills ? "💀 Por kills" : "🏆 Clásico", x.mapa, x.formato, Number(x.pozo_pct) > 0 ? "Pozo final " + mon(Math.floor(pozo), x.moneda) : ""].filter(Boolean).map(c => `<span class="hist-chip">${esc(c)}</span>`).join("");
+    return `<article class="hist">
+      <div class="hist-h"><div><h3>${esc(x.titulo)}</h3><span>${esc(x.modo)} · ${new Date(x.fecha).toLocaleDateString("es-AR",{ day:"numeric", month:"long", year:"numeric" })}</span></div></div>
+      <div style="margin-bottom:10px">${chips}${/^https:\/\//.test(x.link_vivo || "") ? `<a class="hist-chip" href="${esc(x.link_vivo)}" target="_blank" rel="noopener">📺 Ver transmisión</a>` : ""}</div>
+      ${podio.length ? podio.map(fila).join("") : '<div class="tvacio" style="padding:14px">Resultados próximamente</div>'}
+      ${resto.length ? `<details class="tn-det" style="margin-top:10px"><summary>Ver el resto de la tabla (${resto.length})</summary><div style="padding:0 16px 12px">${resto.map(r => `<div class="res-r"><span>${r.pos ? r.pos + "º" : "·"}</span><b>${esc(r.f.etiqueta || "—")}</b><em>${r.f.kills !== null ? r.f.kills + " kills" : ""}</em><u>${esc(premio(r.f, r.pos || 99))}</u></div>`).join("")}</div></details>` : ""}
+    </article>`;
+  }
+
+  async function cargar(reset){
+    if(reset){ off = 0; $("lista").innerHTML = '<div class="tvacio">Cargando…</div>'; }
+    let q = sb.from("torneos").select("id,titulo,modo,fecha,mapa,formato,premio,premio2,premio3,costo,moneda,tipo,pozo_pct,pozo_base,reparto,link_vivo").eq("estado","finalizado").eq("cancelado",false);
+    if(modo !== "todos") q = q.eq("modo", modo);
+    const t = await q.order("fecha",{ ascending:false }).range(off, off + PAGE - 1);
+    if(t.error){ $("lista").innerHTML = '<div class="tvacio">No pudimos cargar los resultados. Probá de nuevo en un momento.</div>'; return; }
+    const data = t.data || [];
+    if(reset && !data.length){ $("lista").innerHTML = '<div class="tvacio"><b>Todavía no hay torneos terminados</b>Cuando termine el primero, vas a ver acá quién ganó.</div>'; $("mas").hidden = true; return; }
+    const c = await sb.rpc("inscriptos_torneos"); (c.data || []).forEach(x => CF[x.torneo_id] = x.confirmados);
+    const html = (await Promise.all(data.map(async x => { const r = await sb.rpc("resultados_torneo",{ p_id: x.id }); return card(x, r.data || []); }))).join("");
+    if(reset) $("lista").innerHTML = html; else $("lista").insertAdjacentHTML("beforeend", html);
+    off += data.length; $("mas").hidden = data.length < PAGE;
+  }
+  $("mf").addEventListener("click", e => {
+    const b = e.target.closest("button[data-m]"); if(!b) return;
+    $("mf").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+    modo = b.dataset.m; cargar(true);
+  });
+  $("mas").onclick = () => cargar(false);
+  cargar(true);
+</script>
+</body>
+</html>

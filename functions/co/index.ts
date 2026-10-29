@@ -112,6 +112,46 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
+    // Aviso al admin cuando alguien se inscribe a un torneo (Discord y/o WhatsApp). Solo se envía una vez por inscripción.
+    if (a.action === "aviso") {
+      const { data: ins } = await admin.from("inscripciones")
+        .select("id,usuario,equipo,monto,metodo,referencia,cobro,estado,torneos(titulo,moneda,fecha),inscripcion_jugadores(nombre,id_jugador)")
+        .eq("id", a.id).single();
+      if (!ins || ins.usuario !== user.id) return json({ ok: true });
+      const { data: marca } = await admin.from("inscripciones").update({ avisado: true }).eq("id", ins.id).eq("avisado", false).select("id");
+      if (!marca?.length) return json({ ok: true });   // ya se avisó
+      const t: any = ins.torneos;
+      const dinero = (n: number) => t?.moneda === "USDT" ? `${n} USDT` : `$${Number(n).toLocaleString("es-AR")}`;
+      const jug = (ins.inscripcion_jugadores || []).map((j: any) => `${j.nombre} (${j.id_jugador})`).join(", ");
+      const lineas = [
+        `🎮 Nueva inscripción: ${t?.titulo}`,
+        `${ins.equipo ? ins.equipo + " · " : ""}${jug}`,
+        Number(ins.monto) > 0
+          ? `💸 ${dinero(ins.monto)} por ${ins.metodo === "binance" ? "Binance" : "Mercado Pago"} · comprobante: ${ins.referencia} · ${ins.estado === "pendiente" ? "PENDIENTE de aprobar" : ins.estado}`
+          : "Inscripción gratis (confirmada)",
+        ...(ins.cobro ? [`Cobra en: ${ins.cobro}`] : []),
+        ...(Deno.env.get("SITE_URL") ? [`Panel: ${Deno.env.get("SITE_URL")}/admin.html`] : []),
+      ];
+      const texto = lineas.join("\n");
+      const envios: Promise<unknown>[] = [];
+      const hook = Deno.env.get("DISCORD_WEBHOOK_URL");
+      if (hook) envios.push(fetch(hook, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "XITERKING Torneos", embeds: [{ title: lineas[0], description: lineas.slice(1).join("\n"), color: 0xe10600 }] }),
+      }));
+      // WhatsApp vía CallMeBot (gratis, sin app propia). Secrets: CALLMEBOT_PHONE (con código de país) y CALLMEBOT_KEY.
+      const tel = Deno.env.get("CALLMEBOT_PHONE"), key = Deno.env.get("CALLMEBOT_KEY");
+      if (tel && key) envios.push(fetch(`https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(tel)}&text=${encodeURIComponent(texto)}&apikey=${encodeURIComponent(key)}`));
+      // Telegram (gratis y estable). Secrets: TELEGRAM_BOT_TOKEN (de @BotFather) y TELEGRAM_CHAT_ID (tu chat con el bot).
+      const tgToken = Deno.env.get("TELEGRAM_BOT_TOKEN"), tgChat = Deno.env.get("TELEGRAM_CHAT_ID");
+      if (tgToken && tgChat) envios.push(fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: tgChat, text: texto }),
+      }));
+      await Promise.allSettled(envios);
+      return json({ ok: true });
+    }
+
     if (a.action === "sync") {
       let q = admin.from("pedidos").select("id,diamantes,id_jugador,co_order_id").eq("estado", "pendiente").limit(20);
       if (!perf?.es_admin) q = q.eq("usuario", user.id);

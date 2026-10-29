@@ -50,12 +50,21 @@
 @keyframes introFade{to{opacity:1}}
 @keyframes introGlitch{0%{transform:translate(-3px,0);text-shadow:3px 0 #e10600,-3px 0 #2ee6ff}25%{transform:translate(3px,1px);text-shadow:-3px 0 #e10600,3px 0 #2ee6ff}50%{transform:translate(-2px,-1px);text-shadow:2px 0 #e10600,-2px 0 #2ee6ff}75%{transform:translate(2px,0);text-shadow:-2px 0 #e10600,2px 0 #2ee6ff}100%{transform:none;text-shadow:none}}
 @keyframes introEmber{0%{transform:translateY(0) scale(1);opacity:0}15%{opacity:.9}100%{transform:translateY(-100vh) scale(.4);opacity:0}}
+#intro .snd{position:absolute;right:14px;bottom:14px;z-index:5;background:#000a;border:1px solid #e1060099;color:#fff;font:inherit;font-size:.78rem;padding:9px 14px;border-radius:999px;cursor:pointer;backdrop-filter:blur(4px)}
+#intro .snd[hidden]{display:none}
+#intro.wait,#intro.wait *,#intro.wait *::before,#intro.wait *::after{animation-play-state:paused!important}
+#intro .gate{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:radial-gradient(circle at 50% 45%,#2a0608 0,#0a0505 55%,#000 100%);border:0;color:#fff;font:inherit;cursor:pointer}
+#intro .gate img{width:clamp(110px,28vw,150px);filter:drop-shadow(0 0 22px #e10600aa)}
+#intro .gate span{font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:.3em;font-size:clamp(1.1rem,5vw,1.5rem);padding-left:.3em;animation:gatePulse 1.6s ease-in-out infinite}
+#intro .gate small{font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:#b9a9a9}
+#intro .gate[hidden]{display:none}
+@keyframes gatePulse{0%,100%{opacity:.55}50%{opacity:1}}
 @keyframes introAuto{to{opacity:0;visibility:hidden}}
 @media (prefers-reduced-motion:reduce){#intro .rays,#intro .fire i,#intro .flash,#intro .box,#intro .emblem::before,#intro .emblem::after,#intro .r2,#intro .wave,#intro .emblem img,#intro .em,#intro .nm{animation:none}}
 </style>
 </head>
 <body>
-<div id="intro" role="status" aria-label="Cargando">
+<div id="intro" class="wait" role="status" aria-label="Cargando">
   <div class="door dl"></div><div class="door dr"></div>
   <div class="embers" id="introEmbers"><div class="rays"></div><div class="fire"><i style="--x:5%;--d:1.3s;animation-delay:-0.2s"></i><i style="--x:20%;--d:1.0s;animation-delay:-0.7s"></i><i style="--x:35%;--d:1.5s;animation-delay:-0.4s"></i><i style="--x:50%;--d:1.1s;animation-delay:-0.9s"></i><i style="--x:65%;--d:1.4s;animation-delay:-0.1s"></i><i style="--x:80%;--d:1.0s;animation-delay:-0.6s"></i><i style="--x:95%;--d:1.3s;animation-delay:-0.3s"></i></div></div>
   <div class="box">
@@ -65,12 +74,14 @@
     <div class="load"><div class="bar"><i id="introBar"></i></div><div class="pct" id="introPct">0%</div></div>
   </div>
   <div class="flash"></div>
+  <button type="button" class="gate" id="introGo"><img src="assets/logo.png" alt=""><span>Tocá para entrar</span><small>🔊 Con sonido</small></button>
+  <button type="button" class="snd" id="introSnd" hidden>🔊 Activar sonido</button>
 </div>
 <script>
-  // Dura unos 2,8 s; si la página tarda más en cargar, espera en 90% hasta que termine
+  // Dura unos 5 s; si la página tarda más en cargar, espera en 90% hasta que termine
   (function(){
     var el = document.getElementById("intro"), bar = document.getElementById("introBar"), pct = document.getElementById("introPct"), em = document.getElementById("introEmbers");
-    var DUR = 2800, t0 = Date.now(), listo = document.readyState === "complete";
+    var DUR = 5000, t0 = Date.now(), listo = document.readyState === "complete";
     if(!listo) window.addEventListener("load", function(){ listo = true; });
     for(var k = 0; k < 22; k++){
       var d = document.createElement("i"), z = 2 + Math.random()*4; d.className = "em";
@@ -85,9 +96,36 @@
       bar.style.transform = "scaleX(" + p + ")";
       pct.textContent = Math.round(p * 100) + "%";
       if(p < 1) return requestAnimationFrame(paso);
-      setTimeout(function(){ el.classList.add("out"); setTimeout(function(){ el.remove(); }, 1200); }, 300);
+      setTimeout(function(){ el.classList.add("out"); if(window._introApagar) window._introApagar(); setTimeout(function(){ el.remove(); }, 1200); }, 300);
     }
-    paso();
+    // ---- Música de la pantalla de carga (poné tu clip en assets/intro.mp3) ----
+    var au = new Audio("assets/intro.mp3"), snd = document.getElementById("introSnd"), sonando = false;
+    var INICIO = 0;   // el clip ya viene cortado desde 1:41 (si usás la canción entera, poné 101)
+    au.volume = .7; au.preload = "auto";
+    au.addEventListener("loadedmetadata", function(){ try{ if(INICIO && au.currentTime < INICIO) au.currentTime = INICIO; }catch(e){} });
+    function sonar(){
+      if(sonando) return;
+      var r = au.play();
+      if(r && r.then) r.then(function(){ sonando = true; snd.hidden = true; }).catch(function(){ if(!sonando) snd.hidden = false; });
+    }
+    var fallo = false;
+    au.addEventListener("error", function(){ fallo = true; snd.hidden = false; snd.textContent = "⚠ No se encontró assets/intro.mp3"; });
+    snd.addEventListener("click", function(e){ e.stopPropagation(); sonar(); });
+    window._introApagar = function(){
+      if(!sonando) return;
+      var iv = setInterval(function(){ if(au.volume > .07) au.volume -= .07; else { clearInterval(iv); au.pause(); } }, 70);
+    };
+
+    // ---- Pantalla "Tocá para entrar": el toque permite que el navegador deje sonar la música ----
+    var go = document.getElementById("introGo");
+    function empezar(){
+      go.hidden = true; el.classList.remove("wait");
+      t0 = Date.now(); sonar(); paso();
+      try{ sessionStorage.setItem("introVista", "1"); }catch(e){}
+    }
+    var vista = false; try{ vista = sessionStorage.getItem("introVista") === "1"; }catch(e){}
+    go.addEventListener("click", empezar);
+    if(vista) empezar();   // si ya la viste en esta sesión, no pide el toque otra vez
   })();
 </script>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -168,6 +206,21 @@
     <div class="tornos" id="tornos"><div class="tvacio">Cargando torneos…</div></div>
   </section>
 
+  <section class="rv" id="ranking">
+    <h2>Ranking de la temporada</h2>
+    <div class="rk-box">
+      <div class="tn-fil" id="rkmodo"><button type="button" data-m="Solo" class="on">🎯 Individual</button><button type="button" data-m="Dúo">🤝 Dúo</button><button type="button" data-m="Escuadra">🛡 Escuadra</button></div>
+      <div class="tn-fil" id="rkfil"><button type="button" data-d="mes" class="on">Este mes</button><button type="button" data-d="todo">Histórico</button></div>
+      <div id="rk"><div class="tvacio">Cargando ranking…</div></div>
+      <p class="rk-pts">Puntos: 1º 15 · 2º 10 · 3º 7 · 4º 5 · 5º 3 · +1 por jugar · +1 por cada kill. Cada modo tiene su propio ranking: individual, dúo y escuadra. En dúo y escuadra suma el equipo.</p>
+    </div>
+  </section>
+
+  <section class="rv" id="resultados">
+    <h2>Últimos ganadores</h2>
+    <div id="res"><div class="tvacio">Cargando resultados…</div></div>
+  </section>
+
 
 
 
@@ -194,25 +247,28 @@
     const pad = n => String(n).padStart(2,"0");
     const mon = (n,m) => m === "USDT" ? Number(n).toLocaleString("es-AR") + " USDT" : "$" + Number(n).toLocaleString("es-AR");
     const icono = n => '<span class="tn-ic">' + '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/></svg>'.repeat(n) + '</span>';
-    let LISTA = [], CUP = {}, MIS = {}, filtro = "todos", timer = null;
+    let LISTA = [], CUP = {}, CONF = {}, MIS = {}, ESP = {}, filtro = "todos", timer = null;
 
     async function cargar(){
       await Auth.listo;
       const u = Auth.actual();
-      const [t, c, m] = await Promise.all([
-        sb.from("torneos").select("id,titulo,modo,fecha,premio,premio2,premio3,mapa,formato,reglas,cupos,costo,descripcion,estado,tipo,pago_kill,moneda").neq("estado","finalizado").order("fecha"),
+      const [t, c, m, es] = await Promise.all([
+        sb.from("torneos").select("id,titulo,modo,fecha,premio,premio2,premio3,mapa,formato,reglas,cupos,costo,descripcion,estado,tipo,pago_kill,moneda,cierre_horas,minimo,pozo_pct,pozo_base,reparto,cancelado,link_vivo").neq("estado","finalizado").order("fecha"),
         sb.rpc("inscriptos_torneos"),
-        u ? sb.from("inscripciones").select("id,torneo_id,equipo,estado,monto").eq("usuario",u.id).in("estado",["pendiente","confirmada"]) : Promise.resolve({ data:[] })
+        u ? sb.from("inscripciones").select("id,torneo_id,equipo,estado,monto,checkin,creado").eq("usuario",u.id).in("estado",["pendiente","confirmada"]) : Promise.resolve({ data:[] }),
+        u ? sb.from("lista_espera").select("torneo_id").eq("usuario",u.id) : Promise.resolve({ data:[] })
       ]);
+      ESP = {}; (es.data || []).forEach(x => ESP[x.torneo_id] = 1);
       if(t.error){ console.error(t.error); box.innerHTML = '<div class="tvacio">No pudimos cargar los torneos. Probá de nuevo en un momento.</div>'; return; }
       LISTA = t.data || [];
-      CUP = {}; (c.data || []).forEach(x => CUP[x.torneo_id] = x.equipos);
+      CUP = {}; CONF = {}; (c.data || []).forEach(x => { CUP[x.torneo_id] = x.equipos; CONF[x.torneo_id] = x.confirmados; });
       MIS = {}; (m.data || []).forEach(x => MIS[x.torneo_id] = x);
       render();
     }
 
     function card(t){
       const d = new Date(t.fecha), vivo = t.estado === "en_curso", n = nj(t.modo);
+      const ch = t.cierre_horas == null ? 2 : Number(t.cierre_horas), cierreT = d.getTime() - ch * 3600000, cerrado = !vivo && Date.now() >= cierreT;
       const costoN = Number(t.costo) || 0;
       const costo = costoN > 0 ? mon(costoN, t.moneda) : "Gratis";
       const insc = CUP[t.id] || 0, lleno = t.cupos && insc >= t.cupos, mi = MIS[t.id];
@@ -221,11 +277,18 @@
       const fecha = d.toLocaleDateString("es-AR",{ weekday:"long", day:"numeric", month:"long" });
       const hora = d.toLocaleTimeString("es-AR",{ hour:"2-digit", minute:"2-digit" });
 
-      const kills = t.tipo === "kills", pk = Number(t.pago_kill) || 0, nf = x => x.toLocaleString("es-AR");
+      const kills = t.tipo === "kills", pozoPct = Number(t.pozo_pct) || 0, pozoOn = pozoPct > 0 && !kills, pk = Number(t.pago_kill) || 0, nf = x => x.toLocaleString("es-AR");
       let pod = "";
       if(kills){
         const eq = costoN > 0 && pk > 0 ? Math.ceil(costoN / pk) : 0;
         pod = `<div class="tn-kill"><div class="k1"><span>Cada kill vale</span><b>${mon(pk, t.moneda)}</b></div><div class="k2">Pagás <b>${costo}</b> y cobrás por cada baja que hagas.${eq ? ` Con <b>${eq} kill${eq > 1 ? "s" : ""}</b> ya recuperás la inscripción.` : ""} Más kills, más ganás: te pagamos tus kills al terminar, a la cuenta que indiques al inscribirte.</div></div>`;
+      } else if(pozoOn){
+        const rep = String(t.reparto || "50/30/20").split("/").map(Number);
+        const pozo = Number(t.pozo_base || 0) + (CONF[t.id] || 0) * costoN * pozoPct / 100;
+        const medal = ["1º","2º","3º"];
+        const p = (k) => rep[k] ? `<div class="pd p${k+1}"><span>${medal[k]}</span><b>${mon(Math.floor(pozo * rep[k] / 100), t.moneda)}</b></div>` : "";
+        pod = `<div class="tn-pozo"><span>💰 Pozo acumulado</span><b>${mon(Math.floor(pozo), t.moneda)}</b><small>${pozoPct}% de lo recaudado${Number(t.pozo_base) > 0 ? " + " + mon(t.pozo_base, t.moneda) + " puestos por XITERKING" : ""} · crece con cada inscripción confirmada</small></div>
+          <div class="tn-pod">${rep.length > 1 ? p(1) : ""}${p(0)}${rep.length > 2 ? p(2) : ""}</div>`;
       } else if(t.premio2 || t.premio3){
         const p = (k,l,v) => v ? `<div class="pd p${k}"><span>${l}</span><b>${esc(v)}</b></div>` : "";
         pod = `<div class="tn-pod">${p(2,"2º",t.premio2)}${p(1,"1º",t.premio)}${p(3,"3º",t.premio3)}</div>`;
@@ -236,39 +299,52 @@
       const info = [
         ["Fecha", fecha], ["Hora", hora + " hs"],
         ["Jugadores", n === 1 ? "Individual" : n + " por equipo"],
-        ["Mapa", t.mapa], ["Formato", t.formato], ["Inscripción", costo], kills ? ["Pago por kill", mon(pk, t.moneda)] : []
+        ["Cierre de inscripción", !vivo && ch > 0 ? new Date(cierreT).toLocaleString("es-AR",{ weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" }) + " hs" : ""], ["Mapa", t.mapa], ["Formato", t.formato], ["Inscripción", costo], kills ? ["Pago por kill", mon(pk, t.moneda)] : []
       ].filter(x => x[1]).map(x => `<div><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join("");
 
       const cup = t.cupos
         ? `<div class="tn-cup"><div class="tn-bar"><i style="width:${pct}%"></i></div><small>${insc} / ${t.cupos} ${unidad} · ${lleno ? "¡Cupos agotados!" : "quedan " + (t.cupos - insc)}</small></div>`
         : (insc ? `<div class="tn-cup"><small>${insc} ${unidad} inscriptos · sin límite de cupos</small></div>` : "");
 
+      const minHtml = t.minimo ? (insc >= t.minimo
+        ? `<div class="tn-min ok">✓ Mínimo de ${t.minimo} ${unidad} alcanzado · el torneo se juega</div>`
+        : `<div class="tn-min">⚠ Mínimo ${t.minimo} ${unidad} para que se juegue · faltan <b>${t.minimo - insc}</b>. Si no se llega al cierre, se cancela y se devuelven los pagos.</div>`) : "";
+      const faltaMin = !t.cancelado && cerrado && t.minimo && insc < t.minimo;
       const reglas = (t.reglas || "").split("\n").map(x => x.trim()).filter(Boolean);
       const regHtml = reglas.length ? `<details class="tn-det"><summary>Reglas y requisitos</summary><ul>${reglas.map(r => `<li>${esc(r)}</li>`).join("")}</ul></details>` : "";
       const rkHtml = kills ? `<details class="tn-det" data-rank="${t.id}"><summary>Ranking de kills</summary><div class="tn-plist">Cargando…</div></details>` : "";
       const parHtml = insc ? `<details class="tn-det" data-part="${t.id}"><summary>Quiénes ya se anotaron (${insc})</summary><div class="tn-plist">Cargando…</div></details>` : "";
 
       let cta;
-      if(mi){
+      if(t.cancelado){ cta = mi ? '<div class="tn-ok pend">❌ Cancelado · te devolvemos tu pago</div>' : '<button class="btn" type="button" disabled>Torneo cancelado</button>'; }
+      else if(mi){
         const pend = mi.estado === "pendiente", pagada = mi.estado === "confirmada" && Number(mi.monto) > 0;
         cta = pend
           ? `<div class="tn-ok pend">⏳ Pago en revisión · te confirmamos el lugar enseguida</div>`
           : `<div class="tn-ok">✓ Ya estás inscripto${mi.equipo ? " como <b>" + esc(mi.equipo) + "</b>" : ""}</div>`;
-        if(!vivo && !pagada) cta += `<button class="btn ghost sm" type="button" data-can="${mi.id}">Cancelar inscripción</button>`;
+        if(!vivo && !cerrado && !pagada) cta += `<button class="btn ghost sm" type="button" data-can="${mi.id}">Cancelar inscripción</button>`;
+        const fin = d.getTime() - 1800000, ini = d.getTime() - 3600000, ahora = Date.now(), hh = ms => new Date(ms).toLocaleTimeString("es-AR",{ hour:"2-digit", minute:"2-digit" });
+        if(mi.estado === "confirmada" && !vivo && new Date(mi.creado).getTime() < fin){
+          if(mi.checkin) cta += '<div class="tn-ok">✅ Check-in hecho · ¡nos vemos en la sala!</div>';
+          else if(ahora >= ini && ahora < fin) cta += `<button class="btn" type="button" data-ck="${mi.id}">✅ Confirmar que juego (hasta las ${hh(fin)})</button>`;
+          else if(ahora < ini) cta += `<div class="tn-min">🕐 Check-in obligatorio: de ${hh(ini)} a ${hh(fin)} hs. Si no lo hacés, perdés tu lugar.</div>`;
+        }
       } else if(vivo){ cta = '<button class="btn" type="button" disabled>Inscripciones cerradas</button>'; }
-      else if(lleno){ cta = '<button class="btn" type="button" disabled>Cupos agotados</button>'; }
+      else if(cerrado){ cta = '<button class="btn" type="button" disabled>Inscripciones cerradas</button>'; }
+      else if(lleno){ cta = ESP[t.id] ? `<div class="tn-ok pend">⏳ En lista de espera · te avisamos si se libera un lugar</div><button class="btn ghost sm" type="button" data-sal="${t.id}">Salir de la lista</button>` : `<button class="btn" type="button" data-esp="${t.id}">Cupos agotados · Anotarme en lista de espera</button>`; }
       else { cta = `<button class="btn" type="button" data-ins="${t.id}">Inscribirme · ${costo}</button>`; }
 
       return `<article class="tn${vivo ? " vivo" : ""}">
         <div class="tn-head"><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="tn-badge">${icono(n)}${esc(t.modo)}</span>${kills ? '<span class="tn-kt">💀 Por kills</span>' : ""}</div><span class="tn-st">${vivo ? "En vivo" : "Próximamente"}</span></div>
         <h3>${esc(t.titulo)}</h3>
         ${t.descripcion ? `<p class="tn-desc">${esc(t.descripcion)}</p>` : ""}
-        ${vivo ? '<div class="tn-live">🔥 Torneo en juego</div>'
+        ${vivo ? '<div class="tn-live">🔥 Torneo en juego' + (/^https:\/\//.test(t.link_vivo || "") ? ' · <a href="' + esc(t.link_vivo) + '" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline">📺 Ver transmisión</a>' : '') + '</div>'
                : `<div class="tn-cd" data-cd="${d.getTime()}"><div><b>00</b><span>días</span></div><div><b>00</b><span>hs</span></div><div><b>00</b><span>min</span></div><div><b>00</b><span>seg</span></div></div>`}
         ${pod}
         <div class="tn-grid">${info}</div>
-        ${cup}${regHtml}${rkHtml}${parHtml}
-        <div class="tn-cta">${cta}</div>
+        ${t.cancelado ? '<div class="tn-lock">❌ Torneo cancelado · no se llegó al mínimo de equipos. Los pagos se devuelven.</div>' : vivo ? "" : cerrado ? '<div class="tn-lock">🔒 Inscripciones cerradas</div>' : `<div class="tn-lock open">⏱ Las inscripciones cierran en <b data-cl="${cierreT}">…</b>${ch > 0 ? " (" + ch + " h antes del inicio)" : ""}</div>`}
+        ${t.cancelado ? "" : minHtml}${faltaMin ? '<div class="tn-min">⚠ No se llegó al mínimo: este torneo se cancelará y se devuelven los pagos.</div>' : ""}${cup}${regHtml}${rkHtml}${parHtml}
+        <div class="tn-cta">${cta}<a class="btn ghost sm" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent("🔥 " + t.titulo + " · " + fecha + " " + hora + " hs. Inscribite acá: " + location.origin + location.pathname)}">Compartir por WhatsApp</a></div>
       </article>`;
     }
 
@@ -289,7 +365,16 @@
         const v = [Math.floor(s/86400), Math.floor(s%86400/3600), Math.floor(s%3600/60), s%60];
         el.querySelectorAll("b").forEach((b,i) => b.textContent = pad(v[i]));
       });
-      tick(); timer = setInterval(tick, 1000);
+      const tick2 = () => {
+        tick();
+        for(const el of document.querySelectorAll("[data-cl]")){
+          const ms = +el.dataset.cl - Date.now();
+          if(ms <= 0){ render(); return; }
+          const s = Math.floor(ms / 1000);
+          el.textContent = (s >= 86400 ? Math.floor(s/86400) + "d " : "") + pad(Math.floor(s%86400/3600)) + "h " + pad(Math.floor(s%3600/60)) + "m " + pad(s%60) + "s";
+        }
+      };
+      tick2(); timer = setInterval(tick2, 1000);
     }
 
     fil.addEventListener("click", e => {
@@ -311,7 +396,7 @@
         d.dataset.ok = "1";
         const r = await sb.rpc("ranking_kills",{ p_id: +d.dataset.rank });
         d.querySelector(".tn-plist").innerHTML = (r.error || !(r.data || []).length)
-          ? "Todavía no hay resultados. El ranking aparece cuando termina el torneo."
+          ? "Todavía no hay resultados. El ranking aparece apenas se cargan las kills del torneo."
           : r.data.map((x,i) => `<span><i>${i+1}º</i>${esc(x.etiqueta)} · ${x.kills} kill${x.kills === 1 ? "" : "s"} · ${Number(x.premio).toLocaleString("es-AR")} USDT</span>`).join("");
       }
     }, true);
@@ -319,6 +404,17 @@
     box.addEventListener("click", async e => {
       const bi = e.target.closest("button[data-ins]");
       if(bi){ const t = LISTA.find(x => String(x.id) === bi.dataset.ins); if(t) abrir(t); return; }
+      const bk = e.target.closest("button[data-ck]");
+      if(bk){ bk.disabled = true; const r = await sb.rpc("hacer_checkin",{ p_id: +bk.dataset.ck }); toast(r.error ? "El check-in se abre 1 hora antes y cierra 30 minutos antes" : "¡Check-in hecho!"); cargar(); return; }
+      const be = e.target.closest("button[data-esp]"), bs = e.target.closest("button[data-sal]");
+      if(be){
+        const t = LISTA.find(x => String(x.id) === be.dataset.esp);
+        if(!Auth.actual()){ abrir(t); return; }
+        be.disabled = true;
+        const r = await sb.rpc("anotar_espera",{ p_torneo: +be.dataset.esp });
+        toast(r.error ? "No se pudo anotar" : "Listo: te avisamos si se libera un lugar"); cargar(); return;
+      }
+      if(bs){ bs.disabled = true; await sb.rpc("salir_espera",{ p_torneo: +bs.dataset.sal }); toast("Saliste de la lista"); cargar(); return; }
       const bc = e.target.closest("button[data-can]");
       if(bc){
         if(!confirm("¿Cancelar tu inscripción?")) return;
@@ -335,7 +431,7 @@
       duplicado:"Alguno de esos IDs ya está inscripto en este torneo.", cerrado:"Las inscripciones ya cerraron.",
       jugadores:"Faltan datos de jugadores.", nombre:"Revisá los nombres (2 a 30 caracteres).", id:"Revisá los IDs (solo números).",
       torneo:"El torneo ya no existe.", metodo:"Método de pago inválido.", referencia:"Escribí el número de comprobante.",
-      cobro:"Escribí dónde querés cobrar tus kills.", pagada:"Tu inscripción ya está pagada. Escribinos por soporte si necesitás cancelarla."
+      cobro:"Escribí dónde querés cobrar tus kills.", bloqueado:"Tenés 2 faltas recientes: por ahora solo podés anotarte a torneos con inscripción paga.", pagada:"Tu inscripción ya está pagada. Escribinos por soporte si necesitás cancelarla."
     };
     const errTxt = m => { const k = Object.keys(ERR).find(k => String(m).trim() === k) || Object.keys(ERR).find(k => String(m).includes(k)); return k ? ERR[k] : "No se pudo inscribir. Probá de nuevo."; };
 
@@ -368,6 +464,7 @@
         ${jug}${cobro}${pago}
         <div class="row"><span>Inscripción</span><b>${costo > 0 ? mon(costo, t.moneda) : "Gratis"}</b></div>
         ${costo > 0 ? '<p class="note">Revisamos tu pago y te confirmamos el lugar. Este pago no usa tu saldo de diamantes.</p>' : ""}
+        <label style="display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:.88rem;cursor:pointer"><input type="checkbox" id="iac" style="margin-top:3px"><span>Leí y acepto las reglas y requisitos del torneo. Entiendo que debo hacer el check-in entre 1 hora y 30 minutos antes del inicio (si no, me dan de baja sin devolución) y que usar hacks implica la descalificación.</span></label>
         <div class="msg" id="im" role="alert" style="margin-top:12px"></div>
         <div class="acts" style="margin-top:6px"><button class="btn ghost" type="button" id="ic">Cancelar</button><button class="btn" type="button" id="ig">${costo > 0 ? "Enviar inscripción" : "Confirmar inscripción"}</button></div>`;
       ov.classList.add("open");
@@ -385,12 +482,14 @@
         const co = kills ? $("ico").value.trim() : "", ref = costo > 0 ? $("ir").value.trim() : "";
         if(kills && co.length < 3){ msg.textContent = "Escribí dónde querés cobrar tus kills."; return; }
         if(costo > 0 && ref.length < 4){ msg.textContent = "Escribí el número de comprobante de tu pago."; return; }
+        if(!$("iac").checked){ msg.textContent = "Tenés que aceptar las reglas del torneo."; return; }
         msg.textContent = ""; b.disabled = true; b.innerHTML = '<span class="spin"></span>';
         const r = await sb.rpc("inscribir_torneo",{
           p_torneo: t.id, p_equipo: n > 1 ? $("ie").value.trim() : null, p_jugadores: jugadores,
           p_metodo: costo > 0 ? (usdt ? "binance" : "mercadopago") : null, p_ref: ref || null, p_cobro: co || null
         });
         if(r.error){ b.disabled = false; b.textContent = costo > 0 ? "Enviar inscripción" : "Confirmar inscripción"; msg.textContent = errTxt(r.error.message); return; }
+        sb.functions.invoke("co",{ body:{ action:"aviso", id:r.data } }).catch(()=>{});   // te avisa por Discord/WhatsApp
         modal.classList.remove("wide");
         modal.innerHTML = `<h3>${costo > 0 ? "¡Inscripción enviada!" : "¡Inscripción confirmada!"}</h3>
           <p>${costo > 0 ? "Vamos a revisar tu pago y te confirmamos el lugar en <b style=\"color:var(--text)\">" + esc(t.titulo) + "</b>. Vas a verlo en la tarjeta del torneo." : "Ya estás anotado en <b style=\"color:var(--text)\">" + esc(t.titulo) + "</b>."}</p>
@@ -403,6 +502,55 @@
     }
 
     cargar();
+  })();
+
+  // ---- Ranking de temporada y resultados ----
+  (function(){
+    const $ = id => document.getElementById(id);
+    const MED = ["🥇","🥈","🥉"];
+    const mon = (n,m) => m === "USDT" ? Number(n).toLocaleString("es-AR") + " USDT" : "$" + Number(n).toLocaleString("es-AR");
+
+    let rkModo = "Solo", rkTiempo = "mes";
+    async function ranking(){
+      const desde = rkTiempo === "mes" ? new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString() : null;
+      const r = await sb.rpc("ranking_temporada",{ p_desde: desde, p_modo: rkModo });
+      const L = (r.data || []).slice(0,10), eq = rkModo !== "Solo";
+      $("rk").innerHTML = (r.error || !L.length)
+        ? '<div class="tvacio"><b>Todavía no hay puntos</b>El ranking ' + (rkModo === "Solo" ? "individual" : "de " + rkModo.toLowerCase()) + ' se arma con los resultados de los torneos terminados.</div>'
+        : `<div class="rk-t"><div class="rk-h"><span>#</span><span>${eq ? "Equipo" : "Jugador"}</span><span>Pts</span><span>Torn.</span><span>Kills</span></div>${L.map((x,i)=>`<div class="rk-r${i<3?" top":""}"><span>${MED[i]||i+1}</span><b>${esc(x.jugador||"—")}</b><span>${x.puntos}</span><span>${x.torneos}</span><span>${x.kills}</span></div>`).join("")}</div>`;
+    }
+    $("rkmodo").addEventListener("click", e => {
+      const b = e.target.closest("button[data-m]"); if(!b) return;
+      $("rkmodo").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+      rkModo = b.dataset.m; ranking();
+    });
+    $("rkfil").addEventListener("click", e => {
+      const b = e.target.closest("button[data-d]"); if(!b) return;
+      $("rkfil").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+      rkTiempo = b.dataset.d; ranking();
+    });
+
+    async function resultados(){
+      const t = await sb.from("torneos").select("id,titulo,modo,fecha,premio,premio2,premio3,costo,moneda,tipo,pozo_pct,pozo_base,reparto").eq("estado","finalizado").eq("cancelado",false).order("fecha",{ ascending:false }).limit(2);
+      if(t.error || !(t.data||[]).length){ $("res").innerHTML = '<div class="tvacio"><b>Aún no hay torneos terminados</b>Acá vas a ver los ganadores de cada torneo.</div>'; return; }
+      const c = await sb.rpc("inscriptos_torneos"), CF = {}; (c.data||[]).forEach(x => CF[x.torneo_id] = x.confirmados);
+      const cards = await Promise.all(t.data.map(async x => {
+        const r = await sb.rpc("resultados_torneo",{ p_id: x.id }), L = (r.data || []).slice(0,3);
+        const rep = String(x.reparto || "50/30/20").split("/").map(Number);
+        const pozo = Number(x.pozo_base||0) + (CF[x.id]||0) * Number(x.costo||0) * Number(x.pozo_pct||0) / 100;
+        const texto = [x.premio, x.premio2, x.premio3];
+        const premio = f => {
+          if(x.tipo === "kills") return f.premio ? mon(f.premio, x.moneda) : "";
+          if(Number(x.pozo_pct) > 0 && f.puesto && rep[f.puesto-1]) return mon(Math.floor(pozo * rep[f.puesto-1] / 100), x.moneda);
+          return f.puesto && f.puesto <= 3 ? (texto[f.puesto-1] || "") : "";
+        };
+        return `<article class="res-c"><div class="res-h"><b>${esc(x.titulo)}</b><span>${esc(x.modo)} · ${new Date(x.fecha).toLocaleDateString("es-AR",{ day:"numeric", month:"long" })}</span></div>
+          ${L.length ? L.map((f,i)=>`<div class="res-r"><span>${f.puesto && f.puesto<=3 ? MED[f.puesto-1] : (f.puesto ? f.puesto + "º" : "·")}</span><b>${esc(f.etiqueta||"—")}${f.integrantes && f.integrantes !== f.etiqueta ? `<small>${esc(f.integrantes)}</small>` : ""}</b><em>${f.kills !== null ? f.kills + " kill" + (f.kills === 1 ? "" : "s") : ""}</em><u>${esc(premio(f))}</u></div>`).join("") : '<div class="res-r"><b>Resultados próximamente</b></div>'}
+        </article>`;
+      }));
+      $("res").innerHTML = '<div class="res-g">' + cards.join("") + '</div><p style="text-align:center;margin-top:18px"><a class="btn ghost" href="resultados.html">Ver todos los torneos terminados →</a></p>';
+    }
+    ranking(); resultados();
   })();
 
   document.getElementById("adm").onclick = async () => {
