@@ -1,0 +1,247 @@
+/* XITERKING · tema nuevo (rojo). Se carga al final de cada página y pisa los estilos viejos. */
+:root{
+  --bg:#080505; --card:#140b0b; --line:#2b1a1a; --line2:#432626; --input:#100808;
+  --text:#f6f1f1; --muted:#a09292;
+  --red:#e5231b; --red-d:#8f0f0a; --price:#ff5a4d; --gold:#ffc83d; --wa:#3ddc97; --err:#ff6b6b;
+  --ink-on-accent:#fff;
+}
+body{background:var(--bg);font-family:Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:0}
+h1,h2,h3{font-family:"Chakra Petch",sans-serif;font-weight:700;font-style:normal;text-transform:none;letter-spacing:-.005em}
+
+/* Fondo: trama de rombos fija, sin animación */
+#fx{background:
+  linear-gradient(135deg,#ffffff07 1px,transparent 1px) 0 0/44px 44px,
+  linear-gradient(45deg,#ffffff07 1px,transparent 1px) 0 0/44px 44px,
+  radial-gradient(ellipse 70% 40% at 50% -10%,#5a0d1099,transparent 70%);
+  -webkit-mask-image:linear-gradient(#000 20%,transparent 95%);mask-image:linear-gradient(#000 20%,transparent 95%)}
+#fx::before{display:none}
+
+/* Botones tipo arcade: planos, con base sólida que se hunde al apretar */
+.btn,.buy,.wa{background:var(--red);color:var(--ink-on-accent);border:0;border-radius:10px;
+  box-shadow:0 4px 0 var(--red-d);font-family:"Chakra Petch",sans-serif;font-weight:700;letter-spacing:.01em;
+  transition:transform .08s,box-shadow .08s,filter .15s}
+.btn:hover,.buy:hover:not(:disabled){filter:brightness(1.1)}
+.btn:active,.buy:active:not(:disabled),.wa:active{transform:translateY(3px);box-shadow:0 1px 0 var(--red-d)}
+.btn.ghost{background:transparent;color:var(--text);border:1.5px solid var(--line2);box-shadow:none}
+.btn.ghost:hover{border-color:var(--red);background:#e5231b1a}
+.btn.ghost:active{transform:none}
+.buy{height:56px;border-radius:12px}
+.buy:disabled{background:#2a1414;color:#7d6060;box-shadow:none}
+.wa{border-radius:12px}
+
+/* Formas: esquinas más cortas, bordes finos, sin brillos */
+.panel,.auth,.hist,.step,.faq details,.modal,.product,.bt,.tn3,.spot,.how div,.sp-prize{border-radius:12px}
+.panel,.auth{background:var(--card);border:1px solid var(--line2);box-shadow:none}
+.panel::before,.auth::before{left:0;right:0;top:0;height:3px;border-radius:12px 12px 0 0;background:var(--red);box-shadow:none}
+.tn3{background:var(--card);border-color:var(--line2)}
+.tn3.vivo{border-color:var(--red);box-shadow:none}
+.tn3.vivo .tn3-date{background:linear-gradient(180deg,#e5231b,#8f0f0a)}
+.tn3-date{background:linear-gradient(180deg,#5a1a1a,#2c0d0d)}
+.tn3.cerrado .tn3-date{background:#241818}
+.spot{background:linear-gradient(160deg,#2a0d0f,#0f0707);border-color:var(--line2);box-shadow:none}
+.sp-tag{background:var(--red);color:#fff}
+.bt{background:var(--card)}
+.bt:hover{transform:none;border-color:var(--red);box-shadow:none}
+.h2-eyebrow,.eyebrow{text-transform:none;letter-spacing:.02em;font-size:.82rem;font-weight:600;color:#ff6a5a;background:#e5231b1a;border:1px solid #e5231b55;border-radius:6px;padding:4px 12px}
+.eyebrow::before,.eyebrow::after{display:none}
+.hero2 h1{font-size:clamp(2.6rem,7.4vw,5rem);line-height:1;letter-spacing:-.02em}
+.hero2 h1 em{background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--gold);filter:none;font-style:normal}
+.page-title h1 span,.hero h1 span{color:var(--red);text-shadow:none}
+.sec-h i{display:none}
+.sec-h h2{font-size:clamp(1.5rem,4vw,2.1rem)}
+.h2-stats b,.sp-prize b{text-shadow:none}
+.ticker{background:#0c0606}
+.ticker div{font-style:normal;color:#ff6a5a;letter-spacing:.06em}
+
+/* Cabecera y navegación: rectas, no píldoras */
+header.nav2{border-radius:12px;background:#0c0606e6;border-color:var(--line2)}
+.nav2 nav a{border-radius:8px}
+.pill,.user,.f-top nav a,.hist-chip,.est,.copy,.badge{border-radius:8px}
+.pill{text-transform:none;letter-spacing:0;font-size:.84rem}
+.pill.plain{background:var(--card);border-color:var(--line2);color:var(--text)}
+.user .av{background:var(--red);color:#fff;border-radius:8px}
+
+/* Paquetes de diamantes */
+.pack{border-radius:12px;background:var(--card);border-color:var(--line2)}
+.pack:hover{border-color:#6a3636}
+.pack.sel{background:#240d0e;border-color:var(--red);box-shadow:0 0 0 1px var(--red)}
+.pack .ico svg,.product .art svg{filter:none}
+.pack .tag{background:var(--gold);color:#241a00;box-shadow:none;border-radius:6px}
+.product .art{background:linear-gradient(135deg,#4a0a0e,#1c0809 80%)}
+.product .art.ff{background:linear-gradient(180deg,#00000044,#000000aa),url("free-fire.jpg") center/cover no-repeat,#1c0809}
+.product .go{background:var(--red);color:#fff;border-radius:8px}
+.product:hover,.faq details[open]{border-color:var(--red)}
+
+/* Campos */
+input,textarea,select{background:var(--input);border:1px solid var(--line2);border-radius:10px}
+input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px #e5231b33}
+.tabs{background:var(--input);border-color:var(--line2);border-radius:10px}
+.tabs::before{background:var(--red);border-radius:7px}
+.tabs button.on{color:#fff}
+.tabs button{font-family:"Chakra Petch",sans-serif}
+
+/* Sin resplandores */
+.logo img,#mini .ring img{filter:none}
+.confetti{background:var(--gold)}
+.icon{background:var(--card);border-color:var(--line2);box-shadow:none;border-radius:14px}
+#toast{background:var(--card);border-color:var(--line2)}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+
+/* ===== Mejoras de uso ===== */
+html{scroll-padding-top:96px}
+::selection{background:#e5231b66}
+.skip{position:fixed;left:12px;top:-60px;z-index:10000;background:var(--red);color:#fff;font-weight:700;padding:10px 16px;border-radius:8px;transition:top .15s}
+.skip:focus{top:12px}
+:focus-visible{outline:2px solid #fff;outline-offset:3px;border-radius:6px}
+
+/* Carga con efecto (en lugar de texto quieto) */
+.tvacio.cargando{color:transparent;position:relative;min-height:120px;overflow:hidden;border-radius:12px;background:var(--card);user-select:none}
+.tvacio.cargando *{visibility:hidden}
+.tvacio.cargando::after,.sp-empty b{background-size:200% 100%}
+.tvacio.cargando::after{content:"";position:absolute;inset:0;background-image:linear-gradient(100deg,transparent 30%,#ffffff10 50%,transparent 70%);animation:brillo 1.3s linear infinite}
+@keyframes brillo{from{background-position:200% 0}to{background-position:-200% 0}}
+
+/* Tarjetas: respuesta al pasar el mouse */
+.tn3,.bt,.product,.step,.hist{transition:border-color .2s,transform .2s}
+.tn3:hover{border-color:#7a3a3a}
+.faq summary{font-family:"Chakra Petch",sans-serif;font-size:1.02rem}
+.faq details{background:var(--card);border-radius:12px}
+.faq details p{line-height:1.65}
+
+/* Barra inferior en celulares */
+.tabbar{display:none}
+@media(max-width:860px){
+  body{padding-bottom:74px}
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;
+    background:#0c0606f2;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line2);
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+  .tabbar a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:10px;color:var(--muted);font-size:.68rem;font-weight:600}
+  .tabbar a.on{color:#fff;background:#e5231b26}
+  .tabbar a.on svg{color:var(--red)}
+  .wa{bottom:84px}
+  #toast{bottom:150px}
+}
+@media(min-width:861px){.wa{bottom:20px;right:20px}}
+
+/* Celular: encabezado compacto y Soporte solo con ícono */
+@media(max-width:860px){
+  header.nav2{padding:8px 12px;gap:8px}
+  .logo{font-size:.95rem;letter-spacing:.1em}
+  #acct{flex-wrap:nowrap;gap:6px}
+  #acct .pill.plain[href="cuenta.html"]{display:none}
+  #acct .btn.sm{padding:7px 12px;font-size:.8rem;white-space:nowrap}
+  #acct .user b{display:none}
+  .wa{width:48px;height:48px;padding:0;justify-content:center;font-size:0;gap:0;border-radius:50%;bottom:84px;right:14px}
+  .wa svg{width:22px;height:22px}
+}
+
+/* Selector de método de pago */
+.mpick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 6px}
+.mpick button{appearance:none;cursor:pointer;color:var(--text);background:var(--input);border:1.5px solid var(--line2);border-radius:12px;padding:12px 10px;text-align:center;display:flex;flex-direction:column;gap:4px;font:inherit;transition:border-color .15s,background .15s}
+.mpick button b{font-family:"Chakra Petch",sans-serif;font-size:.98rem}
+.mpick button span{color:var(--gold);font-weight:700;font-size:.92rem}
+.mpick button:hover{border-color:#6a3636}
+.mpick button.on{border-color:var(--red);background:#240d0e;box-shadow:0 0 0 1px var(--red)}
+
+/* Cartel de comunidad */
+#comunidad:not(:empty){margin:46px auto 10px;max-width:1100px;padding:0 16px}
+.com{display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:linear-gradient(135deg,#2a0d0f,#120808);border:1px solid var(--line2);border-top:3px solid var(--red);border-radius:12px;padding:22px 24px}
+.com-t b{display:block;font-family:"Chakra Petch",sans-serif;font-size:1.25rem;margin-bottom:4px}
+.com-t span{color:var(--muted);font-size:.92rem;line-height:1.5}
+.com-b{display:flex;gap:10px;flex-wrap:wrap}
+.com-btn{display:inline-flex;align-items:center;gap:8px;color:#fff;font-family:"Chakra Petch",sans-serif;font-weight:700;padding:12px 18px;border-radius:10px;transition:transform .08s,filter .15s}
+.com-btn:hover{filter:brightness(1.12)}.com-btn:active{transform:translateY(2px)}
+.com-btn.dc{background:#5865f2;box-shadow:0 4px 0 #3b45b5}
+.com-btn.wp{background:#1faa59;box-shadow:0 4px 0 #14793e}
+
+/* Asistente de IA */
+.ia-fab{position:fixed;left:20px;bottom:20px;z-index:40;display:inline-flex;align-items:center;gap:8px;background:var(--card);color:var(--text);border:1.5px solid var(--line2);border-radius:12px;padding:12px 16px;font:700 .9rem "Chakra Petch",sans-serif;cursor:pointer;box-shadow:0 4px 0 #000a}
+.ia-fab:hover,.ia-fab.on{border-color:var(--red)}
+.ia-fab svg{color:var(--gold)}
+.ia-box{position:fixed;left:20px;bottom:76px;z-index:41;width:min(380px,calc(100vw - 32px));height:min(520px,calc(100vh - 120px));display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line2);border-top:3px solid var(--red);border-radius:12px;box-shadow:0 12px 40px #000c}
+.ia-box[hidden]{display:none}
+.ia-h{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.ia-h b{font-family:"Chakra Petch",sans-serif}
+.ia-x{background:none;border:0;color:var(--muted);font-size:1rem;cursor:pointer;padding:4px 8px}
+.ia-m{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.ia-b{max-width:88%;padding:9px 12px;border-radius:12px;font-size:.9rem;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.ia-b.bot{background:var(--input);border:1px solid var(--line);align-self:flex-start}
+.ia-b.yo{background:var(--red);color:#fff;align-self:flex-end}
+.ia-b a{color:#ff8a7a;text-decoration:underline}
+.ia-f{display:flex;gap:8px;padding:10px 12px 6px}
+.ia-f input{flex:1;min-width:0;padding:10px 12px}
+.ia-n{color:var(--muted);font-size:.7rem;padding:0 12px 10px}
+@media(max-width:860px){
+  .ia-fab{left:14px;bottom:84px;padding:12px}
+  .ia-fab span{display:none}
+  .ia-box{left:16px;right:16px;width:auto;bottom:140px;height:min(480px,calc(100vh - 220px))}
+}
+/* ===== Llaves (cuartos, semifinal, final) ===== */
+.lk{padding:0 16px 14px}
+.lk-scroll{overflow-x:auto;padding-bottom:8px}
+.lk-cols{display:flex;gap:18px;min-width:min-content;align-items:stretch}
+.lk-c{display:flex;flex-direction:column;justify-content:space-around;gap:10px;min-width:210px;flex:1}
+.lk h4{font-family:"Chakra Petch",sans-serif;font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 4px;text-align:center}
+.lk-m{background:var(--card);border:1px solid var(--line2);border-radius:10px;overflow:hidden}
+.lk-m.bye{opacity:.75}
+.lk-t{display:flex;justify-content:space-between;gap:10px;padding:9px 12px;font-size:.9rem;border-bottom:1px solid var(--line)}
+.lk-t:last-of-type{border-bottom:0}
+.lk-t span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lk-t b{color:var(--gold)}
+.lk-t.gana{background:#e5231b26;font-weight:700}
+.lk-t.gana span::before{content:"✓ ";color:var(--wa)}
+.lk-t.pierde{color:var(--muted)}
+.lk-bye{color:var(--muted);font-style:italic}
+.lk-camp{background:linear-gradient(90deg,#f6c34326,#0009);border:1px solid #f6c34399;border-radius:10px;padding:10px 14px;margin-bottom:12px}
+.lk-camp b{color:var(--gold)}
+.lk-3{margin-top:14px;max-width:260px}
+.lk-adm{display:flex;flex-wrap:wrap;gap:6px;padding:8px;border-top:1px solid var(--line);background:#0005}
+.lk-adm input{width:52px;padding:6px 8px}
+.lk-adm .btn{flex:1;min-width:110px;box-shadow:none}
+
+/* ===== Más aire en la home (espaciados; subí o bajá los números a gusto) ===== */
+section.rv{margin-bottom:96px}
+.sec-h{margin:0 0 32px}
+.ticker{margin-bottom:72px}
+.how{gap:18px;margin-bottom:34px}
+.how div{padding:22px 22px 22px 66px}
+.tornos{gap:34px}
+.tn-fil{margin-bottom:26px}
+.spot{padding:32px}
+.tn-pozo,.tn-kill{padding:20px 24px}
+.tn3-body{padding:30px 32px}
+.tn3-side{padding:30px 28px;gap:18px}
+.tn3-more{padding:0 30px 14px}
+.tn3 h3{margin-bottom:10px}
+.tn3 .tn-pod,.tn3 .tn-pozo,.tn3 .tn-kill{margin:20px 0}
+.tn-head{margin-bottom:18px}
+.tn-det{margin-bottom:14px}
+.faq details{margin-bottom:14px}
+.faq summary{padding:20px 22px}
+.faq details p{padding:0 22px 22px}
+.foot2{margin-top:56px;padding:44px 0 14px}
+@media(min-width:861px){
+  .hero2{padding:88px 0 56px;gap:48px}
+  .hero2 p{margin:26px 0 34px}
+  .h2-stats{margin-top:44px;padding-top:28px;gap:36px}
+}
+@media(max-width:860px){
+  .hero2{padding-top:44px;padding-bottom:36px;gap:28px}
+  section.rv{margin-bottom:72px}
+  .tornos{gap:26px}
+  .tn3-body{padding:24px 20px}
+  .tn3-side{padding:22px 20px}
+  .tn3-more{padding:0 20px 10px}
+}
+
+
+/* ===== Fondo: brillos rojos en los costados + logo de marca de agua ===== */
+body::before{content:"";position:fixed;right:-90px;bottom:-70px;width:min(520px,75vw);aspect-ratio:1;z-index:0;pointer-events:none;background:url("logo.png") center/contain no-repeat;opacity:.05}
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 55% 45% at 0% 35%,#e5231b22,transparent 70%),radial-gradient(ellipse 50% 45% at 100% 90%,#8f0f0a33,transparent 70%)}
+
+
+/* ===== Cursor con el diablo del logo sobre lo que se puede tocar (solo mouse) ===== */
+@media (hover:hover) and (pointer:fine){
+  a[href],button:not(:disabled),.btn,.buy,.pack,.product,.bt,.tn3,summary,label[for],select,[role=button],[data-ins],.tabbar a{cursor:url("cursor-diablo.png") 16 16,pointer}
+}

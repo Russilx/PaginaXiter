@@ -5,8 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Admin · Tienda de diamantes</title>
 <meta name="robots" content="noindex">
+<meta name="description" content="Panel de administración">
+<meta name="theme-color" content="#080505">
+<meta name="robots" content="noindex">
+<meta property="og:type" content="website"><meta property="og:title" content="Admin · Tienda de diamantes"><meta property="og:description" content="Panel de administración"><meta property="og:image" content="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"><link rel="preconnect" href="https://udmumufzdkvnmmeicxup.supabase.co">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="stylesheet" href="assets/styles.css">
+<style>.ix{background:#0006;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}.ix-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start}.ix-h>div:first-child b{display:block;font-size:1.02rem}.ix-h small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}.ix-bs{display:flex;gap:6px;flex-wrap:wrap}.ix-b{font-size:.72rem;font-weight:700;border:1px solid var(--line2);border-radius:999px;padding:3px 10px;color:var(--muted);white-space:nowrap}.ix-b.ok{color:var(--wa);border-color:#3ddc9755}.ix-b.warn{color:var(--gold);border-color:#ffc83d55}.ix-b.bad{color:var(--err);border-color:#ff6b6b55}.ix-j{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.ix-p{background:var(--input);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:.85rem}.ix-p i{font-style:normal;color:var(--muted);margin-left:6px;font-variant-numeric:tabular-nums}.ix-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}.ix-c{background:var(--input);border:1px solid var(--line);border-radius:10px;padding:9px 12px}.ix-c small{display:block;color:var(--muted);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:3px}.ix-c b{font-weight:600;font-size:.92rem;word-break:break-word}.ix-a{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.ix-a .btn{margin:0}.tsh{margin:22px 0 10px;padding-top:14px;border-top:1px solid var(--line2);font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}.tsec{background:var(--card);border:1px dashed var(--line2);border-radius:12px;padding:12px;margin-bottom:6px}.tpre{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.tprev{margin-top:12px;padding:12px 14px;border-radius:12px;background:#e1060018;border:1px solid #e1060055;font-size:.92rem;line-height:1.6}.tprev:empty{display:none}.tc .tn2-chip b{text-transform:none}.tc .tn2-chips{margin-bottom:12px}.btn.danger{background:transparent;color:#ff8a8a;border:1.5px solid #e1060077;box-shadow:none}.btn.danger:hover{background:#e1060022;filter:none}.btn.danger:active{transform:none;box-shadow:none}</style>
+<link rel="stylesheet" href="assets/tema.css">
 </head>
 <body>
 <div class="wrap">
@@ -28,11 +36,24 @@
   const quien = p => `${esc(p?.nombre)} <span style="color:var(--muted)">(${esc(p?.email)})</span>`;
   const fecha = t => new Date(t).toLocaleString("es-AR",{dateStyle:"short",timeStyle:"short"});
 
-  let TAB = "pend", FILT = "todos", OT = new Set(), editId = null, TORN = {}, INSC = {}, PEND = [], KP = {}, CAP = {}, FAL = {};
+  let TAB = "pend", FILT = "todos", OT = new Set(), editId = null, TORN = {}, INSC = {}, PEND = [], ESPERA = {}, DEV = [], INSBYID = {}, KP = {}, CAP = {}, FAL = {}, CFGS = {}, LLAV = {};
+  // Monto expresado en la moneda del método que eligió el cliente (y el precio original si es distinto)
+  const cobrar = (n, t, metodo) => { const m = (t && t.moneda) || "ARS", o = mon(n, m); if(!metodo) return o; const s = Cobro.texto(Cobro.convertir(n, m, metodo), metodo); return s === o ? s : s + " (precio " + o + ")"; };
+  const metCobro = i => /^Binance/.test(i.cobro || "") ? "binance" : /^Mercado/.test(i.cobro || "") ? "mercadopago" : (i.metodo || null);
   const mon = (n,m) => m==="USDT" ? Number(n).toLocaleString("es-AR")+" USDT" : "$"+Number(n).toLocaleString("es-AR");
-  const ESTADOS = { proximo:"Próximo", en_curso:"En curso", finalizado:"Finalizado" };
+  const ESTADOS = { proximo:"Próximo", en_curso:"En vivo", finalizado:"Terminado" };
+  const estT = t => t.cancelado ? "cancelado" : t.estado;   // estado "visible" (un torneo cancelado va aparte)
   const aLocal = t => { const d = new Date(t); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0,16); };
 
+  // Comprobante: foto (se abre con un botón) o, en pagos viejos, el número escrito
+  const compRow = x => x.comprobante_ruta
+    ? `<div class="row"><span>Comprobante</span><b><button class="btn ghost sm" type="button" data-comp="${esc(x.comprobante_ruta)}">📷 Ver foto</button></b></div><div data-compout></div>`
+    : `<div class="row"><span>Comprobante</span><b>${/^foto:/.test(x.referencia || "") ? "📷 foto sin archivo" : esc(x.referencia)}</b></div>`;
+  // Premio de un torneo clásico para un puesto (pozo con reparto, o el texto fijo)
+  const premioClasico = (t, pos, n) => {
+    if(Number(t.pozo_pct) > 0){ const rep = String(t.reparto || "50/30/20").split("/").map(Number); return rep[pos-1] ? mon(Math.floor((Number(t.pozo_base || 0) + n * Number(t.costo || 0) * Number(t.pozo_pct) / 100) * rep[pos-1] / 100), t.moneda) : ""; }
+    return [t.premio, t.premio2, t.premio3][pos-1] || "";
+  };
   const etiq = i => i.equipo || (i.inscripcion_jugadores[0]||{}).nombre || "Sin nombre";
   const MEDS = ["🥇","🥈","🥉"];
   const ABIERTOS = new Set();
@@ -58,13 +79,39 @@
       <div class="row" style="margin-top:6px"><span>${MEDS[f.pos-1] || f.pos + "º"} ${esc(f.nombre)}</span><b>${f.k} kill${f.k === 1 ? "" : "s"}${f.premio ? " · " + esc(f.premio) : ""}</b></div>`).join("")}
       ${empate ? '<p style="color:#ffb35a;margin:8px 0 0">⚠ Hay empate en el 1º puesto: los dos equipos comparten el puesto. Revisá cómo repartís el premio.</p>' : ""}</div>`;
   }
+
+  // ---- Llaves: cuartos, semifinal y final (eliminatoria directa) ----
+  const ERR_LLAVE = { ya_jugado:"Ya hay partidos jugados: no se puede rehacer el sorteo", pocos:"Hacen falta al menos 2 equipos confirmados (con check-in si lo dejaste marcado)", muchos:"Las llaves admiten hasta 16 equipos", siguiente_jugado:"No se puede cambiar: el partido siguiente ya se jugó", incompleto:"Todavía no están definidos los dos equipos", sin_final:"Cargá primero el ganador de la final", sin_tercer:"Cargá primero el ganador del 3er puesto", torneo:"El torneo ya no admite cambios" };
+  const errLlave = r => ERR_LLAVE[Object.keys(ERR_LLAVE).find(k => new RegExp(k).test(r.error.message))] || "No se pudo. ¿Ejecutaste llaves.sql?";
+  function lSection(t){
+    const L = INSC[t.id] || [], P = LLAV[t.id] || [], est = estT(t);
+    if(t.cancelado) return "";
+    if(!P.length){
+      if(!(est === "proximo" || est === "en_curso") || L.length < 2) return "";
+      const conf = L.filter(i => i.checkin).length;
+      return `<details class="lkbox" data-lk="${t.id}" style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">🥊 Llaves (cuartos, semifinal y final)</summary>
+        <p style="color:var(--muted);margin:10px 0">${t.por_fases ? "Este torneo es por fases: las llaves se arman <b>solas</b> cuando cierra el check-in. Este botón es solo por si querés armarlas antes. " : ""}Sortea los cruces con los equipos confirmados (de 2 a 16). Si la cantidad no es potencia de 2, algunos pasan directo de fase. Conviene generarlas cuando cierra el check-in (${conf} / ${L.length} lo hicieron).</p>
+        <label style="display:flex;gap:8px;align-items:center;margin:8px 0;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" data-lk-ck checked style="width:auto"> Solo equipos con check-in hecho</label>
+        <label style="display:flex;gap:8px;align-items:center;margin:8px 0 12px;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" data-lk-3 style="width:auto"> Incluir partido por el 3er puesto</label>
+        <button class="btn" type="button" data-lg="${t.id}">🎲 Generar llaves</button></details>`;
+    }
+    const fin = est === "finalizado", final = P.find(m => m.fase === "final"), t3 = P.find(m => m.fase === "tercer_puesto");
+    const listo = final && final.ganador && (!t3 || t3.ganador), sinJugar = !P.some(m => m.ganador && m.b_id);
+    return `<details class="lkbox" data-lk="${t.id}" style="margin-top:10px" open><summary style="cursor:pointer;font-weight:700">🥊 Llaves</summary>
+      <p style="color:var(--muted);margin:10px 0">Elegí quién ganó cada partido (el marcador es opcional). El ganador pasa solo a la fase siguiente y se ve en el sitio al instante.</p>
+      ${llavesHtml(P, !fin)}
+      <div class="acts" style="margin-top:12px">
+        ${fin ? '<span style="align-self:center;font-weight:800;color:var(--wa)">✓ Torneo finalizado</span>' : `<button class="btn" type="button" data-lf="${t.id}"${listo ? "" : " disabled"}>Finalizar y publicar ganadores</button>`}
+        ${!fin && sinJugar ? `<button class="btn ghost" type="button" data-lr="${t.id}">🔄 Rehacer sorteo</button>` : ""}
+      </div>
+      ${!fin && !listo ? '<p style="color:var(--muted);margin:8px 0 0;font-size:.85rem">Para finalizar hace falta el ganador de la final' + (t3 ? " y del 3er puesto" : "") + ".</p>" : ""}</details>`;
+  }
   function kSection(t){
     const L = INSC[t.id] || [];
-    if(!L.length || t.cancelado) return "";
+    if(!L.length || t.cancelado || t.estado === "proximo") return "";
     const abierto = ABIERTOS.has(t.id) || t.estado === "en_curso";
-    return `<details class="kx" data-kx="${t.id}" style="margin-top:10px" ${abierto ? "open" : ""}><summary style="cursor:pointer;font-weight:700">🏆 Cargar kills y ver ranking</summary>
-      <p style="color:var(--muted);margin:10px 0">Escribí las kills de cada equipo. El puesto y el ganador los calcula el sistema.</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:10px 0"><div><label>Partidas</label><input data-xp inputmode="numeric" value="${t.partidas || 1}" style="max-width:80px"></div><div style="flex:1;min-width:180px"><label>Link de transmisión (https://…)</label><input data-xl value="${esc(t.link_vivo || "")}" placeholder="YouTube / Twitch"></div><button class="btn ghost sm" type="button" data-gx="${t.id}">Guardar</button></div>
+    return `<details class="kx" data-kx="${t.id}" style="margin-top:10px" ${abierto ? "open" : ""}><summary style="cursor:pointer;font-weight:700">🏆 Resultados y kills</summary>
+      <p style="color:var(--muted);margin:10px 0">${t.partidas || 1} partida${(t.partidas || 1) > 1 ? "s" : ""}. Escribí las kills de cada equipo; el puesto y el ganador los calcula el sistema.</p>
       ${L.map(i => { const np = t.partidas || 1, v = KP[i.id] || (np === 1 ? [i.kills] : []), c = (CAP[i.id] || []).length;
         return `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px"><b style="flex:1;min-width:120px">${esc(etiq(i))} <small style="font-weight:400;color:var(--muted)">${i.checkin ? "✅ check-in" : "⏳ sin check-in"}${FAL[i.usuario] ? " · " + FAL[i.usuario] + " falta(s)" : ""}</small></b>${Array.from({ length: np }, (_, p) => `<input data-ki="${i.id}" data-n="${esc(etiq(i))}" inputmode="numeric" placeholder="${np > 1 ? "P" + (p + 1) : "Kills"}" value="${v[p] ?? ""}" style="max-width:70px"${i.premio_pagado ? " disabled" : ""}>`).join("")}${c ? `<button class="btn ghost sm" type="button" data-cap="${i.id}">📎 ${c}</button>` : ""}<button class="btn ghost sm" type="button" data-nf="${i.id}" data-v="${i.no_presento ? 0 : 1}">${i.no_presento ? "↩ Quitar falta" : "🚫 No se presentó"}</button></div>`; }).join("")}
       <div class="acts" style="margin-top:12px"><button class="btn" type="button" data-gk="${t.id}">Guardar kills</button>${t.estado === "finalizado" ? '<span style="align-self:center;font-weight:800;color:var(--wa)">✓ Torneo finalizado</span>' : `<button class="btn ghost" type="button" data-ft="${t.id}">Finalizar y publicar ganadores</button>`}<button class="btn ghost" type="button" data-img="${t.id}">🖼 Imagen para redes</button></div><div data-capout></div>
@@ -72,6 +119,97 @@
     </details>`;
   }
   const leerKills = box => { const m = new Map(); box.querySelectorAll("input[data-ki]").forEach(x => { const id = +x.dataset.ki, v = x.value.trim(); if(!m.has(id)) m.set(id, { id, nombre: x.dataset.n, vals: [], crudo: [] }); m.get(id).crudo.push(v); m.get(id).vals.push(v === "" ? null : parseInt(v,10)); }); return [...m.values()].map(o => ({ ...o, k: o.vals.every(v => v === null) ? null : o.vals.reduce((a,v) => a + (v || 0), 0) })); };
+
+  const premioTxt = (t, n) => {
+    if(t.tipo === "kills") return mon(t.pago_kill || 0, t.moneda) + " por kill";
+    if(Number(t.pozo_pct) > 0) return "Pozo " + mon(Math.floor(Number(t.pozo_base || 0) + n * Number(t.costo || 0) * Number(t.pozo_pct) / 100), t.moneda) + " (" + t.pozo_pct + "%)";
+    return [t.premio, t.premio2, t.premio3].map((x, i) => x ? MEDS[i] + " " + x : "").filter(Boolean).join(" · ");
+  };
+  // Una tarjeta por torneo: resumen, avisos, acciones y después las listas
+  function tarjeta(t){
+    const L = INSC[t.id] || [], pend = PEND.filter(x => x.torneo_id === t.id), est = estT(t);
+    const vivo = est === "en_curso", prox = est === "proximo", fin = est === "finalizado", canc = est === "cancelado";
+    const ch = t.cierre_horas == null ? 2 : Number(t.cierre_horas), cierre = new Date(t.fecha).getTime() - ch * 3600000;
+    const sinFases = t.por_fases && !(LLAV[t.id] || []).length && (prox || vivo) && Date.now() >= new Date(t.fecha).getTime() - 1800000 && L.filter(i => i.checkin).length < 2, sinMin = prox && t.minimo && Date.now() >= cierre && L.length < t.minimo;
+    const devs = canc ? L.filter(i => Number(i.monto) > 0 && !i.reembolsado).length : 0;
+    const costo = Number(t.costo) > 0 ? mon(t.costo, t.moneda) : "Gratis";
+    const chips = [
+      ["Modo", t.modo], ["Inscripción", costo], ["Premio", premioTxt(t, L.length)], ["Mapa", t.mapa], ["Formato", t.formato],
+      t.partidas > 1 ? ["Partidas", t.partidas] : [],
+      t.por_fases ? ["Formato", "Por fases" + (t.tercer_puesto ? " + 3er puesto" : "")] : [],
+      prox ? ["Cierra", ch === 0 ? "al inicio" : ch + " h antes"] : [],
+      t.minimo ? ["Mínimo", L.length + " / " + t.minimo] : [],
+      (ESPERA[t.id] || []).length ? ["Lista de espera", ESPERA[t.id].length] : [],
+      (prox || vivo) && L.length ? ["Check-in", L.filter(i => i.checkin).length + " / " + L.length] : []
+    ].filter(x => x[1]).map(x => `<span class="tn2-chip"><i>${x[0]}</i><b>${esc(x[1])}</b></span>`).join("");
+    const avisos = [
+      canc ? `<div class="tn-lock" style="display:block;margin:0 0 10px">❌ Torneo cancelado · ${devs ? "faltan <b>" + devs + "</b> devolución" + (devs > 1 ? "es" : "") + " por hacer" : "no quedan devoluciones pendientes"}</div>` : "",
+      sinFases ? `<div class="tn-min" style="color:#ffb35a">⚠ Cerró el check-in y hay menos de 2 equipos con check-in: no se pudieron armar las llaves. Cancelá el torneo para devolver los pagos.</div>` : "",
+      sinMin ? `<div class="tn-min" style="color:#ffb35a">⚠ Cerró la inscripción y no se llegó al mínimo (${L.length} / ${t.minimo}). Cancelá el torneo para devolver los pagos.</div>` : "",
+      pend.length && !canc ? `<div class="tn-min">⏳ <b>${pend.length}</b> pago${pend.length > 1 ? "s" : ""} por aprobar <button class="btn ghost sm" type="button" data-gopend style="margin-left:8px">Ir a Pendientes</button></div>` : ""
+    ].join("");
+    const acts = [
+      prox ? `<button class="btn${sinMin ? " ghost" : ""}" type="button" data-go="${t.id}">▶ Pasar a En vivo</button>` : "",
+      !canc ? `<button class="btn ghost" type="button" data-te="${t.id}">✏️ Editar</button>` : "",
+      (prox || vivo) ? `<button class="btn danger" type="button" data-ct="${t.id}">Cancelar torneo</button>` : "",
+      !L.length && !pend.length ? `<button class="btn danger" type="button" data-td="${t.id}">🗑 Eliminar</button>` : ""
+    ].join("");
+    // Tarjeta de cada inscripto: encabezado con estado, jugadores como fichas, datos en grilla y acciones abajo
+    const cardI = i => {
+      const pagado = Number(i.monto) > 0, metN = i.metodo === "binance" ? "Binance" : "Mercado Pago";
+      const badges = [
+        pagado ? '<span class="ix-b ok">💸 Pagó</span>' : '<span class="ix-b">🆓 Gratis</span>',
+        (prox || vivo) ? (i.checkin ? '<span class="ix-b ok">✅ Check-in</span>' : '<span class="ix-b warn">⏳ Sin check-in</span>') : "",
+        FAL[i.usuario] ? `<span class="ix-b bad">⚠ ${FAL[i.usuario]} falta${FAL[i.usuario] > 1 ? "s" : ""}</span>` : "",
+        i.premio_pagado ? '<span class="ix-b ok">🏆 Premio pagado</span>' : "",
+        canc && pagado ? (i.reembolsado ? '<span class="ix-b ok">↩ Devuelto</span>' : '<span class="ix-b bad">↩ Falta devolver</span>') : ""
+      ].join("");
+      const premioC = t.tipo !== "kills" && fin && i.puesto && i.puesto <= 3 ? premioClasico(t, i.puesto, L.length) : "";
+      const celdas = [
+        pagado ? ["Pagó", cobrar(i.monto, t, i.metodo) + " · " + metN] : [],
+        pagado ? ["Comprobante", i.comprobante_ruta ? `<button class="btn ghost sm" type="button" data-comp="${esc(i.comprobante_ruta)}">📷 Ver foto</button>` : (/^foto:/.test(i.referencia || "") ? "📷 sin archivo" : esc(i.referencia || "—"))] : [],
+        (t.tipo === "kills" || i.cobro) ? ["Cobra en", esc(i.cobro || "—")] : [],
+        !canc && i.kills != null ? ["Resultado", (i.puesto ? i.puesto + "º" : "—") + " · " + i.kills + " kills"] : [],
+        !canc && t.tipo === "kills" && i.kills != null ? ["Debés pagar", cobrar(i.premio_kills, t, metCobro(i))] : [],
+        premioC ? ["Debés pagar (" + i.puesto + "º)", esc(premioC)] : []
+      ].filter(x => x.length).map(x => `<div class="ix-c"><small>${x[0]}</small><b>${x[1]}</b></div>`).join("");
+      const botones = [
+        canc && pagado && !i.reembolsado ? `<button class="btn sm" type="button" data-rb="${i.id}">Marcar devuelto</button>` : "",
+        !canc && t.tipo === "kills" && i.kills != null && !i.premio_pagado ? `<button class="btn ghost sm" type="button" data-pp="${i.id}">Marcar premio pagado</button>` : "",
+        premioC && !i.premio_pagado ? `<button class="btn ghost sm" type="button" data-ppc="${i.id}">Marcar premio pagado</button>` : "",
+        (prox || vivo) ? `<button class="btn danger sm" type="button" data-ci="${i.id}">Quitar inscripción</button>` : ""
+      ].join("");
+      return `<div class="ix">
+        <div class="ix-h"><div><b>${esc(etiq(i))}</b><small>${quien(i.perfiles)}</small></div><div class="ix-bs">${badges}</div></div>
+        <div class="ix-j">${(i.inscripcion_jugadores || []).map(j => `<span class="ix-p">${esc(j.nombre)} <i>${esc(j.id_jugador)}</i></span>`).join("")}</div>
+        ${celdas ? `<div class="ix-g">${celdas}</div>` : ""}
+        <div data-compout></div>
+        ${botones ? `<div class="ix-a">${botones}</div>` : ""}
+      </div>`;
+    };
+    const lista = L.length ? `<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">👥 Inscriptos (${L.length})</summary>${L.map(cardI).join("")}
+        <button class="btn ghost sm" type="button" data-cp="${t.id}" style="margin-top:12px">Copiar lista (nombre + ID)</button></details>` : "";
+
+    return `<details class="step tc" data-tc="${t.id}" data-est="${est}" ${OT.has(t.id) ? "open" : ""}>
+      <summary style="cursor:pointer;display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px"><b style="flex:1;min-width:160px">${esc(t.titulo)}</b><span class="hist-chip" style="margin:0">${canc ? "❌ Cancelado" : ESTADOS[t.estado] || esc(t.estado)}</span>${pend.length && !canc ? `<span class="hist-chip" style="margin:0">⏳ ${pend.length} por aprobar</span>` : ""}<span style="color:var(--muted);font-size:.85rem">${fecha(t.fecha)} · ${L.length}${t.cupos ? "/" + t.cupos : ""} inscriptos</span></summary>
+      <div class="tn2-chips">${chips}</div>
+      ${avisos}
+      <div class="acts" style="margin:0 0 4px;flex-wrap:wrap">${acts}</div>
+      ${(LLAV[t.id] || []).length ? "" : kSection(t)}
+      ${lSection(t)}
+      ${lista}
+      ${(ESPERA[t.id] || []).length ? `<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">⏳ Lista de espera (${ESPERA[t.id].length})</summary>${ESPERA[t.id].map((x, k) => `<div class="row" style="margin-top:8px"><span>${k + 1}. ${quien(x.p)}</span><b>${x.creado ? fecha(x.creado) : ""}</b></div>`).join("")}<p style="color:var(--muted);font-size:.85rem;margin-top:8px">Si se libera un lugar, el sistema les avisa.</p></details>` : ""}
+    </details>`;
+  }
+  // Para cambiar solo el estado sin pasar por el formulario (manda los mismos datos que el formulario)
+  const paramsTorneo = (t, estado) => ({
+    p_id: t.id, p_titulo: t.titulo, p_modo: t.modo, p_fecha: t.fecha, p_premio: t.premio || null, p_cupos: t.cupos || null,
+    p_costo: Number(t.costo) || 0, p_descripcion: t.descripcion || null, p_estado: estado,
+    p_premio2: t.premio2 || null, p_premio3: t.premio3 || null, p_mapa: t.mapa || null, p_formato: t.formato || null, p_reglas: t.reglas || null,
+    p_tipo: t.tipo || "clasico", p_pago_kill: t.tipo === "kills" ? Number(t.pago_kill) : null, p_moneda: t.moneda || "ARS",
+    p_cierre_horas: t.cierre_horas == null ? 2 : t.cierre_horas, p_minimo: t.minimo || null,
+    p_pozo_pct: Number(t.pozo_pct) || 0, p_pozo_base: Number(t.pozo_base) || 0, p_reparto: t.reparto || "50/30/20"
+  });
 
   function mostrarTab(){
     panel.querySelectorAll("[data-pane]").forEach(x => x.hidden = x.dataset.pane !== TAB);
@@ -83,54 +221,103 @@
     const t = e.target.closest("#tabs button"), f = e.target.closest("#tfilt button");
     if(t){ TAB = t.dataset.tab; mostrarTab(); }
     if(f){ FILT = f.dataset.tf; mostrarTab(); }
+    if(e.target.closest("[data-gopend]")){ TAB = "pend"; mostrarTab(); window.scrollTo({ top: 0, behavior: "smooth" }); }
   });
+  function llenar(t){
+    const $ = id => document.getElementById(id);
+    bloquear(null);
+    $("t_pmodo").value = Number(t.pozo_pct) > 0 ? "pozo" : "fijo"; $("t_partidas").value = t.partidas || 1; $("t_link").value = t.link_vivo || ""; $("t_sim").value = "";
+      $("t_titulo").value = t.titulo; $("t_modo").value = t.modo; $("t_fecha").value = aLocal(t.fecha);
+      $("t_estado").value = t.estado; $("t_premio").value = t.premio || ""; $("t_costo").value = t.costo;
+      $("t_cupos").value = t.cupos || ""; $("t_desc").value = t.descripcion || "";
+      $("t_moneda").value = t.moneda || "ARS"; $("t_cierre").value = t.cierre_horas == null ? 2 : t.cierre_horas;
+      $("t_min").value = t.minimo || ""; $("t_pozo").value = t.pozo_pct || 0; $("t_pbase").value = t.pozo_base || 0; $("t_reparto").value = t.reparto || "50/30/20"; $("t_tipo").value = t.por_fases ? "fases" : (t.tipo || "clasico"); $("t_3p").checked = !!t.tercer_puesto; $("t_pk").value = t.pago_kill || "";       $("t_premio2").value = t.premio2 || ""; $("t_premio3").value = t.premio3 || "";
+      $("t_mapa").value = t.mapa || ""; $("t_formato").value = t.formato || ""; $("t_reglas").value = t.reglas || "";
+    tipoUI();
+  }
+  // Con inscriptos (o pagos por aprobar) no se puede cambiar lo que afecta lo que ya pagaron
+  function bloquear(t){
+    const n = t ? (INSC[t.id] || []).length + PEND.filter(x => x.torneo_id === t.id).length : 0;
+    ["t_modo", "t_tipo", "t_costo", "t_moneda"].forEach(id => g(id).disabled = n > 0);
+    const m = g("t_lock");
+    m.style.display = n ? "" : "none";
+    m.innerHTML = n ? `🔒 Ya hay <b>${n}</b> inscripto${n > 1 ? "s" : ""} o pago${n > 1 ? "s" : ""} por aprobar: no se puede cambiar el modo, el tipo, el costo ni la moneda. Si hay que cambiarlos, cancelá el torneo y creá uno nuevo.` : "";
+  }
   async function cargar(){
     await sb.functions.invoke("co",{body:{action:"sync"}}).catch(()=>{});
     editId = null;
-    const [q,d,p,tn,ins,kp,cp,fl] = await Promise.all([
+    const [q,d,p,tn,ins,kp,cp,fl,cf,sd] = await Promise.all([
       sb.from("paquetes").select("diamantes,precio").order("diamantes"),
-      sb.from("depositos").select("id,metodo,monto,referencia,creado,perfiles(nombre,email)").eq("estado","pendiente").order("creado"),
+      sb.from("depositos").select("id,metodo,monto,referencia,comprobante_ruta,creado,perfiles(nombre,email)").eq("estado","pendiente").order("creado"),
       sb.from("pedidos").select("id,diamantes,precio,id_jugador,creado,co_reference,motivo,perfiles(nombre,email)").eq("estado","pendiente").order("creado"),
-      sb.from("torneos").select("id,titulo,modo,fecha,premio,premio2,premio3,mapa,formato,reglas,cupos,costo,descripcion,estado,tipo,pago_kill,moneda,cierre_horas,minimo,pozo_pct,pozo_base,reparto,cancelado,partidas,link_vivo").order("fecha",{ascending:false}),
-      sb.from("inscripciones").select("id,torneo_id,equipo,monto,metodo,referencia,cobro,usuario,checkin,no_presento,estado,puesto,kills,premio_kills,premio_pagado,reembolsado,creado,perfiles(nombre,email),torneos(titulo,moneda),inscripcion_jugadores(nombre,id_jugador)").in("estado",["pendiente","confirmada"]).order("creado"),
+      sb.from("torneos").select("id,titulo,modo,fecha,premio,premio2,premio3,mapa,formato,reglas,cupos,costo,descripcion,estado,tipo,pago_kill,moneda,cierre_horas,minimo,pozo_pct,pozo_base,reparto,cancelado,partidas,link_vivo,fecha_anterior,fecha_cambiada,por_fases,tercer_puesto").order("fecha",{ascending:false}),
+      sb.from("inscripciones").select("id,torneo_id,equipo,monto,metodo,referencia,comprobante_ruta,cobro,usuario,checkin,no_presento,estado,puesto,kills,premio_kills,premio_pagado,reembolsado,creado,perfiles(nombre,email),torneos(titulo,moneda),inscripcion_jugadores(nombre,id_jugador)").in("estado",["pendiente","confirmada"]).order("creado"),
       sb.from("kills_partidas").select("inscripcion_id,partida,kills").order("partida"),
       sb.from("capturas").select("inscripcion_id,ruta"),
-      sb.from("faltas").select("usuario").gte("creado", new Date(Date.now() - 30 * 864e5).toISOString())
+      sb.from("faltas").select("usuario").gte("creado", new Date(Date.now() - 30 * 864e5).toISOString()),
+      sb.from("config_sitio").select("clave,activo,mensaje"),
+      sb.from("solicitudes_devolucion").select("id,inscripcion_id,torneo_id,creado").eq("estado","pendiente").order("creado")
     ]);
+    // Lista de espera: el admin ve quién está anotado en cada torneo
+    const le = await sb.from("lista_espera").select("*");
+    const esIds = [...new Set((le.data || []).map(x => x.usuario))];
+    const pfs = esIds.length ? await sb.from("perfiles").select("id,nombre,email").in("id", esIds) : { data: [] };
+    const PF = {}; (pfs.data || []).forEach(p => PF[p.id] = p);
+    ESPERA = {}; (le.data || []).forEach(x => (ESPERA[x.torneo_id] = ESPERA[x.torneo_id] || []).push({ p: PF[x.usuario], creado: x.creado }));
+    Object.values(ESPERA).forEach(a => a.sort((m, n) => String(m.creado || "").localeCompare(String(n.creado || ""))));
+    CFGS = {}; (cf.data||[]).forEach(r => CFGS[r.clave] = r);
     FAL = {}; (fl.data||[]).forEach(r => FAL[r.usuario] = (FAL[r.usuario] || 0) + 1);
     KP = {}; (kp.data||[]).forEach(r => (KP[r.inscripcion_id] = KP[r.inscripcion_id] || [])[r.partida-1] = r.kills);
     CAP = {}; (cp.data||[]).forEach(r => (CAP[r.inscripcion_id] = CAP[r.inscripcion_id] || []).push(r.ruta));
     const deps = d.data || [], peds = p.data || [], paqs = q.data || [], torn = tn.data || [];
+    // En vivo primero, después los próximos (el más cercano arriba), luego terminados y cancelados
+    const peso = t => t.cancelado ? 3 : ({ en_curso: 0, proximo: 1, finalizado: 2 }[t.estado] ?? 2);
+    torn.sort((a, b) => peso(a) - peso(b) || (peso(a) === 1 ? new Date(a.fecha) - new Date(b.fecha) : new Date(b.fecha) - new Date(a.fecha)));
     TORN = {}; torn.forEach(t=>TORN[t.id]=t);
+    LLAV = {}; await Promise.all(torn.filter(t => !t.cancelado && t.estado !== "finalizado").map(async t => { const r = await sb.rpc("llaves_torneo",{ p_id: t.id }); if(!r.error && (r.data || []).length) LLAV[t.id] = r.data; }));
+    INSBYID = {}; (ins.data || []).forEach(i => INSBYID[i.id] = i); DEV = sd.data || [];
     INSC = {}; PEND = []; (ins.data || []).forEach(i=>{ if(i.estado==="pendiente") PEND.push(i); else (INSC[i.torneo_id] = INSC[i.torneo_id] || []).push(i); });
     panel.innerHTML = `
       <button class="btn ghost" type="button" id="rec" style="margin-bottom:14px">🔄 Actualizar</button>
+      ${["recargas","saldo"].some(k => CFGS[k] && CFGS[k].activo === false) ? `<div class="tn-lock" style="display:block;margin-bottom:14px">⛔ Desactivado ahora: ${["recargas","saldo"].filter(k => CFGS[k] && CFGS[k].activo === false).map(k => k === "recargas" ? "recargas de diamantes" : "carga de saldo").join(" y ")} (se cambia en la pestaña Tienda)</div>` : ""}
       <div class="tn-fil" id="tabs" style="margin-bottom:22px">
-        <button type="button" data-tab="pend">${(n => n ? "📥 Pendientes (" + n + ")" : "📥 Pendientes")(PEND.length + deps.length + peds.length)}</button>
+        <button type="button" data-tab="pend">${(n => n ? "📥 Pendientes (" + n + ")" : "📥 Pendientes")(PEND.length + deps.length + peds.length + DEV.length)}</button>
         <button type="button" data-tab="torn">🏆 Torneos (${torn.length})</button>
         <button type="button" data-tab="tienda">💎 Tienda</button>
       </div>
 
       <section data-pane="pend">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:22px">${[["Inscripciones a torneos", PEND.length], ["Devoluciones", DEV.length], ["Cargas de saldo", deps.length], ["Pedidos de diamantes", peds.length]].map(x => `<div class="step" style="padding:14px;text-align:center;${x[1] ? "border-color:#e10600aa" : ""}"><b style="font-size:1.7rem;display:block">${x[1]}</b><span style="color:var(--muted);font-size:.8rem">${x[0]}</span></div>`).join("")}</div>
       <h2>Inscripciones a torneos pendientes (${PEND.length})</h2>
       <div class="adm" style="margin-bottom:44px">${PEND.map(x=>`
         <div class="step" data-insc="${x.id}">
           <div class="row"><b>${quien(x.perfiles)}</b></div>
           <div class="row"><span>Torneo</span><b>${esc(x.torneos && x.torneos.titulo)}</b></div>
           <div class="row"><span>${x.equipo?esc(x.equipo):"Jugadores"}</span><b>${(x.inscripcion_jugadores||[]).map(j=>esc(j.nombre)+" ("+esc(j.id_jugador)+")").join(", ")}</b></div>
-          <div class="row"><span>Debe pagar</span><b>${mon(x.monto, x.torneos && x.torneos.moneda)} · ${x.metodo==="binance"?"Binance":"Mercado Pago"}</b></div>
-          <div class="row"><span>Comprobante</span><b>${esc(x.referencia)}</b></div>
+          <div class="row"><span>Debe pagar</span><b>${cobrar(x.monto, x.torneos, x.metodo)} · ${x.metodo==="binance"?"Binance":"Mercado Pago"}</b></div>
+          ${compRow(x)}
           ${x.cobro?`<div class="row"><span>Cobra en</span><b>${esc(x.cobro)}</b></div>`:""}
           <div class="row"><span>Fecha</span><b>${fecha(x.creado)}</b></div>
           <div class="acts"><button class="btn" type="button" data-ra="ok">Aprobar pago</button><button class="btn ghost" type="button" data-ra="no">Rechazar</button></div>
         </div>`).join("") || '<p style="color:var(--muted)">No hay inscripciones pendientes.</p>'}</div>
+      <h2>Devoluciones solicitadas (${DEV.length})</h2>
+      <div class="adm" style="margin-bottom:44px">${DEV.map(s => { const i = INSBYID[s.inscripcion_id] || {}, t = TORN[s.torneo_id] || {}; return `
+        <div class="step" data-dev="${s.id}" data-insc-id="${s.inscripcion_id}">
+          <div class="row"><b>${quien(i.perfiles)}</b></div>
+          <div class="row"><span>Torneo</span><b>${esc(t.titulo)}</b></div>
+          <div class="row"><span>Cambio de horario</span><b>${t.fecha_anterior ? fecha(t.fecha_anterior) + " → " : ""}${t.fecha ? fecha(t.fecha) : ""}</b></div>
+          <div class="row"><span>Pagó</span><b>${cobrar(i.monto, i.torneos, i.metodo)} · ${i.metodo === "binance" ? "Binance" : "Mercado Pago"}</b></div>
+          ${compRow(i)}
+          <div class="row"><span>Pedida</span><b>${fecha(s.creado)}</b></div>
+          <div class="acts"><button class="btn" type="button" data-dv="ok">Ya devolví · quitar inscripción</button><button class="btn ghost" type="button" data-dv="no">Rechazar</button></div>
+        </div>`; }).join("") || '<p style="color:var(--muted)">No hay devoluciones solicitadas.</p>'}</div>
       <h2>Cargas de saldo pendientes (${deps.length})</h2>
       <div class="adm" style="margin-bottom:44px">${deps.map(x=>`
         <div class="step" data-dep="${x.id}">
           <div class="row"><b>${quien(x.perfiles)}</b></div>
           <div class="row"><span>Método</span><b>${x.metodo==="binance"?"Binance":"Mercado Pago"}</b></div>
           <div class="row"><span>Declaró</span><b>${x.metodo==="binance"?esc(x.monto)+" USDT":fmt(x.monto)}</b></div>
-          <div class="row"><span>Comprobante</span><b>${esc(x.referencia)}</b></div>
+          ${compRow(x)}
           <div class="row"><span>Fecha</span><b>${fecha(x.creado)}</b></div>
           <input inputmode="decimal" placeholder="Saldo a acreditar (USDT)" value="${esc(x.monto)}">
           <div class="acts"><button class="btn" data-a="ok">Aprobar</button><button class="btn ghost" data-a="no">Rechazar</button></div>
@@ -150,72 +337,65 @@
       <section data-pane="torn" hidden>
       <h2 style="margin-top:0">Torneos</h2>
       ${tn.error ? '<p style="color:#ff5a5a">No pude leer los torneos (' + esc(tn.error.message) + '). ¿Ejecutaste torneos-pro.sql?</p>' : ""}
-      <details id="tcreate" style="margin-bottom:22px"><summary class="btn" style="display:inline-block;cursor:pointer;margin-bottom:14px">➕ Crear torneo / editar</summary>
+      <details id="tcreate" style="margin-bottom:22px"><summary class="btn" style="display:inline-block;cursor:pointer;margin-bottom:14px">➕ Crear torneo nuevo</summary>
       <div class="step tf" id="tform">
-        <h3 id="thead" style="margin-bottom:14px;font-size:1.05rem">Crear torneo</h3>
+        <h3 id="thead" style="margin-bottom:14px;font-size:1.05rem">Nuevo torneo</h3>
+        <div id="t_lock" class="tn-lock" style="display:none"></div>
+        <div class="tsec" id="w_copia"><label for="t_copia">⚡ Ahorrá tiempo: copiar los datos de un torneo anterior</label><select id="t_copia"><option value="">— Empezar de cero —</option>${torn.map(t => `<option value="${t.id}">${esc(t.titulo)}</option>`).join("")}</select></div>
+
+        <h4 class="tsh">1 · Datos del torneo</h4>
         <div class="tfg">
           <div><label for="t_titulo">Nombre</label><input id="t_titulo" maxlength="80" placeholder="Ej: Torneo de Escuadras XITERKING"></div>
-          <div><label for="t_tipo">Tipo de torneo</label><select id="t_tipo"><option value="clasico" selected>Clásico (premios por puesto)</option><option value="kills">Por kills (cada kill paga)</option></select></div>
-          <div id="w_pk" style="display:none"><label for="t_pk">Pago por kill (misma moneda)</label><input id="t_pk" inputmode="decimal" placeholder="Ej: 1000"></div>
           <div><label for="t_modo">Modo</label><select id="t_modo"><option>Solo</option><option>Dúo</option><option selected>Escuadra</option></select></div>
           <div><label for="t_fecha">Fecha y hora</label><input id="t_fecha" type="datetime-local"></div>
-          <div><label for="t_estado">Estado</label><select id="t_estado"><option value="proximo">Próximo</option><option value="en_curso">En curso</option><option value="finalizado">Finalizado (se oculta)</option></select></div>
-          <div><label for="t_premio">Premio</label><input id="t_premio" maxlength="80" placeholder="Ej: 50 USDT o 1.166 diamantes"></div>
-          <div><label for="t_costo">Inscripción (0 = gratis)</label><input id="t_costo" inputmode="decimal" value="0"></div>
-          <div><label for="t_moneda">Cobrás en</label><select id="t_moneda"><option value="ARS" selected>Pesos · Mercado Pago</option><option value="USDT">USDT · Binance Pay</option></select></div>
-          <div><label for="t_cupos">Cupos (equipos; vacío = sin límite)</label><input id="t_cupos" inputmode="numeric"></div>
-          <div><label for="t_cierre">Cerrar inscripciones (horas antes)</label><input id="t_cierre" inputmode="numeric" value="2"></div>
-          <div><label for="t_min">Mínimo de equipos (vacío = sin mínimo)</label><input id="t_min" inputmode="numeric" placeholder="Ej: 8"></div>
-          <div class="w_pz"><label for="t_pozo">% de lo recaudado que va al pozo (0 = sin pozo)</label><input id="t_pozo" inputmode="numeric" value="0"></div>
-          <div class="w_pz"><label for="t_pbase">Plata tuya que sumás al pozo</label><input id="t_pbase" inputmode="decimal" value="0"></div>
-          <div class="w_pz"><label for="t_reparto">Reparto del pozo (1º/2º/3º, suma 100)</label><input id="t_reparto" value="50/30/20"></div>
-          <div><label for="t_premio2">Premio 2º puesto</label><input id="t_premio2" maxlength="80"></div>
-          <div><label for="t_premio3">Premio 3º puesto</label><input id="t_premio3" maxlength="80"></div>
           <div><label for="t_mapa">Mapa</label><input id="t_mapa" maxlength="60" placeholder="Ej: Bermuda"></div>
-          <div><label for="t_formato">Formato</label><input id="t_formato" maxlength="80" placeholder="Ej: 3 partidas · suma de puntos"></div>
+          <div><label for="t_formato">Formato</label><input id="t_formato" maxlength="80" placeholder="Ej: 3 partidas · suma de kills"></div>
+          <div><label for="t_partidas">Cantidad de partidas</label><input id="t_partidas" inputmode="numeric" value="1"></div>
+          <div><label for="t_link">Link de transmisión (opcional)</label><input id="t_link" placeholder="https://youtube.com/…"></div>
+          <div id="w_estado" style="display:none"><label for="t_estado">Estado</label><select id="t_estado"><option value="proximo">Próximo</option><option value="en_curso">En vivo</option><option value="finalizado" disabled hidden>Terminado</option></select><small style="display:block;color:var(--muted);margin-top:6px;line-height:1.4">Para terminarlo usá “Finalizar y publicar ganadores” desde el torneo.</small></div>
         </div>
         <label for="t_desc">Descripción</label>
-        <textarea id="t_desc" rows="3" maxlength="300" placeholder="Presentación del torneo…"></textarea>
-        <label for="t_reglas">Reglas y requisitos (una por línea)</label>
-        <textarea id="t_reglas" rows="5" maxlength="1200" placeholder="Nivel mínimo 40&#10;Prohibido usar hacks&#10;Llegar 10 minutos antes"></textarea>
-        <div class="acts" style="margin-top:6px"><button class="btn" type="button" id="tsave">Crear torneo</button><button class="btn ghost" type="button" id="tcancel" style="display:none">Cancelar</button></div>
+        <textarea id="t_desc" rows="2" maxlength="300" placeholder="Presentación del torneo…"></textarea>
+
+        <h4 class="tsh">2 · Inscripción</h4>
+        <div class="tfg">
+          <div><label for="t_costo">Costo (0 = gratis)</label><input id="t_costo" inputmode="decimal" value="0"></div>
+          <div><label for="t_moneda">Precio y premios en</label><select id="t_moneda"><option value="ARS" selected>Pesos (ARS)</option><option value="USDT">USDT</option></select><small style="display:block;color:var(--muted);margin-top:6px;line-height:1.4">El cliente elige si paga con Mercado Pago o Binance. Se convierte con la cotización <b>tasaUSDT</b> de assets/app.js.</small></div>
+          <div><label for="t_cupos">Cupos (equipos; vacío = sin límite)</label><input id="t_cupos" inputmode="numeric"></div>
+          <div><label for="t_min">Mínimo de equipos (vacío = sin mínimo)</label><input id="t_min" inputmode="numeric" placeholder="Ej: 8"></div>
+          <div><label for="t_cierre">Cerrar inscripciones (horas antes; 0 = hasta el inicio)</label><input id="t_cierre" inputmode="numeric" value="2"></div>
+        </div>
+
+        <h4 class="tsh">3 · Premios</h4>
+        <div class="tfg">
+          <div id="w_fases" style="display:none;grid-column:1/-1"><label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" id="t_3p" style="width:auto"> Incluir partido por el 3er puesto</label><p style="color:var(--muted);font-size:.85rem;margin:6px 0 0">Las llaves se arman solas cuando cierra el check-in (30 min antes), con los equipos que lo hicieron. Hasta 16 equipos. Premios por puesto (1º, 2º, 3º).</p></div>
+          <div><label for="t_tipo">Tipo de torneo</label><select id="t_tipo"><option value="clasico" selected>Clásico (premios por puesto)</option><option value="fases">Por fases (cuartos, semifinal y final)</option><option value="kills">Por kills (cada kill paga)</option></select></div>
+          <div id="w_pk" style="display:none"><label for="t_pk">Pago por kill (misma moneda)</label><input id="t_pk" inputmode="decimal" placeholder="Ej: 1000"></div>
+          <div id="w_clasico"><label for="t_pmodo">¿Cómo se arman los premios?</label><select id="t_pmodo"><option value="fijo" selected>Premios fijos (los escribo yo)</option><option value="pozo">Pozo: un % de lo recaudado</option></select></div>
+          <div class="w_pz"><label for="t_pozo">% de las inscripciones que va al pozo</label><input id="t_pozo" inputmode="numeric" value="0"></div>
+          <div class="w_pz"><label for="t_pbase">Plata tuya que sumás al pozo</label><input id="t_pbase" inputmode="decimal" value="0"></div>
+          <div class="w_pz"><label for="t_reparto">Reparto del pozo (1º/2º/3º, suma 100)</label><input id="t_reparto" value="50/30/20"><div class="tpre"><button type="button" class="btn ghost sm" data-rp="50/30/20">50/30/20</button><button type="button" class="btn ghost sm" data-rp="60/40">60/40</button><button type="button" class="btn ghost sm" data-rp="70/20/10">70/20/10</button><button type="button" class="btn ghost sm" data-rp="100">Solo el 1º</button></div></div>
+          <div class="w_pz"><label for="t_sim">Equipos para la vista previa</label><input id="t_sim" inputmode="numeric" placeholder="Ej: 12"></div>
+          <div class="w_fj"><label for="t_premio">Premio 1º puesto</label><input id="t_premio" maxlength="80" placeholder="Ej: 50 USDT o 1.166 diamantes"></div>
+          <div class="w_fj"><label for="t_premio2">Premio 2º puesto</label><input id="t_premio2" maxlength="80"></div>
+          <div class="w_fj"><label for="t_premio3">Premio 3º puesto</label><input id="t_premio3" maxlength="80"></div>
+        </div>
+        <div id="t_prev" class="tprev"></div>
+
+        <h4 class="tsh">4 · Reglas y requisitos</h4>
+        <textarea id="t_reglas" rows="4" maxlength="1200" placeholder="Nivel mínimo 40&#10;Prohibido usar hacks&#10;Llegar 10 minutos antes"></textarea>
+        <button type="button" class="btn ghost sm" id="t_rsug" style="margin-top:8px">Usar reglas sugeridas</button>
+        <div class="acts" style="margin-top:6px"><button class="btn" type="button" id="tsave">🚀 Publicar torneo</button><button class="btn ghost" type="button" id="tcancel" style="display:none">Descartar cambios</button></div>
       </div>
-            </details>
-      <div class="tn-fil" id="tfilt" style="margin-bottom:16px">${[["todos","Todos"],["proximo","Próximos"],["en_curso","En vivo"],["finalizado","Terminados"]].map(f => `<button type="button" data-tf="${f[0]}">${f[1]} (${f[0]==="todos" ? torn.length : torn.filter(t=>t.estado===f[0]).length})</button>`).join("")}</div>
-      <div class="adm" style="margin-bottom:44px">${torn.map(t=>`
-        <details class="step tc" data-tc="${t.id}" data-est="${t.estado}" ${OT.has(t.id) ? "open" : ""}>
-          <summary style="cursor:pointer;display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px"><b style="flex:1;min-width:160px">${t.cancelado ? "❌ " : ""}${esc(t.titulo)}</b><span class="hist-chip">${ESTADOS[t.estado]||esc(t.estado)}</span><span style="color:var(--muted);font-size:.85rem">${fecha(t.fecha)} · ${(INSC[t.id]||[]).length}${t.cupos?"/"+t.cupos:""} inscriptos</span></summary>
-          <div class="row"><span>Modo</span><b>${esc(t.modo)}</b></div>
-          <div class="row"><span>Fecha</span><b>${fecha(t.fecha)}</b></div>
-          <div class="row"><span>Inscripción cierra</span><b>${t.cierre_horas == null ? 2 : t.cierre_horas} h antes</b></div>
-          ${t.minimo ? `<div class="row"><span>Mínimo</span><b>${(INSC[t.id]||[]).length} / ${t.minimo} confirmados</b></div>` : ""}
-          ${Number(t.pozo_pct) > 0 ? `<div class="row"><span>Pozo actual</span><b>${mon(Number(t.pozo_base||0) + (INSC[t.id]||[]).length * Number(t.costo||0) * t.pozo_pct / 100, t.moneda)}</b></div>` : ""}
-          ${t.cancelado ? '<div class="row"><b style="color:#ff5a5a">❌ Torneo cancelado</b></div>'
-            : (t.minimo && t.estado === "proximo" && Date.now() >= new Date(t.fecha).getTime() - (t.cierre_horas ?? 2) * 3600000 && (INSC[t.id]||[]).length < t.minimo
-              ? `<p style="color:#ffb35a;margin:8px 0">⚠ Cerró la inscripción y no se llegó al mínimo.</p><button class="btn ghost sm" type="button" data-ct="${t.id}">Cancelar torneo y devolver pagos</button>` : "")}
-          <div class="row"><span>Inscriptos</span><b>${(INSC[t.id]||[]).length}${t.cupos?" / "+t.cupos:""}</b></div>
-          ${kSection(t)}
-          ${(INSC[t.id]||[]).length ? `<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Ver inscriptos</summary>${INSC[t.id].map(i=>`
-            <div style="border-top:1px solid var(--line);margin-top:10px;padding-top:10px">
-              <div class="row"><b>${esc(i.equipo || (i.inscripcion_jugadores[0]||{}).nombre || "Sin nombre")}</b><span>${quien(i.perfiles)}</span></div>
-              ${(i.inscripcion_jugadores||[]).map(j=>`<div class="row"><span>${esc(j.nombre)}</span><b>${esc(j.id_jugador)}</b></div>`).join("")}
-              <div class="row"><span>Pagó</span><b>${Number(i.monto)>0?mon(i.monto,t.moneda)+" · "+(i.metodo==="binance"?"Binance":"Mercado Pago"):"Gratis"}</b></div>
-              ${t.tipo==="kills" ? `<div class="row"><span>Cobra en</span><b>${esc(i.cobro||"—")}</b></div>` : ""}
-              ${t.cancelado
-                ? (Number(i.monto)>0
-                    ? `<div class="row"><span>Devolver</span><b>${mon(i.monto,t.moneda)} · ${esc(i.referencia||"")}</b></div>` + (i.reembolsado ? '<div class="row"><span>Devolución</span><b style="color:var(--wa)">✓ Hecha</b></div>' : `<button class="btn sm" type="button" data-rb="${i.id}" style="margin-top:8px">Marcar devuelto</button>`)
-                    : '<div class="row"><span>Devolver</span><b>Nada (era gratis)</b></div>')
-                : `<div class="row"><span>Resultado</span><b>${i.puesto ? i.puesto+"º" : "—"} · ${i.kills!==null ? i.kills+" kills" : "—"}</b></div>`
-                   + (t.tipo==="kills" && i.kills!==null ? `<div class="row"><span>Debés pagar</span><b>${mon(i.premio_kills,t.moneda)}</b></div>` + (i.premio_pagado ? '<div class="row"><span>Premio</span><b style="color:var(--wa)">✓ Pagado</b></div>' : `<button class="btn ghost sm" type="button" data-pp="${i.id}" style="margin-top:8px">Marcar premio pagado</button>`) : "")}
-              <button class="btn ghost sm" type="button" data-ci="${i.id}" style="margin-top:8px">Quitar inscripción</button>
-            </div>`).join("")}
-            <button class="btn ghost sm" type="button" data-cp="${t.id}" style="margin-top:12px">Copiar lista (nombre + ID)</button></details>` : ""}
-          <div class="acts" style="margin-top:12px"><button class="btn" type="button" data-te="${t.id}">Editar</button><button class="btn ghost" type="button" data-td="${t.id}">Eliminar</button></div>
-        </details>`).join("") || '<p style="color:var(--muted)">Todavía no creaste torneos.</p>'}</div>
+      </details>
+      <div class="tn-fil" id="tfilt" style="margin-bottom:16px">${[["todos", "Todos"], ["proximo", "Próximos"], ["en_curso", "En vivo"], ["finalizado", "Terminados"], ["cancelado", "Cancelados"]].map(f => `<button type="button" data-tf="${f[0]}">${f[1]} (${f[0] === "todos" ? torn.length : torn.filter(t => estT(t) === f[0]).length})</button>`).join("")}</div>
+      <div class="adm" style="margin-bottom:44px;grid-template-columns:1fr">${torn.map(tarjeta).join("") || '<p style="color:var(--muted)">Todavía no creaste torneos.</p>'}</div>
 
       </section>
       <section data-pane="tienda" hidden>
-      <h2 style="margin-top:0">Central One</h2> <button style="margin-bottom:14px" class="btn ghost" type="button" id="cat">Catálogo y saldo de Central One</button><div id="catout" style="margin-bottom:30px"></div>
+      <h2 style="margin-top:0">Interruptores</h2>
+      <div class="adm" style="margin-bottom:34px">${[["recargas","💎 Recargas de diamantes","Si las desactivás, nadie puede comprar diamantes hasta que las actives de nuevo."],["saldo","💰 Carga de saldo","Si la desactivás, nadie puede enviar nuevos depósitos."]].map(x => { const c = CFGS[x[0]] || { activo: true }; return `<div class="step"><div class="row"><b>${x[1]}</b><b style="color:${c.activo ? "var(--wa)" : "#ff8a8a"}">${c.activo ? "● Activadas" : "● Desactivadas"}</b></div><p style="color:var(--muted);margin:6px 0 10px">${x[2]}</p><input data-cm="${x[0]}" maxlength="140" placeholder="Mensaje para los clientes (opcional)" value="${esc(c.mensaje || "")}"><div class="acts" style="margin-top:10px"><button class="btn ${c.activo ? "" : "ghost"}" type="button" data-cfg="${x[0]}" data-v="${c.activo ? 0 : 1}">${c.activo ? "⛔ Desactivar" : "✅ Activar"}</button></div></div>`; }).join("")}</div>
+      <h2>Central One</h2> <button style="margin-bottom:14px" class="btn ghost" type="button" id="cat">Catálogo y saldo de Central One</button><div id="catout" style="margin-bottom:30px"></div>
       <h2>Precios de paquetes</h2>
       <div class="adm" style="margin-bottom:44px">${paqs.map(x=>`
         <div class="step" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -226,7 +406,15 @@
 
       </section>
     `;
-    mostrarTab();
+    mostrarTab(); tipoUI();
+    { const np = PEND.length + deps.length + peds.length + DEV.length; document.title = (np ? "(" + np + ") " : "") + "Admin · Tienda de diamantes"; }
+    // Alerta de saldo bajo en Central One (el mínimo se cambia con el secret CO_SALDO_MINIMO)
+    sb.functions.invoke("co",{ body:{ action:"balance" } }).then(r => {
+      const d = r.data; if(!d || !d.ok || !d.bajo) return;
+      const b = document.createElement("div"); b.className = "tn-lock"; b.style.cssText = "display:block;margin-bottom:14px";
+      b.innerHTML = `⚠ <b>Saldo bajo en Central One:</b> quedan ${esc(d.disponible)} USD (mínimo ${esc(d.minimo)}). Cargá saldo para que no se rechacen recargas de tus clientes.`;
+      panel.prepend(b);
+    }).catch(()=>{});
     document.getElementById("rec").onclick = cargar;
     document.getElementById("cat").onclick = async ()=>{
       const out = document.getElementById("catout");
@@ -263,8 +451,34 @@
   }
 
   // ---- Torneos: crear, editar, borrar ----
-  const tipoUI = () => { const k = document.getElementById("t_tipo").value === "kills"; document.getElementById("w_pk").style.display = k ? "" : "none"; document.querySelectorAll(".w_pz").forEach(x => x.style.display = k ? "none" : ""); };
-  panel.addEventListener("change", e=>{ if(e.target.id==="t_tipo") tipoUI(); });
+  const g = id => document.getElementById(id), num = id => parseFloat((g(id).value || "0").replace(",", ".")) || 0;
+  function previewPremios(){
+    const k = g("t_tipo").value === "kills", pozo = g("t_pmodo").value === "pozo", m = g("t_moneda").value, f = n => m === "USDT" ? n.toLocaleString("es-AR") + " USDT" : "$" + n.toLocaleString("es-AR");
+    let h = "";
+    if(k){ const pk = num("t_pk"); h = pk ? `💀 Cada kill paga <b>${f(pk)}</b>. Ejemplo: un equipo con 10 kills cobra <b>${f(pk * 10)}</b>.` : "Escribí cuánto paga cada kill."; }
+    else if(pozo){
+      const rep = (g("t_reparto").value || "50/30/20").split("/").map(Number), n = parseInt(g("t_sim").value, 10) || parseInt(g("t_cupos").value, 10) || 0, p = num("t_pbase") + n * num("t_costo") * (parseInt(g("t_pozo").value, 10) || 0) / 100;
+      h = rep.reduce((a, x) => a + x, 0) !== 100 ? '<span style="color:#ffb35a">⚠ El reparto tiene que sumar 100</span>' : `💰 Con <b>${n}</b> equipos el pozo sería <b>${f(p)}</b><br>` + rep.map((x, i) => `${MEDS[i]} ${f(Math.floor(p * x / 100))} (${x}%)`).join(" · ");
+    } else h = "🏆 " + ([g("t_premio").value, g("t_premio2").value, g("t_premio3").value].map((x, i) => x.trim() ? `${MEDS[i]} ${esc(x.trim())}` : "").filter(Boolean).join(" · ") || "Escribí los premios de cada puesto.");
+    g("t_prev").innerHTML = h;
+  }
+  const tipoUI = () => {
+    const k = g("t_tipo").value === "kills", pz = g("t_pmodo").value === "pozo";
+    g("w_fases").style.display = g("t_tipo").value === "fases" ? "" : "none";
+    g("w_pk").style.display = k ? "" : "none"; g("w_clasico").style.display = k ? "none" : "";
+    document.querySelectorAll(".w_pz").forEach(x => x.style.display = (!k && pz) ? "" : "none");
+    document.querySelectorAll(".w_fj").forEach(x => x.style.display = (!k && !pz) ? "" : "none");
+    previewPremios();
+  };
+  panel.addEventListener("input", e => { if(e.target.closest("#tform")) previewPremios(); });
+  panel.addEventListener("click", e => {
+    const rp = e.target.closest("button[data-rp]"); if(rp){ g("t_reparto").value = rp.dataset.rp; previewPremios(); }
+    if(e.target.closest("#t_rsug") && !g("t_reglas").value.trim()) g("t_reglas").value = "Nivel mínimo 40\nProhibido usar hacks o emuladores\nHacer el check-in entre 1 hora y 30 minutos antes\nRespetar a los demás jugadores\nLas decisiones del organizador son finales";
+  });
+  panel.addEventListener("change", e => {
+    if(e.target.id === "t_tipo" || e.target.id === "t_pmodo") tipoUI();
+    if(e.target.id === "t_copia" && e.target.value){ llenar(TORN[e.target.value]); editId = null; g("t_fecha").value = ""; g("t_estado").value = "proximo"; g("t_link").value = ""; g("thead").textContent = "Nuevo torneo (copia de " + TORN[e.target.value].titulo + ")"; g("t_titulo").focus(); }
+  });
   panel.addEventListener("toggle", e => { const d = e.target; if(d.dataset && d.dataset.tc){ d.open ? OT.add(+d.dataset.tc) : OT.delete(+d.dataset.tc); }
     if(d.dataset && d.dataset.kx){ d.open ? ABIERTOS.add(+d.dataset.kx) : ABIERTOS.delete(+d.dataset.kx); } }, true);
   panel.addEventListener("input", e => {
@@ -279,6 +493,14 @@
     if(r.error){ toast(/pagado/.test(r.error.message) ? "No se puede cambiar: ya pagaste ese premio" : "No se pudo guardar. ¿Ejecutaste ranking-automatico.sql?"); return false; }
     return true;
   }
+  panel.addEventListener("click", async e => {
+    const b = e.target.closest("button[data-cfg]"); if(!b) return;
+    const activar = b.dataset.v === "1", k = b.dataset.cfg, nom = k === "recargas" ? "las recargas de diamantes" : "la carga de saldo";
+    if(!activar && !confirm("¿Desactivar " + nom + "? Los clientes no podrán usarlas hasta que las actives de nuevo.")) return;
+    b.disabled = true;
+    const r = await sb.rpc("set_config_sitio",{ p_clave: k, p_activo: activar, p_mensaje: b.closest(".step").querySelector("[data-cm]").value });
+    toast(r.error ? "No se pudo cambiar. ¿Ejecutaste recargas-config.sql?" : activar ? "Activadas" : "Desactivadas"); cargar();
+  });
   async function imagenRedes(t, box){
     const top = armarRanking(t, leerKills(box).map(f => ({ nombre: f.nombre, k: f.k }))).filter(f => f.pos <= 3);
     if(!top.length) return toast("Cargá las kills primero");
@@ -297,8 +519,7 @@
     const a = document.createElement("a"); a.download = "resultados-" + t.id + ".png"; a.href = c.toDataURL("image/png"); a.click();
   }
   panel.addEventListener("click", async e => {
-    const gx = e.target.closest("button[data-gx]"), im = e.target.closest("button[data-img]"), cb = e.target.closest("button[data-cap]");
-    if(gx){ const box = gx.closest("details.kx"), r = await sb.rpc("guardar_extras_torneo",{ p_id: +gx.dataset.gx, p_partidas: parseInt(box.querySelector("[data-xp]").value,10) || 1, p_link: box.querySelector("[data-xl]").value.trim() }); toast(r.error ? "Revisá: partidas 1 a 10 y el link debe empezar con https://" : "Guardado"); if(!r.error) cargar(); return; }
+    const im = e.target.closest("button[data-img]"), cb = e.target.closest("button[data-cap]");
     const nfb = e.target.closest("button[data-nf]");
     if(nfb){ const marcar = nfb.dataset.v === "1"; if(marcar && !confirm("¿Marcarle una falta por no presentarse? Con 2 faltas en 30 días no podrá anotarse a torneos gratis.")) return;
       const r = await sb.rpc("marcar_falta",{ p_id: +nfb.dataset.nf, p_marcar: marcar }); toast(r.error ? "No se pudo (¿ya está confirmada su inscripción?)" : marcar ? "Falta marcada" : "Falta quitada"); if(!r.error) cargar(); return; }
@@ -306,6 +527,44 @@
     if(cb){ const out = cb.closest("details.kx").querySelector("[data-capout]"); out.innerHTML = "Cargando…";
       const L = await Promise.all((CAP[cb.dataset.cap] || []).map(r => sb.storage.from("capturas").createSignedUrl(r, 3600)));
       out.innerHTML = L.map((x,i) => x.data ? `<a href="${x.data.signedUrl}" target="_blank" rel="noopener"><img src="${x.data.signedUrl}" alt="Captura ${i+1}" style="max-width:110px;border-radius:8px;margin:8px 8px 0 0"></a>` : "").join(""); return; }
+  });
+  // Ver la foto de un comprobante
+  panel.addEventListener("click", async e => {
+    const cb = e.target.closest("button[data-comp]"); if(!cb) return;
+    const out = (cb.closest(".ix") || cb.closest(".step")).querySelector("[data-compout]"); out.textContent = "Cargando…";
+    const r = await sb.storage.from("comprobantes").createSignedUrl(cb.dataset.comp, 3600);
+    out.innerHTML = r.data ? `<a href="${r.data.signedUrl}" target="_blank" rel="noopener"><img src="${r.data.signedUrl}" alt="Comprobante" style="max-width:100%;max-height:420px;border-radius:10px;margin:8px 0"></a>` : "No se pudo abrir la foto.";
+  });
+  panel.addEventListener("click", async e => {
+    const g = e.target.closest("button[data-lg]"), rl = e.target.closest("button[data-lr]"), gw = e.target.closest("button[data-lkg]"), lf = e.target.closest("button[data-lf]");
+    if(!g && !rl && !gw && !lf) return;
+    if(g){
+      const box = g.closest("details.lkbox"); g.disabled = true;
+      const r = await sb.rpc("generar_llaves",{ p_torneo: +g.dataset.lg, p_tercer: box.querySelector("[data-lk-3]").checked, p_solo_checkin: box.querySelector("[data-lk-ck]").checked });
+      if(r.error){ toast(errLlave(r)); g.disabled = false; return; }
+      toast("Llaves generadas con " + r.data + " equipos"); cargar(); return;
+    }
+    if(rl){
+      if(!confirm("¿Rehacer el sorteo? Se borra el cuadro actual y se arma uno nuevo.")) return;
+      rl.disabled = true; const r = await sb.rpc("borrar_llaves",{ p_torneo: +rl.dataset.lr });
+      if(r.error){ toast(errLlave(r)); rl.disabled = false; return; }
+      toast("Cuadro borrado: podés generarlo de nuevo"); cargar(); return;
+    }
+    if(gw){
+      const box = gw.closest("[data-lkm]"), n = v => { const s = box.querySelector(v).value.trim(); return s === "" ? null : parseInt(s, 10); };
+      const pa = n("[data-sa]"), pb = n("[data-sb]");
+      if((pa !== null && !(pa >= 0)) || (pb !== null && !(pb >= 0))) return toast("El marcador va con números");
+      gw.disabled = true;
+      const r = await sb.rpc("cargar_resultado_llave",{ p_partido: +box.dataset.lkm, p_ganador: +gw.dataset.lkg, p_a: pa, p_b: pb });
+      if(r.error){ toast(errLlave(r)); gw.disabled = false; return; }
+      toast("Resultado cargado"); cargar(); return;
+    }
+    if(lf){
+      if(!confirm("¿Finalizar el torneo? Se fijan los puestos según el cuadro y los ganadores pasan a la página de Resultados.")) return;
+      lf.disabled = true; const r = await sb.rpc("finalizar_llaves",{ p_torneo: +lf.dataset.lf });
+      if(r.error){ toast(errLlave(r)); lf.disabled = false; return; }
+      toast("Torneo finalizado: ganadores publicados"); cargar();
+    }
   });
   panel.addEventListener("click", async e => {
     const gk = e.target.closest("button[data-gk]"), ft = e.target.closest("button[data-ft]");
@@ -338,49 +597,65 @@
       if(!(ch >= 0 && ch <= 168)) return toast("Horas de cierre inválidas (0 a 168)");
       const mn = $("t_min").value.trim(), minimo = mn ? parseInt(mn,10) : null;
       if(mn && !(minimo >= 1)) return toast("Mínimo inválido");
-      const esK = $("t_tipo").value === "kills";
-      const pozoPct = esK ? 0 : parseInt($("t_pozo").value.trim() || "0", 10);
+      if(cupos && minimo && minimo > cupos) return toast("El mínimo no puede ser mayor que los cupos");
+      const esK = $("t_tipo").value === "kills", esP = !esK && $("t_pmodo").value === "pozo";
+      const pozoPct = esP ? parseInt($("t_pozo").value.trim() || "0", 10) : 0;
       if(!(pozoPct >= 0 && pozoPct <= 100)) return toast("El % del pozo va de 0 a 100");
-      const pbase = esK ? 0 : parseFloat(($("t_pbase").value || "0").replace(",","."));
+      if(esP && pozoPct === 0) return toast("Escribí qué % de las inscripciones va al pozo");
+      const pbase = esP ? parseFloat(($("t_pbase").value || "0").replace(",",".")) : 0;
       if(!(pbase >= 0)) return toast("Pozo base inválido");
       const reparto = $("t_reparto").value.trim() || "50/30/20";
-      if(!/^\d+(\/\d+){0,2}$/.test(reparto) || reparto.split("/").reduce((a,x)=>a + +x, 0) !== 100) return toast("El reparto debe sumar 100 (ej: 50/30/20)");
+      if(esP && (!/^\d+(\/\d+){0,2}$/.test(reparto) || reparto.split("/").reduce((a,x)=>a + +x, 0) !== 100)) return toast("El reparto debe sumar 100 (ej: 50/30/20)");
+      const lk = $("t_link").value.trim(), par = parseInt($("t_partidas").value, 10) || 1;
+      if(lk && !/^https:\/\//.test(lk)) return toast("El link de transmisión tiene que empezar con https://");
+      if(!(par >= 1 && par <= 10)) return toast("Las partidas van de 1 a 10");
+      if(!editId && new Date($("t_fecha").value).getTime() < Date.now()) return toast("La fecha y hora ya pasaron");
+      const iso = new Date($("t_fecha").value).toISOString();
       sv.disabled = true;
       const r = await sb.rpc("guardar_torneo",{
         p_id: editId, p_titulo: titulo, p_modo: $("t_modo").value,
-        p_fecha: new Date($("t_fecha").value).toISOString(),
-        p_premio: $("t_premio").value.trim() || null, p_cupos: cupos, p_costo: costo,
-        p_descripcion: $("t_desc").value.trim() || null, p_estado: $("t_estado").value,
-        p_premio2: $("t_premio2").value.trim() || null, p_premio3: $("t_premio3").value.trim() || null,
+        p_fecha: iso,
+        p_premio: (esK || esP) ? null : ($("t_premio").value.trim() || null), p_cupos: cupos, p_costo: costo,
+        p_descripcion: $("t_desc").value.trim() || null, p_estado: editId ? $("t_estado").value : "proximo",
+        p_premio2: (esK || esP) ? null : ($("t_premio2").value.trim() || null), p_premio3: (esK || esP) ? null : ($("t_premio3").value.trim() || null),
         p_mapa: $("t_mapa").value.trim() || null, p_formato: $("t_formato").value.trim() || null,
         p_reglas: $("t_reglas").value.trim() || null,
-        p_tipo: $("t_tipo").value, p_pago_kill: pk, p_moneda: $("t_moneda").value, p_cierre_horas: ch,
+        p_tipo: $("t_tipo").value === "fases" ? "clasico" : $("t_tipo").value, p_pago_kill: pk, p_moneda: $("t_moneda").value, p_cierre_horas: ch,
         p_minimo: minimo, p_pozo_pct: pozoPct, p_pozo_base: pbase, p_reparto: reparto
       });
       sv.disabled = false;
       if(r.error) return toast("No se pudo guardar");
-      toast(editId ? "Torneo actualizado" : "Torneo creado");
+      let nid = editId || (/^\d+$/.test(String(r.data)) ? +r.data : null);
+      if(!nid){ const q = await sb.from("torneos").select("id").eq("titulo", titulo).eq("fecha", iso).order("id",{ ascending:false }).limit(1); nid = q.data && q.data[0] && q.data[0].id; }
+      if(nid){ const fz = await sb.rpc("set_fases_torneo",{ p_id: nid, p_activo: $("t_tipo").value === "fases", p_tercer: $("t_3p").checked }); if(fz.error) toast("Torneo guardado, pero no se pudo marcar 'por fases'. ¿Ejecutaste llaves.sql?"); }
+      if(nid){ const x = await sb.rpc("guardar_extras_torneo",{ p_id: nid, p_partidas: par, p_link: lk }); if(x.error) toast("Torneo guardado, pero no se pudieron guardar partidas/link"); else toast(editId ? "Torneo actualizado" : "🚀 Torneo publicado"); }
+      else toast(editId ? "Torneo actualizado" : "🚀 Torneo publicado");
       cargar(); return;
     }
     if(e.target.closest("#tcancel")){ cargar(); return; }
+    const go = e.target.closest("button[data-go]");
+    if(go){
+      const t = TORN[go.dataset.go]; if(!t) return;
+      if(!confirm("¿Pasar «" + t.titulo + "» a En vivo? Se cierran las inscripciones y el check-in, y se habilita la carga de kills.")) return;
+      go.disabled = true;
+      const r = await sb.rpc("guardar_torneo", paramsTorneo(t, "en_curso"));
+      toast(r.error ? "No se pudo cambiar el estado" : "Torneo en vivo 🔴");
+      OT.add(t.id); cargar(); return;
+    }
     const ed = e.target.closest("button[data-te]");
     if(ed){
       const t = TORN[ed.dataset.te]; if(!t) return;
       editId = t.id; $("tcreate").open = true; TAB = "torn"; mostrarTab();
-      $("t_titulo").value = t.titulo; $("t_modo").value = t.modo; $("t_fecha").value = aLocal(t.fecha);
-      $("t_estado").value = t.estado; $("t_premio").value = t.premio || ""; $("t_costo").value = t.costo;
-      $("t_cupos").value = t.cupos || ""; $("t_desc").value = t.descripcion || "";
-      $("t_moneda").value = t.moneda || "ARS"; $("t_cierre").value = t.cierre_horas == null ? 2 : t.cierre_horas;
-      $("t_min").value = t.minimo || ""; $("t_pozo").value = t.pozo_pct || 0; $("t_pbase").value = t.pozo_base || 0; $("t_reparto").value = t.reparto || "50/30/20"; $("t_tipo").value = t.tipo || "clasico"; $("t_pk").value = t.pago_kill || ""; tipoUI();
-      $("t_premio2").value = t.premio2 || ""; $("t_premio3").value = t.premio3 || "";
-      $("t_mapa").value = t.mapa || ""; $("t_formato").value = t.formato || ""; $("t_reglas").value = t.reglas || "";
+      llenar(t); bloquear(t);
+      $("w_estado").style.display = t.estado === "finalizado" ? "none" : ""; $("w_copia").style.display = "none";
       $("thead").textContent = "Editar torneo"; $("tsave").textContent = "Guardar cambios"; $("tcancel").style.display = "";
       $("tform").scrollIntoView({ behavior:"smooth", block:"center" });
       return;
     }
     const ct = e.target.closest("button[data-ct]");
     if(ct){
-      if(!confirm("¿Cancelar el torneo? Las inscripciones pendientes pasan a la lista de devoluciones y vas a tener que devolver los pagos a mano.")) return;
+      const tt = TORN[ct.dataset.ct], pag = tt ? (INSC[tt.id] || []).filter(i => Number(i.monto) > 0).length : 0;
+      if(!confirm("¿Cancelar el torneo" + (tt ? " «" + tt.titulo + "»" : "") + "? " + (pag ? "Hay " + pag + " inscripción" + (pag > 1 ? "es pagas" : " paga") + ": van a la lista de devoluciones y tenés que devolver los pagos a mano. " : "Nadie pagó, no hay nada que devolver. ") + "No se puede deshacer.")) return;
       const r = await sb.rpc("cancelar_torneo",{ p_id: +ct.dataset.ct });
       toast(r.error ? "No se pudo cancelar" : "Torneo cancelado");
       cargar(); return;
@@ -389,6 +664,22 @@
     if(rb){
       const r = await sb.rpc("marcar_reembolso",{ p_id: +rb.dataset.rb });
       toast(r.error ? "No se pudo marcar" : "Devolución registrada");
+      cargar(); return;
+    }
+    const ppc = e.target.closest("button[data-ppc]");
+    if(ppc){
+      if(!confirm("¿Ya le pagaste el premio a este jugador? Se marca como pagado y no se puede cambiar.")) return;
+      const r = await sb.rpc("marcar_premio_clasico_pagado",{ p_id: +ppc.dataset.ppc });
+      toast(r.error ? "No se pudo marcar" : "Premio marcado como pagado");
+      cargar(); return;
+    }
+    const dv = e.target.closest("button[data-dv]");
+    if(dv){
+      const box = dv.closest(".step"), ok = dv.dataset.dv === "ok";
+      if(!confirm(ok ? "¿Ya devolviste el dinero? Se marca como devuelto y se quita la inscripción (se libera el cupo)." : "¿Rechazar el pedido de devolución?")) return;
+      if(ok){ const c = await sb.rpc("cancelar_inscripcion",{ p_id: +box.dataset.inscId }); if(c.error){ toast("No se pudo quitar la inscripción"); return; } }
+      const r = await sb.rpc("resolver_devolucion",{ p_id: +box.dataset.dev, p_aprobar: ok });
+      toast(r.error ? "No se pudo resolver el pedido" : "Listo");
       cargar(); return;
     }
     const pp = e.target.closest("button[data-pp]");
@@ -421,7 +712,7 @@
     }
     const del = e.target.closest("button[data-td]");
     if(del){
-      if(!confirm("¿Eliminar este torneo?")) return;
+      if(!confirm("¿Eliminar este torneo? No se puede deshacer.")) return;
       const r = await sb.rpc("borrar_torneo",{ p_id: +del.dataset.td });
       toast(r.error ? "No se pudo eliminar" : "Torneo eliminado");
       cargar();

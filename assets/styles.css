@@ -1,5 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Russo+One&family=Inter:wght@400;500;600;700&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Figtree:wght@400;500;600;700;800&display=swap');
 :root{
   color-scheme:dark;
   --bg:#060303;
@@ -20,12 +19,11 @@
 html{scroll-behavior:smooth}
 ::selection{background:#e1060055}
 ::-webkit-scrollbar{width:10px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#3a2020;border-radius:8px}
-body{background:radial-gradient(ellipse 90% 45% at 50% -5%,#41080b,transparent 62%),var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.55;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{background:radial-gradient(ellipse 90% 45% at 50% -5%,#41080b,transparent 62%),var(--bg);color:var(--text);font-family:Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.55;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}
 button,input,textarea,select,summary{font-family:inherit}
-h1,h2,h3{font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.01em}
+h1,h2,h3{font-family:"Chakra Petch",sans-serif;font-weight:700;letter-spacing:.01em}
 :focus-visible{outline:2px solid #ff6a5a;outline-offset:2px}
-
 /* ---------- Fondo ---------- */
 #fx{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
 #fx::before{content:"";position:absolute;inset:0;background-image:linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:72px 100%;-webkit-mask-image:linear-gradient(#000,transparent 85%);mask-image:linear-gradient(#000,transparent 85%)}
@@ -34,12 +32,11 @@ h1,h2,h3{font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.01e
 #fx .em{position:absolute;bottom:-10px;border-radius:50%;opacity:0;animation:brasa linear infinite}
 @keyframes brasa{0%{transform:translateY(0);opacity:0}12%{opacity:.7}100%{transform:translateY(-105vh);opacity:0}}
 @media (prefers-reduced-motion:reduce){#fx .em{display:none}}
-
 /* ---------- Estructura ---------- */
 .wrap{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:0 20px 120px}
 .wrap.narrow{max-width:640px}
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:18px 0}
-.logo{font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:1.05rem;display:flex;align-items:center;gap:10px}
+.logo{font-weight:700;font-family:"Chakra Petch",sans-serif;letter-spacing:.14em;font-size:1.05rem;display:flex;align-items:center;gap:10px}
 .logo img{height:38px;width:auto;filter:drop-shadow(0 0 10px #e1060066)}
 .back{color:var(--muted);font-size:.9rem;transition:color .15s}
 .back:hover{color:var(--text)}
@@ -57,7 +54,6 @@ h2{font-size:1.5rem;margin-bottom:16px}
 footer{margin-top:32px;color:var(--muted);font-size:.82rem;text-align:center}
 footer a{text-decoration:underline}
 footer a:hover{color:var(--text)}
-
 /* ---------- Botones ---------- */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(180deg,#f01a10,var(--red-d));color:#fff;font-weight:700;font-size:.95rem;padding:12px 24px;border-radius:12px;border:1px solid #ffffff1a;cursor:pointer;box-shadow:0 6px 20px #e106003d;transition:filter .15s,transform .15s}
 .btn:hover{filter:brightness(1.12)}
@@ -68,12 +64,11 @@ footer a:hover{color:var(--text)}
 .btn.sm{padding:8px 18px;font-size:.85rem}
 .wa{position:fixed;right:16px;bottom:16px;z-index:5;display:inline-flex;align-items:center;gap:8px;background:linear-gradient(180deg,#f01a10,var(--red-d));color:#fff;font-weight:700;padding:12px 20px;border-radius:999px;box-shadow:0 8px 24px #e1060066;transition:transform .15s}
 .wa:hover{transform:scale(1.05)}
-
 /* ---------- Encabezado de página (icono + título) ---------- */
 .icon{width:68px;height:68px;border-radius:20px;background:radial-gradient(circle at 50% 35%,#5a1214,#220909 70%);border:1px solid #4a1b1d;display:grid;place-items:center;margin:0 auto 18px;box-shadow:0 0 34px #e1060033}
 .icon svg{width:36px;height:35px;filter:drop-shadow(0 3px 10px #ff4a1a88)}
 .page-title{text-align:center;padding:10px 0 26px}
-.page-title h1,.hero h1{font-family:"Russo One",Anton,Impact,sans-serif;font-size:clamp(2.1rem,8vw,3rem);line-height:1.1;letter-spacing:.01em}
+.page-title h1,.hero h1{font-weight:700;font-family:"Chakra Petch",sans-serif;font-size:clamp(2.1rem,8vw,3rem);line-height:1.1;letter-spacing:.01em}
 .eyebrow{display:inline-flex;align-items:center;gap:12px;font-size:.72rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--red);margin-bottom:12px}
 .eyebrow::before,.eyebrow::after{content:"";width:26px;height:1px;background:linear-gradient(90deg,transparent,var(--red))}
 .eyebrow::after{transform:scaleX(-1)}
@@ -83,12 +78,11 @@ footer a:hover{color:var(--text)}
 .hero{text-align:center;padding:30px 0 56px}
 .hero h1{font-size:clamp(2.4rem,7.5vw,4rem)}
 .hero .btn{margin-top:26px}
-
 /* ---------- Tarjeta principal (recargas) ---------- */
 .panel{position:relative;background:linear-gradient(180deg,#130c0c,#0c0808);border:1px solid var(--line);border-radius:24px;padding:24px 20px 20px}
 .panel::before{content:"";position:absolute;top:-1px;left:18%;right:18%;height:2px;background:linear-gradient(90deg,transparent,var(--red),transparent);box-shadow:0 0 14px #e10600aa}
 .sec{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.sec .num{width:24px;height:24px;border-radius:50%;background:var(--red);display:grid;place-items:center;font-family:Anton,sans-serif;font-size:.8rem;flex:none}
+.sec .num{font-weight:700;width:24px;height:24px;border-radius:50%;background:var(--red);display:grid;place-items:center;font-family:"Chakra Petch",sans-serif;font-size:.8rem;flex:none}
 .sec h2{font-size:.95rem;text-transform:uppercase;letter-spacing:.04em;margin:0}
 .idbox{margin-bottom:28px}
 .idbox.err{animation:shake .4s}
@@ -104,12 +98,10 @@ footer a:hover{color:var(--text)}
 .idstat[data-s=bad]::before{content:"✕ "}
 .idstat[data-s=ok]{color:var(--wa);background:#0b2217;border:1px solid #1c5a37}
 .idstat[data-s=ok]::before{content:"✓ "}
-
 input,textarea{background:var(--input);border:1px solid #2d2323;border-radius:12px;color:var(--text);padding:14px 16px;font-size:1rem;transition:border-color .15s,box-shadow .15s}
 input::placeholder{color:#6f6464}
 input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px #e1060026;outline:none}
 .note{color:var(--muted);font-size:.85rem}
-
 .packs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
 .pack{appearance:none;position:relative;color:inherit;cursor:pointer;background:#161010;border:1px solid #2a1f1f;border-radius:16px;padding:16px 8px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;transition:border-color .15s,background .15s,box-shadow .15s}
 .pack:hover{border-color:#4d2626}
@@ -117,14 +109,13 @@ input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px #e106002
 .pack .ico{height:58px;display:flex;align-items:center;justify-content:center;line-height:0}
 .pack .ico svg{filter:drop-shadow(0 4px 9px #ff4a1a66);transition:transform .2s}
 .pack:hover .ico svg,.pack.sel .ico svg{transform:translateY(-2px) scale(1.06)}
-.pack .amount{font-family:Anton,sans-serif;font-size:1.35rem;line-height:1.1;letter-spacing:.01em}
-.pack .price{font-family:Anton,sans-serif;font-size:1.05rem;color:var(--price);letter-spacing:.01em}
+.pack .amount{font-weight:700;font-family:"Chakra Petch",sans-serif;font-size:1.35rem;line-height:1.1;letter-spacing:.01em}
+.pack .price{font-weight:700;font-family:"Chakra Petch",sans-serif;font-size:1.05rem;color:var(--price);letter-spacing:.01em}
 .pack .tag{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:3px 9px;border-radius:999px;white-space:nowrap;box-shadow:0 0 12px #e1060066}
 .buy{display:block;width:100%;height:56px;border:0;border-radius:14px;background:linear-gradient(180deg,#f01a10,var(--red-d));color:#fff;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 8px 26px #e106004d;transition:filter .15s,transform .15s}
 .buy:hover:not(:disabled){filter:brightness(1.12)}
 .buy:active:not(:disabled){transform:scale(.99)}
 .buy:disabled{background:#3a0d0d;color:#8d6a6a;box-shadow:none;cursor:not-allowed}
-
 /* ---------- Historial ---------- */
 .hist{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
 .hist>div{display:flex;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
@@ -135,15 +126,13 @@ input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px #e106002
 .hist .est.pendiente,.est.pendiente{background:#2e2410;color:var(--gold)}
 .hist .est.entregado,.hist .est.aprobado,.est.entregado,.est.aprobado{background:#0f2a1b;color:var(--wa)}
 .hist .est.rechazado,.est.rechazado{background:#2e0f11;color:var(--err)}
-
 /* ---------- Inicio ---------- */
-.products{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
 .product{display:block;background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden;transition:border-color .15s}
 .product:hover{border-color:var(--red)}
 .product .art{height:170px;position:relative;background:linear-gradient(135deg,#4a0a0e,#1c0809 75%);display:flex;align-items:center;justify-content:flex-start;padding:0 28px;overflow:hidden}
-.product .art b{font-family:Anton,sans-serif;font-weight:400;font-size:2.4rem;letter-spacing:.04em;position:relative;z-index:1}
+.product .art b{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:2.4rem;letter-spacing:.04em;position:relative;z-index:1}
 .product .art svg{position:absolute;right:28px;top:50%;margin-top:-50px;width:104px;height:100px;filter:drop-shadow(0 8px 22px #ff4a1a77)}
-/* Foto de fondo de la tarjeta de Free Fire: guardala como assets/free-fire.jpg (si no existe, se ve el degradado rojo de siempre) */
+/* Foto de fondo de la tarjeta de Free Fire (assets/free-fire.jpg) */
 .product .art.ff{background:linear-gradient(180deg,#00000033,#00000088),url("free-fire.jpg") center/cover no-repeat,radial-gradient(circle at 25% 115%,#ff5a1f66 0,transparent 55%),radial-gradient(circle at 50% 55%,#5a0b10 0,#240709 55%,#120505 100%)}
 .badge{position:absolute;top:12px;left:12px;z-index:2;background:#000a;border:1px solid var(--line2);font-size:.75rem;font-weight:600;padding:4px 12px;border-radius:999px;display:flex;align-items:center;gap:6px}
 .badge::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--wa)}
@@ -155,7 +144,7 @@ input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px #e106002
 .step{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
 .step strong{display:block;margin-bottom:4px;font-weight:600}
 .step p{color:var(--muted);font-size:.93rem}
-.step .n{width:28px;height:28px;border-radius:50%;background:var(--red);display:grid;place-items:center;font-family:Anton,sans-serif;font-size:.85rem;margin-bottom:12px}
+.step .n{font-weight:700;width:28px;height:28px;border-radius:50%;background:var(--red);display:grid;place-items:center;font-family:"Chakra Petch",sans-serif;font-size:.85rem;margin-bottom:12px}
 .steps.plain{gap:24px 36px}
 .steps.plain .step{background:none;border:0;border-top:1px solid #4a1a1c;border-radius:0;padding:16px 0 0}
 .faq details{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;transition:border-color .15s}
@@ -165,7 +154,6 @@ input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px #e106002
 .faq summary::after{content:"+";color:var(--red);font-size:1.4rem;line-height:1;transition:transform .2s}
 .faq details[open] summary::after{transform:rotate(45deg)}
 .faq details p{padding:0 18px 18px;color:var(--muted)}
-
 /* ---------- Aviso, ventana modal ---------- */
 #toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,20px);background:#1d1313;border:1px solid #4a2a2a;color:var(--text);font-weight:600;font-size:.9rem;padding:11px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:60;max-width:calc(100vw - 32px)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
@@ -195,7 +183,6 @@ input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px #e106002
 .qr small{color:var(--muted);font-size:.8rem}
 .copy{margin-left:8px;background:#1b1515;border:1px solid var(--line2);color:var(--text);font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:999px;cursor:pointer;transition:border-color .15s}
 .copy:hover{border-color:var(--red)}
-
 /* ---------- Cuenta ---------- */
 .auth{position:relative;max-width:420px;margin:24px auto 0;background:linear-gradient(180deg,#130c0c,#0c0808);border:1px solid var(--line);border-radius:24px;padding:28px}
 .auth::before{content:"";position:absolute;top:-1px;left:18%;right:18%;height:2px;background:linear-gradient(90deg,transparent,var(--red),transparent);box-shadow:0 0 14px #e10600aa}
@@ -212,12 +199,11 @@ input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px #e106002
 .auth.shake{animation:shake .4s}
 .auth .btn{width:100%}
 #cod h3{font-size:1.4rem;margin-bottom:8px}
-.codeinput{text-align:center;font-family:Anton,sans-serif;font-size:1.8rem;letter-spacing:.4em;padding-left:.4em}
+.codeinput{font-weight:700;text-align:center;font-family:"Chakra Petch",sans-serif;font-size:1.8rem;letter-spacing:.4em;padding-left:.4em}
 .aviso{background:#2a1a0b;border:1px solid #5a3a14;color:#f0c987;border-radius:10px;padding:12px 14px;font-size:.88rem;line-height:1.5;margin-bottom:14px}
 .aviso b{font-weight:700}
 .linkbtn{display:block;width:100%;background:none;border:0;color:var(--muted);margin-top:14px;font-size:.9rem;cursor:pointer}
 .linkbtn:hover{color:var(--text)}
-
 /* ---------- Administrador ---------- */
 .adm{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 .adm .step{padding:18px}
@@ -227,7 +213,6 @@ input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px #e106002
 .adm .acts{margin-top:0}
 .adm .acts .btn{flex:1;padding:10px}
 textarea{color:var(--text)}
-
 /* ---------- Celular ---------- */
 @media (max-width:560px){
   .wrap{padding:0 14px 110px}
@@ -244,7 +229,6 @@ textarea{color:var(--text)}
   *,*::before,*::after{transition:none!important;animation:none!important}
   #fx i{opacity:.5}
 }
-
 /* ---------- PC: usar todo el ancho de la pantalla (el celular no cambia) ---------- */
 @media (min-width:561px){
   .wrap,.wrap.narrow{max-width:none;padding:0 clamp(24px,4vw,72px) 120px}
@@ -253,18 +237,15 @@ textarea{color:var(--text)}
   .packs{grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:24px}
   .pack{padding:20px 10px 18px}
   .pack .price{font-size:1.1rem}
-  .products{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
 }
 @media (min-width:900px){
   .cols{display:grid;grid-template-columns:1fr 1fr;column-gap:32px}
 }
-
 /* ---------- Logo ---------- */
 .hero,.page-title{position:relative}
 .hero>*:not(.wm),.page-title>*:not(.wm){position:relative;z-index:1}
 .wm{position:absolute;left:50%;top:50%;height:100%;max-height:440px;width:auto;transform:translate(-50%,-50%);opacity:.14;pointer-events:none;user-select:none;z-index:0}
 .authlogo{display:block;height:92px;width:auto;margin:0 auto 14px;filter:drop-shadow(0 0 16px #e1060066)}
-
 /* Tarjeta de producto del inicio */
 .product{transition:transform .25s ease,border-color .25s,box-shadow .25s}
 .product:hover{transform:translateY(-4px);box-shadow:0 14px 40px #e1060033}
@@ -276,41 +257,23 @@ textarea{color:var(--text)}
 .product:hover .cta{box-shadow:0 0 30px #e10600bb;gap:12px}
 @keyframes pgiro{to{transform:rotate(360deg)}}
 @keyframes pflota{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-
 /* Tarjeta Free Fire: nombre con estilo, llamas y logo a la derecha */
 .product .art{justify-content:space-between;padding:0 26px}
 .aflames{position:absolute;left:0;right:0;bottom:0;height:75%;-webkit-mask:linear-gradient(to top,#000 30%,transparent);mask:linear-gradient(to top,#000 30%,transparent);opacity:.75}
 .aflames span{position:absolute;bottom:-30px;left:var(--x);width:46%;height:100%;margin-left:-23%;background:radial-gradient(ellipse 50% 70% at 50% 100%,#ffb12b 0,#ff5a1f 30%,#c40a00 55%,transparent 78%);filter:blur(12px);transform-origin:50% 100%;animation:aflama var(--d) ease-in-out infinite alternate}
 @keyframes aflama{0%{transform:scale(1,.65)}100%{transform:scale(1.1,1.1)}}
 .ffname{position:relative;z-index:1;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
-.product .ffname b{font-family:"Russo One",Anton,Impact,sans-serif;font-weight:400;font-style:italic;text-transform:uppercase;font-size:clamp(2.2rem,9vw,2.8rem);line-height:.92;letter-spacing:.02em;transform:skewX(-8deg);background:linear-gradient(180deg,#fff 0%,#ffe27a 38%,#ff8a1f 72%,#e10600 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 #3a0600) drop-shadow(0 0 16px #ff5a1f99)}
+.product .ffname b{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:clamp(2.2rem,9vw,2.8rem);line-height:.92;letter-spacing:.02em;transform:skewX(-8deg);background:linear-gradient(180deg,#fff 0%,#ffe27a 38%,#ff8a1f 72%,#e10600 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 #3a0600) drop-shadow(0 0 16px #ff5a1f99)}
 .chip{display:inline-flex;align-items:center;gap:6px;background:#000a;border:1px solid #ff8a1f88;color:#ffb35a;font-size:.68rem;font-weight:800;letter-spacing:.22em;padding:4px 10px 4px 8px;border-radius:999px}
 @media (max-width:400px){.plogo{height:118px}.product .art{padding:0 18px}}
 .product .art .chip svg{position:static;margin:0;width:12px;height:12px;filter:none;flex:none}
-
 /* Torneos (inicio) */
 .tornos{display:grid;gap:16px}
-.tcard{position:relative;display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px 22px 20px 26px;overflow:hidden;transition:border-color .2s,transform .2s,box-shadow .2s}
-.tcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(var(--red),#ff8a1f)}
-.tcard:hover{border-color:var(--red);transform:translateY(-2px);box-shadow:0 12px 34px #e1060022}
-.tdate{width:68px;text-align:center;border:1px solid var(--line2);border-radius:14px;padding:10px 0;background:linear-gradient(180deg,#2a0608,#150808)}
-.tdate b{display:block;font-family:Anton,sans-serif;font-weight:400;font-size:1.9rem;line-height:1}
-.tdate span{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:#ff8a6a;font-weight:700}
-.ttop{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
-.tst{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
-.tcard.vivo .tst{color:#ff5a4d}
-.tcard.vivo .tst::before{content:"";width:7px;height:7px;border-radius:50%;background:#ff3b30;box-shadow:0 0 8px #ff3b30;animation:tlive 1.2s ease-in-out infinite}
-.tmodo{font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:#1b1515;border:1px solid var(--line2);padding:3px 10px;border-radius:999px}
 .tbody h3{font-size:1.2rem;margin-bottom:4px}
 .tbody p{color:var(--muted);font-size:.9rem;margin-bottom:6px}
-.tinfo{list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:8px}
-.tinfo li{font-size:.85rem}
-.tinfo span{color:var(--muted);margin-right:6px}
 .tvacio{text-align:center;padding:34px 20px;border:1px dashed var(--line2);border-radius:20px;color:var(--muted)}
-.tvacio b{display:block;color:var(--text);font-family:"Russo One",Anton,sans-serif;font-weight:400;font-size:1.3rem;margin-bottom:6px}
+.tvacio b{display:block;color:var(--text);font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:1.3rem;margin-bottom:6px}
 @keyframes tlive{50%{opacity:.3}}
-@media (max-width:560px){.tcard{grid-template-columns:auto 1fr}.tcard .btn{grid-column:1/-1;text-align:center}}
-
 /* Formulario de torneos (admin) */
 .tf label{display:block;font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
 .tf input,.tf select,.tf textarea{width:100%;margin:0 0 14px}
@@ -318,35 +281,21 @@ textarea{color:var(--text)}
 .tf select:focus{border-color:var(--red);outline:none}
 .tf textarea{resize:vertical}
 .tfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 16px}
-
 /* ============ ARENA DE TORNEOS ============ */
 .arena{position:relative;overflow:hidden;border:1px solid var(--line2);border-radius:24px;padding:28px 26px 24px;margin-bottom:22px;background:radial-gradient(ellipse 70% 130% at 100% 0%,#4a0a0e 0,transparent 62%),linear-gradient(135deg,#1a0a0a,#0d0606)}
 .arena::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,#ffffff05 0 2px,transparent 2px 14px);pointer-events:none}
 .arena>*{position:relative;z-index:1}
-.arena-top{display:flex;justify-content:space-between;align-items:flex-end;gap:22px;flex-wrap:wrap}
-.arena-tag{display:inline-block;font-size:.7rem;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:#ffb35a;border:1px solid #ff8a1f66;background:#0008;padding:4px 12px;border-radius:999px;margin-bottom:12px}
-.arena-title{font-family:"Russo One",Anton,Impact,sans-serif;font-style:italic;text-transform:uppercase;font-size:clamp(2rem,8vw,3.2rem);line-height:.95;transform:skewX(-6deg);transform-origin:left;background:linear-gradient(180deg,#fff 0%,#ffe27a 40%,#ff8a1f 75%,#e10600 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 #3a0600) drop-shadow(0 0 16px #ff5a1f88)}
 .arena p{color:var(--muted);max-width:460px;margin-top:10px}
-.arena-stats{display:flex;gap:10px;flex-wrap:wrap}
-.arena-stats div{min-width:104px;text-align:center;background:#000a;border:1px solid var(--line2);border-radius:14px;padding:10px 14px}
-.arena-stats b{display:block;font-family:Anton,sans-serif;font-weight:400;font-size:1.7rem;line-height:1.1;color:var(--gold)}
-.arena-stats span{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
-.arena-steps{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:24px 0 0;padding:0;counter-reset:st}
-.arena-steps li{counter-increment:st;display:flex;gap:12px;align-items:flex-start;font-size:.88rem;color:var(--muted);background:#0007;border:1px solid var(--line);border-radius:14px;padding:12px 14px}
-.arena-steps li::before{content:counter(st);flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:Anton,sans-serif;background:linear-gradient(180deg,#f01a10,var(--red-d));color:#fff}
-.arena-steps b{display:block;color:var(--text);font-size:.92rem}
-
 .tn-fil{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
 .tn-fil button{background:var(--card);border:1px solid var(--line2);color:var(--muted);font-weight:700;font-size:.82rem;letter-spacing:.06em;padding:9px 18px;border-radius:999px;cursor:pointer;transition:.15s}
 .tn-fil button:hover{border-color:var(--red);color:var(--text)}
 .tn-fil button.on{background:linear-gradient(180deg,#f01a10,var(--red-d));border-color:#ffffff1a;color:#fff}
-
 .tn{position:relative;overflow:hidden;background:linear-gradient(160deg,#1a0d0d,var(--card) 55%);border:1px solid var(--line);border-radius:24px;padding:26px 26px 24px 30px;transition:border-color .2s,box-shadow .2s,transform .2s}
 .tn::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(var(--red),#ff8a1f)}
 .tn:hover{border-color:var(--red);box-shadow:0 14px 40px #e1060024;transform:translateY(-2px)}
 .tn.vivo{border-color:#e1060088}
 .tn-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-.tn-badge{display:inline-flex;align-items:center;gap:10px;background:#000a;border:1px solid var(--line2);border-radius:999px;padding:6px 16px 6px 12px;font-family:"Russo One",sans-serif;font-size:.85rem;text-transform:uppercase;letter-spacing:.08em}
+.tn-badge{font-weight:700;display:inline-flex;align-items:center;gap:10px;background:#000a;border:1px solid var(--line2);border-radius:999px;padding:6px 16px 6px 12px;font-family:"Chakra Petch",sans-serif;font-size:.85rem;letter-spacing:.08em}
 .tn-ic{display:inline-flex;gap:1px;color:#ff6a4d}
 .tn-ic svg{width:15px;height:15px;fill:currentColor}
 .tn-st{display:inline-flex;align-items:center;gap:7px;font-size:.72rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
@@ -356,12 +305,12 @@ textarea{color:var(--text)}
 .tn-desc{color:var(--muted);max-width:640px;margin-bottom:16px}
 .tn-cd{display:flex;gap:10px;margin:4px 0 20px;flex-wrap:wrap}
 .tn-cd div{min-width:68px;text-align:center;background:linear-gradient(180deg,#2a0608,#150808);border:1px solid var(--line2);border-radius:14px;padding:8px 10px}
-.tn-cd b{display:block;font-family:Anton,sans-serif;font-weight:400;font-size:1.9rem;line-height:1.1}
+.tn-cd b{display:block;font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:1.9rem;line-height:1.1}
 .tn-cd span{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:#ff8a6a;font-weight:700}
 .tn-go,.tn-live{display:inline-block;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:.85rem;color:#fff;background:linear-gradient(90deg,#e10600,#ff8a1f);padding:9px 18px;border-radius:12px;margin:4px 0 20px}
 .tn-pod{display:flex;gap:10px;align-items:flex-end;margin-bottom:20px;flex-wrap:wrap}
 .tn-pod .pd{flex:1;min-width:110px;text-align:center;border-radius:14px 14px 8px 8px;padding:12px 10px;border:1px solid var(--line2);background:#0009}
-.tn-pod .pd span{display:block;font-family:Anton,sans-serif;font-size:1.3rem;line-height:1}
+.tn-pod .pd span{font-weight:700;display:block;font-family:"Chakra Petch",sans-serif;font-size:1.3rem;line-height:1}
 .tn-pod .pd b{display:block;font-size:.85rem;margin-top:4px;font-weight:700}
 .tn-pod .p1{padding-top:22px;border-color:#f6c34399;background:linear-gradient(180deg,#f6c34326,#0009)}
 .tn-pod .p1 span{color:var(--gold);font-size:1.7rem}
@@ -369,10 +318,6 @@ textarea{color:var(--text)}
 .tn-pod .p3{border-color:#cd7f3277}.tn-pod .p3 span{color:#d98a4a}
 .tn-pod.solo .pd{max-width:340px;text-align:left;padding:14px 18px}
 .tn-pod.solo .pd b{font-size:1.1rem}
-.tn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
-.tn-grid div{background:#0007;border:1px solid var(--line);border-radius:12px;padding:10px 14px}
-.tn-grid span{display:block;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
-.tn-grid b{display:block;font-weight:600;font-size:.95rem;text-transform:capitalize}
 .tn-cup{margin-bottom:18px}
 .tn-bar{height:9px;border-radius:99px;background:#1b1515;border:1px solid var(--line2);overflow:hidden}
 .tn-bar i{display:block;height:100%;background:linear-gradient(90deg,#e10600,#ff8a1f);border-radius:99px;transition:width .6s}
@@ -392,52 +337,35 @@ textarea{color:var(--text)}
 .tn-ok{font-weight:700;color:var(--wa)}
 .tn-ok b{color:var(--text)}
 @media (max-width:560px){.tn{padding:22px 18px 20px 22px}.tn-cta .btn{width:100%}.tn-pod .pd{min-width:90px}}
-
 /* Formulario de inscripción */
 .modal.wide{max-width:560px}
 .tn-pl{border:1px solid var(--line);border-radius:14px;padding:12px 14px 2px;margin-bottom:12px;background:#0006}
 .tn-pn{font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#ff8a6a;margin-bottom:10px}
 .tn-pg{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 @media (max-width:480px){.tn-pg{grid-template-columns:1fr}}
-
 /* Torneos por kills */
 .tn-kt{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(90deg,#e10600,#ff8a1f);color:#fff;font-weight:800;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;border-radius:999px;padding:7px 14px}
 .tn-kill{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:20px;border:1px solid #ff8a1f77;border-radius:16px;padding:16px 20px;background:linear-gradient(120deg,#e1060033,#0009 70%)}
 .tn-kill .k1 span{display:block;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:#ffb35a;font-weight:800}
-.tn-kill .k1 b{display:block;font-family:Anton,sans-serif;font-weight:400;font-size:2.3rem;line-height:1.05;color:var(--gold)}
+.tn-kill .k1 b{display:block;font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:2.3rem;line-height:1.05;color:var(--gold)}
 .tn-kill .k2{flex:1;min-width:180px;color:var(--muted);font-size:.9rem}
 .tn-kill .k2 b{color:var(--text)}
-
 /* Pago directo de inscripción */
 .tn-pay{border:1px solid #ff8a1f55;border-radius:14px;padding:12px 14px 6px;margin-bottom:12px;background:#e106000d}
 .tn-pay img{display:block;width:150px;height:150px;margin:10px auto;border-radius:12px;background:#fff;padding:6px}
 .tn-ok.pend{color:var(--gold)}
-
 /* ---------- Emblema del hero (logo con anillo de fuego) ---------- */
-.hero-emblem{position:relative;width:200px;height:200px;margin:0 auto 10px;display:grid;place-items:center}
-.hero-emblem::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 45%,#e10600 72%,#ff8a1f 92%,transparent 100%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));animation:hgiro 4s linear infinite}
-.hero-emblem::after{content:"";position:absolute;inset:16px;border-radius:50%;border:1px dashed #ff4a1a66;animation:hgiro 26s linear infinite reverse}
-.hero-emblem .glow{position:absolute;inset:26px;border-radius:50%;background:radial-gradient(circle,#e1060077 0,#e1060022 55%,transparent 72%);animation:hlat 2.4s ease-in-out infinite}
-.hero-emblem .orb{position:absolute;inset:0;animation:hgiro 7s linear infinite}
-.hero-emblem .orb::before{content:"";position:absolute;top:-4px;left:50%;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:#ffb35a;box-shadow:0 0 14px 3px #ff4a1a}
-.hero-emblem .o2{animation-duration:11s;animation-direction:reverse;inset:16px}
-.hero-emblem .o2::before{width:6px;height:6px;margin-left:-3px;top:-3px;background:#ff4a1a}
-.hero-emblem img{position:relative;width:112px;height:auto;filter:drop-shadow(0 8px 20px #e10600cc);animation:hflota 3.6s ease-in-out infinite}
 @keyframes hgiro{to{transform:rotate(360deg)}}
 @keyframes hlat{50%{opacity:.45;transform:scale(1.1)}}
 @keyframes hflota{50%{transform:translateY(-7px)}}
-@media (prefers-reduced-motion:reduce){.hero-emblem *,.hero-emblem::before,.hero-emblem::after{animation:none!important}}
-@media (max-width:400px){.hero-emblem{width:170px;height:170px}.hero-emblem img{width:94px}}
-
 /* Cierre de inscripciones */
 .tn-lock{display:inline-block;margin:0 0 16px;padding:9px 16px;border-radius:12px;font-size:.88rem;font-weight:700;color:#ff8a8a;background:#e1060018;border:1px solid #e1060055}
 .tn-lock.open{color:var(--gold);background:#f6c3431a;border-color:#f6c34355}
 .tn-lock b{font-variant-numeric:tabular-nums;color:var(--text)}
-
 /* Pozo, mínimo, ranking y resultados */
 .tn-pozo{margin-bottom:14px;border:1px solid #f6c34388;border-radius:16px;padding:16px 20px;background:linear-gradient(120deg,#f6c34322,#0009 70%)}
 .tn-pozo span{display:block;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:#ffd766;font-weight:800}
-.tn-pozo b{display:block;font-family:Anton,sans-serif;font-weight:400;font-size:2.6rem;line-height:1.05;color:var(--gold);text-shadow:0 0 22px #f6c34355}
+.tn-pozo b{display:block;font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:2.6rem;line-height:1.05;color:var(--gold);text-shadow:0 0 22px #f6c34355}
 .tn-pozo small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
 .tn-min{margin:0 0 16px;padding:10px 16px;border-radius:12px;font-size:.86rem;color:var(--muted);background:#ffffff08;border:1px solid var(--line2)}
 .tn-min b{color:var(--text)}.tn-min.ok{color:var(--wa);border-color:#25d36655;background:#25d3660f}
@@ -450,10 +378,9 @@ textarea{color:var(--text)}
 .rk-pts{margin-top:14px;font-size:.78rem;color:var(--muted)}
 .res-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
 .res-c{border:1px solid var(--line);border-radius:18px;padding:16px 18px;background:linear-gradient(160deg,#1a0d0d,var(--card) 60%)}
-.res-h{display:flex;flex-direction:column;margin-bottom:10px}.res-h b{font-family:"Russo One",sans-serif;font-size:1.05rem}.res-h span{font-size:.78rem;color:var(--muted)}
+.res-h{display:flex;flex-direction:column;margin-bottom:10px}.res-h b{font-weight:700;font-family:"Chakra Petch",sans-serif;font-size:1.05rem}.res-h span{font-size:.78rem;color:var(--muted)}
 .res-r{display:grid;grid-template-columns:34px 1fr auto auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:.9rem}
 .res-r em{font-style:normal;color:var(--muted);font-size:.8rem}.res-r u{text-decoration:none;color:var(--gold);font-weight:700}
-
 /* Torneos terminados */
 .res-r b small{display:block;color:var(--muted);font-weight:400;font-size:.74rem}
 .res-sub{color:var(--muted);margin:-6px 0 18px;max-width:560px}
@@ -470,8 +397,15 @@ textarea{color:var(--text)}
 .win.w1{border-color:#f6c34399;background:linear-gradient(90deg,#f6c34326,#0009)}
 .win.w1 b{font-size:1.25rem;color:var(--gold)}.win.w1 .wm{font-size:2.1rem}
 @media (max-width:480px){.win{grid-template-columns:36px 1fr}.win u{grid-column:2;text-align:left}}
-
 /* Cargar kills en el admin */
-.rs-row{display:grid;grid-template-columns:1fr 84px minmax(90px,150px);gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
-.rs-row b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rs-pos{font-size:.85rem;font-weight:700;color:var(--gold);text-align:right}
+/* ===== Torneos: diseño nuevo ===== */
+.tn2{position:relative;border-top:3px solid var(--red)}
+.tn2.vivo{border-top-color:#ff8a1f;box-shadow:0 0 0 1px #ff8a1f44,0 14px 44px #ff4a1a22}
+.tn2.cerrado{border-top-color:#4a4040}
+@keyframes tn2p{0%,100%{opacity:.7}50%{opacity:1}}
+.tn2 h3{font-size:clamp(1.45rem,3.6vw,2.1rem);margin-bottom:6px}
+.tn2-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.tn2-chip{display:inline-flex;gap:8px;align-items:baseline;background:#0007;border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:.84rem}
+.tn2-chip i{font-style:normal;color:var(--muted);font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.tn2-chip b{font-weight:600;text-transform:capitalize}
+.tn2 .tn-cta{margin-top:12px;padding-top:16px;border-top:1px solid var(--line)}

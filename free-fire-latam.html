@@ -4,8 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Free Fire LATAM · Recargas de diamantes</title>
+<meta name="description" content="Recargá diamantes de Free Fire LATAM: cargás saldo en USDT y recibís la entrega automática en tu cuenta.">
+<meta name="theme-color" content="#080505">
+
+<meta property="og:type" content="website"><meta property="og:title" content="Free Fire LATAM · Recargas de diamantes"><meta property="og:description" content="Recargá diamantes de Free Fire LATAM: cargás saldo en USDT y recibís la entrega automática en tu cuenta."><meta property="og:image" content="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"><link rel="preconnect" href="https://udmumufzdkvnmmeicxup.supabase.co">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="stylesheet" href="assets/styles.css">
+<link rel="stylesheet" href="assets/tema.css">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -82,10 +89,12 @@
     <h2>Preguntas frecuentes</h2>
     <details><summary>¿Qué necesito para recargar?</summary><p>Tu ID de jugador de Free Fire y saldo en la página.</p></details>
     <details><summary>¿Cómo cargo saldo?</summary><p>Tocando "Cargar saldo": pagás en USDT por Binance Pay (mínimo 5 USDT) y lo acreditamos al revisar tu pago.</p></details>
+    <details><summary>¿Puedo pedir un reembolso?</summary><p>Si el pedido falla, el saldo vuelve solo a tu cuenta. Los demás casos (saldo sin usar, torneos) están explicados en la <a href="legal.html#reembolsos" style="color:inherit;text-decoration:underline">política de reembolsos</a>.</p></details>
     <details><summary>¿Qué hago si tengo un problema con mi compra?</summary><p>Tocá el botón Soporte y contanos qué pasó con tu ID y el paquete que pediste.</p></details>
   </section>
 
-  <footer>© 2026 XITERKING · Tienda independiente.</footer>
+  <div id="comunidad"></div>
+<footer>© 2026 XITERKING · Tienda independiente.<br><a href="legal.html#terminos" style="color:inherit;text-decoration:underline">Términos y condiciones</a> · <a href="legal.html#reembolsos" style="color:inherit;text-decoration:underline">Política de reembolsos</a> · <a href="legal.html#reglamento" style="color:inherit;text-decoration:underline">Reglamento de torneos</a></footer>
 </div>
 
 <!-- Cambiá el número por el tuyo (código de país + número, sin + ni espacios) -->
@@ -94,7 +103,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
 <script src="assets/app.js"></script>
 <script>
-  let recargas = [];
+  let recargas = [], CFG = {};
   const ESTADO = { pendiente:"En proceso", entregado:"Entregado", aprobado:"Acreditado", rechazado:"Rechazado" };
   // Diamante: mismo tamaño en todos los paquetes
   const gem = () => `<svg viewBox="0 0 100 96" width="48" height="46" aria-hidden="true"><use href="#gem"/></svg>`;
@@ -114,11 +123,21 @@
   async function iniciar(){
     if(!Auth.actual()){ location.replace("cuenta.html?volver=free-fire-latam.html"); return; }
     document.getElementById("cargar").onclick = ()=>cargar();
+    try{ const c = await sb.from("config_sitio").select("clave,activo,mensaje"); (c.data || []).forEach(x => CFG[x.clave] = x); }catch(e){}
+    const off = k => CFG[k] && CFG[k].activo === false;
+    if(off("saldo")){ const c = document.getElementById("cargar"); c.disabled = true; c.textContent = "Carga de saldo desactivada"; }
+    if(off("recargas")){
+      const av = document.createElement("div");
+      av.style.cssText = "margin:0 0 22px;padding:16px 20px;border-radius:16px;border:1px solid #e1060088;background:#e106001f;font-weight:700;text-align:center";
+      av.innerHTML = "⛔ Las recargas de diamantes están desactivadas por el momento." + (CFG.recargas.mensaje ? "<br><span style=\"font-weight:400;color:var(--muted)\">" + esc(CFG.recargas.mensaje) + "</span>" : "<br><span style=\"font-weight:400;color:var(--muted)\">Volvemos pronto. Mientras tanto podés anotarte a los torneos.</span>");
+      document.querySelector("section").before(av);
+    }
     const { data, error } = await sb.from("paquetes").select("diamantes,precio,etiqueta").eq("activo",true).order("diamantes");
     if(error || !data || !data.length){
       cont.innerHTML = '<p style="color:var(--muted)">No pudimos cargar los paquetes. Probá de nuevo en un momento.</p>';
     } else {
       recargas = data.map(r=>({...r, precio:Number(r.precio)}));
+      if(off("recargas")){ cont.style.opacity = ".4"; cont.style.pointerEvents = "none"; const bb = document.getElementById("buy"); bb.disabled = true; bb.textContent = "Recargas desactivadas"; }
       recargas.forEach((r,i)=>{
         const el = document.createElement("button");
         el.type = "button";
@@ -179,6 +198,7 @@
 
   // ---- Compra ----
   async function pedir(r){
+    if(CFG.recargas && CFG.recargas.activo === false){ toast("Las recargas están desactivadas por el momento"); return; }
     const input = document.getElementById("pid"), box = document.getElementById("idbox");
     const id = input.value.trim();
     if(!/^\d{5,15}$/.test(id)){
@@ -198,6 +218,7 @@
       ${jugador ? `<div class="row"><span>Jugador</span><b>${esc(jugador)}</b></div>` : ""}
       <div class="row"><span>Precio</span><b>${fmt(r.precio)}</b></div>
       <div class="row ${falta>0?"low":""}"><span>${falta>0?"Te faltan":"Saldo después"}</span><b>${fmt(falta>0?falta:saldo-r.precio)}</b></div>
+      <p class="note">Al confirmar aceptás los <a href="legal.html#terminos" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">términos</a> y la <a href="legal.html#reembolsos" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">política de reembolsos</a>. Una vez entregada, la recarga no se puede deshacer.</p>
       <div class="acts">
         <button class="btn ghost" type="button" id="no">Cancelar</button>
         ${falta>0 ? `<button class="btn" type="button" id="mas">Cargar saldo</button>` : `<button class="btn" type="button" id="si">Confirmar</button>`}
@@ -217,7 +238,7 @@
         document.getElementById("fin").onclick = cerrar;
         confeti();
       }catch(err){
-        const t = /saldo/.test(err.message) ? "Tu saldo no alcanza." : "Probá de nuevo en un momento.";
+        const t = /recargas_off/.test(err.message) ? "Las recargas están desactivadas por el momento." : /saldo/.test(err.message) ? "Tu saldo no alcanza." : "Probá de nuevo en un momento.";
         modal.innerHTML = `<h3>No se pudo completar</h3><p>${t}</p><div class="acts"><button class="btn" type="button" id="fin">Cerrar</button></div>`;
         document.getElementById("fin").onclick = cerrar;
         Saldo.refrescar();
@@ -228,6 +249,7 @@
   // ---- Cargar saldo (Binance Pay en USDT, lo aprobás vos) ----
   const MINIMO = 5;
   function cargar(sugerido){
+    if(CFG.saldo && CFG.saldo.activo === false){ toast("La carga de saldo está desactivada por el momento"); return; }
     const sug = sugerido ? Math.max(MINIMO, Math.ceil(sugerido*100)/100) : "";
     const cp = t => `<button type="button" class="copy" data-copy="${esc(t)}">Copiar</button>`;
     abrir(`
@@ -236,8 +258,8 @@
       <div class="row"><span>Pay ID</span><b>${esc(PAGOS.binance.payId)} ${cp(PAGOS.binance.payId)}</b></div>
       <div class="row"><span>Enviá</span><b>${esc(PAGOS.binance.nota)}</b></div>
       <div class="field" style="margin-top:14px"><label for="monto">Monto que enviaste (USDT)</label><input id="monto" inputmode="decimal" value="${sug}"></div>
-      <div class="field"><label for="ref">ID de orden o TxID</label><input id="ref" autocomplete="off"></div>
-      <p class="note">Recarga mínima: ${MINIMO} USDT. Revisamos tu pago y te acreditamos el saldo.</p>
+      ${Comprobante.campo("ref")}
+      <p class="note">Recarga mínima: ${MINIMO} USDT. Revisamos tu pago y te acreditamos el saldo. Mirá la <a href="legal.html#reembolsos" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">política de reembolsos</a>.</p>
       <div class="acts">
         <button class="btn ghost" type="button" id="no">Cancelar</button>
         <button class="btn" type="button" id="ok">Ya pagué</button>
@@ -245,16 +267,21 @@
     document.getElementById("no").onclick = cerrar;
     document.getElementById("ok").onclick = async e=>{
       const monto = parseFloat(document.getElementById("monto").value.replace(",","."));
-      const ref = document.getElementById("ref").value.trim();
+      const arch = document.getElementById("ref").files[0];
       if(!(monto>=MINIMO)){ toast("La recarga mínima es de "+MINIMO+" USDT"); return; }
-      if(ref.length<4){ toast("Escribí el comprobante del pago"); return; }
+      const ev = Comprobante.validar(arch); if(ev){ toast(ev); return; }
       const b = e.currentTarget; b.innerHTML = '<span class="spin"></span>'; b.disabled = true;
-      const { error } = await sb.rpc("pedir_deposito",{ p_metodo:"binance", p_monto:monto, p_ref:ref });
+      let sub;
+      try{ sub = await Comprobante.subir(arch); }
+      catch(_){ b.disabled = false; b.textContent = "Ya pagué"; toast("No se pudo subir la foto. Probá de nuevo"); return; }
+      const { data: depId, error } = await sb.rpc("pedir_deposito",{ p_metodo:"binance", p_monto:monto, p_ref:sub.ref });
       if(error){
         b.disabled = false; b.textContent = "Ya pagué";
-        toast(/duplicado/.test(error.message) ? "Ese comprobante ya fue enviado" : /minimo/.test(error.message) ? "La recarga mínima es de "+MINIMO+" USDT" : "No se pudo enviar. Probá de nuevo");
+        toast(/saldo_off/.test(error.message) ? "La carga de saldo está desactivada por el momento" : /duplicado/.test(error.message) ? "Ese comprobante ya fue enviado" : /minimo/.test(error.message) ? "La recarga mínima es de "+MINIMO+" USDT" : "No se pudo enviar. Probá de nuevo");
         return;
       }
+      if(depId) await Comprobante.adjuntar("deposito", depId, sub.ruta);
+      if(depId) sb.functions.invoke("co",{ body:{ action:"aviso_deposito", id:depId } }).catch(()=>{});   // te avisa a vos (admin)
       cerrar(); toast("Recibimos tu pago. Lo revisamos y te acreditamos el saldo."); listar();
     };
   }

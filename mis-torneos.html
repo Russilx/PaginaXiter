@@ -4,8 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mis torneos · XITERKING</title>
+<meta name="description" content="Tus inscripciones, check-in, resultados y estadísticas en los torneos de XITERKING.">
+<meta name="theme-color" content="#080505">
+<meta name="robots" content="noindex">
+<meta property="og:type" content="website"><meta property="og:title" content="Mis torneos · XITERKING"><meta property="og:description" content="Tus inscripciones, check-in, resultados y estadísticas en los torneos de XITERKING."><meta property="og:image" content="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"><link rel="preconnect" href="https://udmumufzdkvnmmeicxup.supabase.co">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="stylesheet" href="assets/styles.css">
+<link rel="stylesheet" href="assets/tema.css">
 </head>
 <body>
 <div class="wrap">
@@ -21,35 +28,44 @@
   const $ = id => document.getElementById(id);
   const ESTADO = { proximo:"Próximo", en_curso:"En vivo", finalizado:"Terminado" }, MED = ["🥇","🥈","🥉"];
   const mon = (n,m) => m === "USDT" ? Number(n).toLocaleString("es-AR") + " USDT" : "$" + Number(n).toLocaleString("es-AR");
-  let CAPN = {};
+  let CAPN = {}, LLK = {};
 
   async function cargar(){
     const u = Auth.actual();
-    const [i, e, c, fl] = await Promise.all([
-      sb.from("inscripciones").select("id,estado,equipo,checkin,puesto,kills,premio_kills,premio_pagado,creado,torneos(id,titulo,modo,fecha,estado,tipo,moneda,cancelado,link_vivo)").eq("usuario",u.id).in("estado",["pendiente","confirmada"]).order("creado",{ascending:false}),
+    const [i, e, c, fl, sd] = await Promise.all([
+      sb.from("inscripciones").select("id,estado,equipo,monto,checkin,puesto,kills,premio_kills,premio_pagado,creado,torneos(id,titulo,modo,fecha,estado,tipo,moneda,cancelado,link_vivo,fecha_anterior,fecha_cambiada)").eq("usuario",u.id).in("estado",["pendiente","confirmada"]).order("creado",{ascending:false}),
       sb.from("lista_espera").select("torneo_id,torneos(titulo,fecha)").eq("usuario",u.id),
       sb.from("capturas").select("inscripcion_id").eq("usuario",u.id),
-      sb.from("faltas").select("id").eq("usuario",u.id).gte("creado", new Date(Date.now() - 30 * 864e5).toISOString())
+      sb.from("faltas").select("id").eq("usuario",u.id).gte("creado", new Date(Date.now() - 30 * 864e5).toISOString()),
+      sb.from("solicitudes_devolucion").select("inscripcion_id,estado").eq("usuario",u.id)
     ]);
+    const DEVS = {}; (sd.data || []).forEach(x => DEVS[x.inscripcion_id] = x.estado);
     const nf = (fl.data || []).length;
     if(i.error){ $("lista").innerHTML = '<div class="tvacio">No pudimos cargar tus torneos. Probá de nuevo en un momento.</div>'; return; }
     CAPN = {}; (c.data || []).forEach(x => CAPN[x.inscripcion_id] = (CAPN[x.inscripcion_id] || 0) + 1);
-    const L = i.data || [], jug = L.filter(x => x.estado === "confirmada" && x.torneos && x.torneos.estado === "finalizado" && !x.torneos.cancelado && x.kills !== null);
+    const L = i.data || [];
+    LLK = {}; await Promise.all([...new Set(L.filter(x => x.torneos && !x.torneos.cancelado && x.estado === "confirmada").map(x => x.torneos.id))].map(async id => { const r = await sb.rpc("llaves_torneo",{ p_id: id }); if(!r.error && (r.data || []).length) LLK[id] = r.data; }));
+    const jug = L.filter(x => x.estado === "confirmada" && x.torneos && x.torneos.estado === "finalizado" && !x.torneos.cancelado && x.kills !== null);
     const st = [["Torneos jugados", jug.length], ["Victorias", jug.filter(x => x.puesto === 1).length], ["Kills totales", jug.reduce((a,x) => a + (x.kills || 0), 0)], ["Mejor puesto", jug.some(x => x.puesto) ? Math.min(...jug.filter(x => x.puesto).map(x => x.puesto)) + "º" : "—"]];
     $("aviso").innerHTML = nf ? `<div class="tn-min" style="margin:0 0 14px">⚠ Tenés <b>${nf} falta${nf > 1 ? "s" : ""}</b> en los últimos 30 días por no presentarte a torneos.${nf >= 2 ? " Por ahora solo podés anotarte a torneos con inscripción paga." : " Con 2 faltas no podés anotarte a torneos gratis."}</div>` : "";
     $("stats").innerHTML = st.map(x => `<div class="step" style="padding:14px;text-align:center"><b style="font-size:1.5rem;display:block">${x[1]}</b><span style="color:var(--muted);font-size:.8rem">${x[0]}</span></div>`).join("");
     const esp = (e.data || []).map(x => `<article class="hist"><div class="hist-h"><div><h3>${esc(x.torneos && x.torneos.titulo)}</h3><span>⏳ En lista de espera · te avisamos si se libera un lugar</span></div></div></article>`).join("");
     const cards = L.map(x => {
       const t = x.torneos || {}, fin = t.estado === "finalizado", pend = x.estado === "pendiente";
-      const res = fin && x.kills !== null ? `<div class="win w${x.puesto || 9}"><span class="wm">${MED[(x.puesto || 9) - 1] || (x.puesto || "·") + "º"}</span><div><b>${x.puesto ? x.puesto + "º puesto" : "Sin puesto"}</b><span class="wk">${x.kills} kill${x.kills === 1 ? "" : "s"}</span></div>${t.tipo === "kills" && Number(x.premio_kills) > 0 ? `<u>${mon(x.premio_kills, t.moneda)}${x.premio_pagado ? " ✓ pagado" : ""}</u>` : ""}</div>` : "";
+      const res = fin && x.kills !== null ? `<div class="win w${x.puesto || 9}"><span class="wm">${MED[(x.puesto || 9) - 1] || (x.puesto || "·") + "º"}</span><div><b>${x.puesto ? x.puesto + "º puesto" : "Sin puesto"}</b><span class="wk">${x.kills} kill${x.kills === 1 ? "" : "s"}</span></div>${t.tipo === "kills" && Number(x.premio_kills) > 0 ? `<u>${mon(x.premio_kills, t.moneda)}${x.premio_pagado ? " ✓ pagado" : ""}</u>` : (t.tipo !== "kills" && x.premio_pagado ? "<u>✓ premio pagado</u>" : "")}</div>` : "";
       const fT = new Date(t.fecha).getTime(), cfin = fT - 1800000, cini = fT - 3600000, ahora = Date.now(), hh = ms => new Date(ms).toLocaleTimeString("es-AR",{ hour:"2-digit", minute:"2-digit" });
       const ck = x.estado === "confirmada" && t.estado === "proximo" && !t.cancelado && new Date(x.creado).getTime() < cfin
         ? (x.checkin ? '<div class="tn-ok" style="margin-top:12px">✅ Check-in hecho</div>' : ahora >= cini && ahora < cfin ? `<button class="btn" type="button" data-ck="${x.id}" style="margin-top:12px">✅ Confirmar que juego (hasta las ${hh(cfin)})</button>` : ahora < cini ? `<div class="tn-min" style="margin-top:12px">🕐 Check-in obligatorio: de ${hh(cini)} a ${hh(cfin)} hs. Si no lo hacés, perdés tu lugar.</div>` : "") : "";
+      const solD = DEVS[x.id], cambio = t.fecha_cambiada && new Date(x.creado) < new Date(t.fecha_cambiada) && Number(x.monto) > 0 && t.estado === "proximo" && !t.cancelado && fT > ahora;
+      const dev = solD ? `<div class="tn-min" style="margin-top:12px">${solD === "pendiente" ? "🕐 Pediste la devolución por el cambio de horario · la estamos revisando" : solD === "aprobada" ? "✅ Devolución aprobada · te devolvemos el pago por el mismo medio" : "❌ Tu pedido de devolución fue rechazado. Escribinos por soporte si tenés dudas."}</div>`
+        : cambio ? `<div class="tn-min" style="margin-top:12px">📅 Cambió el horario del torneo${t.fecha_anterior ? " (antes era " + new Date(t.fecha_anterior).toLocaleString("es-AR",{ dateStyle:"medium", timeStyle:"short" }) + ")" : ""}. Si ya no podés jugar, podés pedir la devolución.</div><button class="btn ghost sm" type="button" data-dev="${x.id}" style="margin-top:8px">↩ Pedir devolución</button>` : "";
+      const el = x.estado === "confirmada" && LLK[t.id] ? estadoEnLlave(LLK[t.id], x.id) : null;
+      const llave = LLK[t.id] ? `${el ? `<div class="${el.ok ? "tn-ok" : "tn-min"}" style="margin-top:12px">${esc(el.t)}</div>` : ""}<details class="tn-det" style="margin-top:10px"><summary>🥊 Ver el cuadro de llaves</summary>${llavesHtml(LLK[t.id])}</details>` : "";
       const sube = !pend && !t.cancelado && (t.estado === "en_curso" || fin);
       return `<article class="hist">
         <div class="hist-h"><div><h3>${esc(t.titulo)}</h3><span>${esc(t.modo)} · ${new Date(t.fecha).toLocaleString("es-AR",{ dateStyle:"medium", timeStyle:"short" })}</span></div></div>
         <div style="margin-bottom:10px"><span class="hist-chip">${t.cancelado ? "❌ Cancelado" : ESTADO[t.estado] || ""}</span>${pend ? '<span class="hist-chip">⏳ Pago en revisión</span>' : ""}${x.equipo ? `<span class="hist-chip">${esc(x.equipo)}</span>` : ""}${/^https:\/\//.test(t.link_vivo || "") ? `<a class="hist-chip" href="${esc(t.link_vivo)}" target="_blank" rel="noopener">📺 Transmisión</a>` : ""}</div>
-        ${res}${ck}
+        ${res}${llave}${ck}${dev}
         ${sube ? `<div style="margin-top:12px"><label class="btn ghost sm" style="cursor:pointer">📎 Subir captura de resultados${CAPN[x.id] ? " (" + CAPN[x.id] + " subida" + (CAPN[x.id] > 1 ? "s" : "") + ")" : ""}<input type="file" accept="image/*" data-up="${x.id}" hidden></label><small style="display:block;color:var(--muted);margin-top:6px">Subí la captura de la pantalla final de cada partida: sirve para verificar las kills.</small></div>` : ""}
       </article>`;
     }).join("");
@@ -57,6 +73,13 @@
   }
 
   $("lista").addEventListener("click", async e => {
+    const dv = e.target.closest("button[data-dev]");
+    if(dv){
+      if(!confirm("¿Pedir la devolución de tu inscripción por el cambio de horario?")) return;
+      dv.disabled = true; const r = await sb.rpc("pedir_devolucion",{ p_id: +dv.dataset.dev });
+      if(!r.error && r.data) sb.functions.invoke("co",{ body:{ action:"aviso_devolucion", id:r.data } }).catch(()=>{});
+      toast(r.error ? (/sin_cambio|torneo/.test(r.error.message) ? "Este torneo ya no admite devolución" : /ya_pedida/.test(r.error.message) ? "Ya pediste la devolución" : "No se pudo pedir la devolución") : "Pedido enviado. Lo revisamos y te avisamos."); cargar(); return;
+    }
     const b = e.target.closest("button[data-ck]"); if(!b) return;
     b.disabled = true; const r = await sb.rpc("hacer_checkin",{ p_id: +b.dataset.ck });
     toast(r.error ? "El check-in se abre 1 hora antes y cierra 30 minutos antes" : "¡Check-in hecho!"); cargar();

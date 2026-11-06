@@ -4,8 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Torneos terminados · XITERKING</title>
+<meta name="description" content="Ganadores y premios de todos los torneos terminados de XITERKING.">
+<meta name="theme-color" content="#080505">
+
+<meta property="og:type" content="website"><meta property="og:title" content="Torneos terminados · XITERKING"><meta property="og:description" content="Ganadores y premios de todos los torneos terminados de XITERKING."><meta property="og:image" content="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"><link rel="preconnect" href="https://udmumufzdkvnmmeicxup.supabase.co">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="stylesheet" href="assets/styles.css">
+<link rel="stylesheet" href="assets/tema.css">
 </head>
 <body>
 <div class="wrap">
@@ -29,7 +36,7 @@
   const mon = (n,m) => m === "USDT" ? Number(n).toLocaleString("es-AR") + " USDT" : "$" + Number(n).toLocaleString("es-AR");
   let modo = "todos", off = 0, CF = {};
 
-  function card(x, L){
+  function card(x, L, LK){
     const kills = x.tipo === "kills", rep = String(x.reparto || "50/30/20").split("/").map(Number);
     const pozo = Number(x.pozo_base || 0) + (CF[x.id] || 0) * Number(x.costo || 0) * Number(x.pozo_pct || 0) / 100;
     const textos = [x.premio, x.premio2, x.premio3];
@@ -46,6 +53,7 @@
       <div class="hist-h"><div><h3>${esc(x.titulo)}</h3><span>${esc(x.modo)} · ${new Date(x.fecha).toLocaleDateString("es-AR",{ day:"numeric", month:"long", year:"numeric" })}</span></div></div>
       <div style="margin-bottom:10px">${chips}${/^https:\/\//.test(x.link_vivo || "") ? `<a class="hist-chip" href="${esc(x.link_vivo)}" target="_blank" rel="noopener">📺 Ver transmisión</a>` : ""}</div>
       ${podio.length ? podio.map(fila).join("") : '<div class="tvacio" style="padding:14px">Resultados próximamente</div>'}
+      ${LK && LK.length ? `<details class="tn-det" style="margin-top:10px"><summary>🥊 Ver el cuadro de llaves</summary>${llavesHtml(LK)}</details>` : ""}
       ${resto.length ? `<details class="tn-det" style="margin-top:10px"><summary>Ver el resto de la tabla (${resto.length})</summary><div style="padding:0 16px 12px">${resto.map(r => `<div class="res-r"><span>${r.pos ? r.pos + "º" : "·"}</span><b>${esc(r.f.etiqueta || "—")}</b><em>${r.f.kills !== null ? r.f.kills + " kills" : ""}</em><u>${esc(premio(r.f, r.pos || 99))}</u></div>`).join("")}</div></details>` : ""}
     </article>`;
   }
@@ -59,7 +67,7 @@
     const data = t.data || [];
     if(reset && !data.length){ $("lista").innerHTML = '<div class="tvacio"><b>Todavía no hay torneos terminados</b>Cuando termine el primero, vas a ver acá quién ganó.</div>'; $("mas").hidden = true; return; }
     const c = await sb.rpc("inscriptos_torneos"); (c.data || []).forEach(x => CF[x.torneo_id] = x.confirmados);
-    const html = (await Promise.all(data.map(async x => { const r = await sb.rpc("resultados_torneo",{ p_id: x.id }); return card(x, r.data || []); }))).join("");
+    const html = (await Promise.all(data.map(async x => { const [r, lk] = await Promise.all([sb.rpc("resultados_torneo",{ p_id: x.id }), sb.rpc("llaves_torneo",{ p_id: x.id })]); return card(x, r.data || [], lk.data || []); }))).join("");
     if(reset) $("lista").innerHTML = html; else $("lista").insertAdjacentHTML("beforeend", html);
     off += data.length; $("mas").hidden = data.length < PAGE;
   }

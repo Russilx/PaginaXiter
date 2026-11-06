@@ -4,8 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mi cuenta · Tienda de diamantes</title>
+<meta name="description" content="Ingresá o creá tu cuenta de XITERKING para recargar diamantes e inscribirte a torneos.">
+<meta name="theme-color" content="#080505">
+<meta name="robots" content="noindex">
+<meta property="og:type" content="website"><meta property="og:title" content="Mi cuenta · Tienda de diamantes"><meta property="og:description" content="Ingresá o creá tu cuenta de XITERKING para recargar diamantes e inscribirte a torneos."><meta property="og:image" content="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"><link rel="preconnect" href="https://udmumufzdkvnmmeicxup.supabase.co">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="stylesheet" href="assets/styles.css">
+<link rel="stylesheet" href="assets/tema.css">
 </head>
 <body>
 <div class="wrap">
@@ -22,8 +29,10 @@
       <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email"></div>
       <div class="field"><label for="pass">Contraseña</label><input id="pass" type="password" autocomplete="current-password"></div>
       <div class="field only-reg"><label for="pass2">Repetí la contraseña</label><input id="pass2" type="password" autocomplete="new-password"></div>
+      <div class="field only-reg"><label for="acepto" style="display:flex;gap:10px;align-items:flex-start;text-transform:none;letter-spacing:0;font-size:.85rem;font-weight:400;cursor:pointer"><input id="acepto" type="checkbox" style="width:auto;margin-top:3px"><span>Acepto los <a href="legal.html#terminos" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">Términos y condiciones</a> y la <a href="legal.html#reembolsos" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">Política de reembolsos</a>.</span></label></div>
       <div class="msg" id="msg" role="alert"></div>
       <button class="btn" type="submit" id="go">Ingresar</button>
+      <button class="linkbtn" type="button" id="olvide">¿Olvidaste tu contraseña?</button>
     </form>
     <div id="cod" hidden>
       <h3>Confirmá tu email</h3>
@@ -35,6 +44,26 @@
       <button class="btn ghost" type="button" id="cre" style="margin-top:10px" disabled>Reenviar código</button>
       <button class="linkbtn" type="button" id="cvolver">‹ Volver</button>
     </div>
+    <div id="rec" hidden>
+      <h3>Recuperar contraseña</h3>
+      <div id="rec1">
+        <p class="note" style="margin-bottom:16px">Escribí el email de tu cuenta y te enviamos un código para elegir una contraseña nueva.</p>
+        <div class="field"><label for="remail">Email</label><input id="remail" type="email" autocomplete="email"></div>
+        <div class="msg" id="rmsg1" role="alert"></div>
+        <button class="btn" type="button" id="rsend">Enviar código</button>
+      </div>
+      <div id="rec2" hidden>
+        <p class="note" id="rtxt" style="margin-bottom:16px"></p>
+        <div class="field"><label for="rcod" id="rcodlabel">Código de verificación</label><input id="rcod" class="codeinput" inputmode="numeric" autocomplete="one-time-code"></div>
+        <div class="field"><label for="rp1">Contraseña nueva</label><input id="rp1" type="password" autocomplete="new-password"></div>
+        <div class="field"><label for="rp2">Repetí la contraseña</label><input id="rp2" type="password" autocomplete="new-password"></div>
+        <p class="aviso">Si no ves el correo en tu bandeja de entrada, <b>revisá la carpeta de spam</b> o correo no deseado.</p>
+        <div class="msg" id="rmsg2" role="alert"></div>
+        <button class="btn" type="button" id="rok">Cambiar contraseña</button>
+        <button class="btn ghost" type="button" id="rre" style="margin-top:10px" disabled>Reenviar código</button>
+      </div>
+      <button class="linkbtn" type="button" id="rvolver">‹ Volver</button>
+    </div>
     
   </div>
 </div>
@@ -42,7 +71,8 @@
 <script src="assets/app.js"></script>
 <script>
   const params = new URLSearchParams(location.search);
-  const destino = params.get("volver") || "index.html";
+  const _v = params.get("volver") || "";
+  const destino = /^[a-z0-9-]+\.html(#[\w-]*)?$/i.test(_v) ? _v : "index.html";   // solo páginas del propio sitio
   Auth.listo.then(()=>{ if(Auth.actual()) location.replace(destino); });
 
   const box = document.getElementById("auth"), tabs = document.getElementById("tabs");
@@ -55,6 +85,7 @@
     go.textContent = m==="reg" ? "Crear cuenta" : "Ingresar";
     document.getElementById("pass").autocomplete = m==="reg" ? "new-password" : "current-password";
     msg.textContent = "";
+    document.getElementById("olvide").style.display = m==="reg" ? "none" : "";
   }
   tabs.querySelectorAll("button").forEach(b=>b.onclick=()=>poner(b.dataset.m));
   if(params.get("modo")==="registro") poner("reg");
@@ -74,6 +105,7 @@
       if(nombre.length<2) return error("Escribí tu nombre.");
       if(pass.length<6) return error("La contraseña debe tener al menos 6 caracteres.");
       if(pass!==pass2) return error("Las contraseñas no coinciden.");
+      if(!document.getElementById("acepto").checked) return error("Tenés que aceptar los términos y la política de reembolsos.");
     } else if(!pass) return error("Escribí tu contraseña.");
     go.disabled = true; go.innerHTML = '<span class="spin"></span>';
     try{
@@ -87,9 +119,9 @@
       error(err.message==="existe" ? "Ya hay una cuenta con ese email." : err.message==="datos" ? "Email o contraseña incorrectos." : err.message==="sinconfirmar" ? "Primero confirmá tu email." : "No se pudo conectar: "+(Auth.detalle||"error desconocido"));
     }
   });
-  // ---- Confirmar email con código (vence en 1 minuto) ----
+  // ---- Confirmar email con código (vence a los 3 minutos) ----
   const $ = id => document.getElementById(id);
-  const LARGO = 8;    // cantidad de dígitos del código (igual que "Email OTP Length" en Supabase > Authentication > Providers > Email)
+  const LARGO = 6;    // cantidad de dígitos del código (igual que "Email OTP Length" en Supabase > Authentication > Providers > Email)
   $("codlabel").textContent = "Código de " + LARGO + " dígitos"; $("codigo").maxLength = LARGO; $("codigo").placeholder = "0".repeat(LARGO);
   const VIDA = 180;   // segundos que dura el código (igual que "Email OTP Expiration" en Supabase)
   let tmr, fin = 0, mailCod = "";
@@ -130,6 +162,57 @@
   $("cre").onclick = reenviar;
   $("codigo").addEventListener("input", e=>{ e.target.value = e.target.value.replace(/\D/g,""); if(e.target.value.length===LARGO) confirmar(); });
   $("cvolver").onclick = ()=>{ clearInterval(tmr); $("cod").hidden = true; tabs.style.display = ""; $("f").style.display = ""; };
+
+  // ---- Recuperar contraseña: código por email + contraseña nueva ----
+  let rtmr, rfin = 0, rMail = "";
+  function rerror(id, t){ $(id).textContent = t; box.classList.remove("shake"); void box.offsetWidth; box.classList.add("shake"); }
+  function rtick(){
+    const s = Math.max(0, Math.ceil((rfin - Date.now())/1000));
+    $("rre").disabled = s > 0; $("rre").textContent = s > 0 ? "Reenviar código (" + s + ")" : "Reenviar código";
+    if(!s) clearInterval(rtmr);
+  }
+  function rarrancar(){ rfin = Date.now() + 60000; clearInterval(rtmr); rtick(); rtmr = setInterval(rtick, 1000); }
+  $("olvide").onclick = ()=>{
+    tabs.style.display = "none"; $("f").style.display = "none"; $("rec").hidden = false; $("rec1").hidden = false; $("rec2").hidden = true;
+    $("remail").value = document.getElementById("email").value.trim(); $("rmsg1").textContent = ""; $("remail").focus();
+  };
+  $("rvolver").onclick = ()=>{ clearInterval(rtmr); $("rec").hidden = true; tabs.style.display = ""; $("f").style.display = ""; };
+  async function rsend(reenvio){
+    const email = $("remail").value.trim();
+    if(!/^\S+@\S+\.\S+$/.test(email)) return rerror("rmsg1", "Escribí un email válido.");
+    const b = $("rsend"); b.disabled = true; b.innerHTML = '<span class="spin"></span>'; $("rmsg1").textContent = "";
+    try{
+      await Auth.recuperar(email);
+      rMail = email;
+      // mensaje neutro: no revelamos si el email tiene cuenta o no
+      $("rtxt").textContent = "Si ese email tiene una cuenta, te enviamos un código a " + email + ".";
+      $("rec1").hidden = true; $("rec2").hidden = false; $("rcod").value = ""; $("rmsg2").textContent = ""; $("rcod").focus(); rarrancar();
+    }catch(err){
+      rerror("rmsg1", err.message==="espera" ? "Ya te enviamos un código hace un momento. Esperá un minuto y probá de nuevo." : "No se pudo enviar el código: " + (Auth.detalle || "error desconocido"));
+    }
+    b.disabled = false; b.textContent = "Enviar código";
+  }
+  $("rsend").onclick = ()=>rsend();
+  $("remail").addEventListener("keydown", e=>{ if(e.key==="Enter") rsend(); });
+  $("rre").onclick = async ()=>{
+    $("rre").disabled = true; $("rmsg2").textContent = "";
+    try{ await Auth.recuperar(rMail); $("rmsg2").style.color = "var(--wa)"; $("rmsg2").textContent = "Te enviamos un código nuevo."; rarrancar(); }
+    catch(err){ $("rmsg2").style.color = ""; rerror("rmsg2", err.message==="espera" ? "Esperá un minuto antes de pedir otro código." : "No se pudo enviar el código: " + (Auth.detalle || "error desconocido")); rarrancar(); }
+  };
+  $("rcod").addEventListener("input", e=>{ e.target.value = e.target.value.replace(/\D/g,""); });
+  $("rok").onclick = async ()=>{
+    $("rmsg2").style.color = "";
+    const c = $("rcod").value.replace(/\D/g,""), p1 = $("rp1").value, p2 = $("rp2").value;
+    if(c.length!==LARGO) return rerror("rmsg2", "Escribí los " + LARGO + " dígitos del código.");
+    if(p1.length<6) return rerror("rmsg2", "La contraseña debe tener al menos 6 caracteres.");
+    if(p1!==p2) return rerror("rmsg2", "Las contraseñas no coinciden.");
+    const b = $("rok"); b.disabled = true; b.innerHTML = '<span class="spin"></span>';
+    try{ await Auth.nuevaPass(rMail, c, p1); location.href = destino; }
+    catch(err){
+      b.disabled = false; b.textContent = "Cambiar contraseña";
+      rerror("rmsg2", err.message==="codigo" ? "Código incorrecto o vencido. Pedí uno nuevo." : err.message==="igual" ? "La contraseña nueva tiene que ser distinta a la anterior." : err.message==="debil" ? "Esa contraseña es muy débil. Probá con una más larga." : "No se pudo cambiar la contraseña: " + (Auth.detalle || "error desconocido"));
+    }
+  };
 </script>
 </body>
 </html>

@@ -4,128 +4,127 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>XITERKING · Diamantes y torneos</title>
+<meta name="description" content="Torneos de Free Fire LATAM con premios reales, ranking de temporada y recargas de diamantes con entrega automática.">
+<meta name="theme-color" content="#080505">
+
+<meta property="og:type" content="website"><meta property="og:title" content="XITERKING · Diamantes y torneos"><meta property="og:description" content="Torneos de Free Fire LATAM con premios reales, ranking de temporada y recargas de diamantes con entrega automática."><meta property="og:image" content="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"><link rel="preconnect" href="https://udmumufzdkvnmmeicxup.supabase.co">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="stylesheet" href="assets/styles.css">
 <style>
-/* Pantalla de carga */
-#intro{position:fixed;inset:0;z-index:9999;overflow:hidden;transition:visibility 0s linear 1.1s;animation:introAuto .6s ease 8s forwards}
-#intro.out{visibility:hidden}
-#intro .door{position:absolute;top:0;bottom:0;width:50.5%;transition:transform 1s cubic-bezier(.77,0,.18,1)}
-#intro .dl{left:0;background:repeating-linear-gradient(0deg,#ffffff07 0 1px,transparent 1px 3px),radial-gradient(circle 75vmax at 100% 45%,#2a0608 0,#0a0505 42%,#000 100%)}
-#intro .dr{right:0;background:repeating-linear-gradient(0deg,#ffffff07 0 1px,transparent 1px 3px),radial-gradient(circle 75vmax at 0% 45%,#2a0608 0,#0a0505 42%,#000 100%)}
-#intro.out .dl{transform:translateX(-101%)}
-#intro.out .dr{transform:translateX(101%)}
-#intro .box{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:transform .8s ease,opacity .5s ease;animation:introShake .55s linear .8s}
-#intro.out .box{transform:scale(1.15);opacity:0}
-#intro .embers{position:absolute;inset:0;z-index:1;pointer-events:none;transition:opacity .3s ease}
-#intro.out .embers{opacity:0}
-#intro .emblem{position:relative;width:clamp(130px,34vw,180px);aspect-ratio:1;display:grid;place-items:center;animation:introIn .9s cubic-bezier(.2,.9,.3,1.2) both}
-#intro .emblem::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 55%,var(--red,#e10600) 100%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));animation:introSpin 1.9s linear infinite}
-#intro .emblem::after{content:"";position:absolute;inset:0;border-radius:50%;border:1px solid #ffffff14;box-shadow:0 0 60px #e1060033 inset;animation:introGlow 2.2s ease-in-out .9s infinite}
-#intro .r2{position:absolute;inset:-16px;border-radius:50%;border:1px dashed #e1060077;animation:introSpin 7s linear infinite reverse}
-#intro .wave{position:absolute;inset:0;border-radius:50%;border:2px solid var(--red,#e10600);opacity:0;animation:introWave 1s ease-out .75s both}
-#intro .emblem img{position:absolute;inset:0;margin:auto;max-width:none;height:62%;width:auto;filter:drop-shadow(0 0 22px #e10600aa);animation:introPulse 2.2s ease-in-out .9s infinite}
-#intro .nm{display:flex;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:.3em;font-size:clamp(1.6rem,7vw,2.3rem);color:#fff;padding-left:.3em;animation:introGlitch .45s steps(1) 2.45s 1}
-#intro .nm span{display:inline-block;opacity:0;transform:translateY(16px) scale(1.2);animation:introLetter .55s ease forwards;animation-delay:calc(.9s + var(--i) * .1s)}
-#intro .nm span:nth-child(n+6){color:var(--red,#e10600);text-shadow:0 0 18px #e1060088}
-#intro .tag{font-size:.72rem;letter-spacing:.4em;text-transform:uppercase;color:#b9a9a9;padding-left:.4em;opacity:0;animation:introFade .9s ease 2s forwards}
-#intro .load{width:min(260px,66vw);display:flex;flex-direction:column;align-items:center;gap:9px;opacity:0;animation:introFade .6s ease 1.2s forwards}
-#intro .bar{width:100%;height:6px;background:#ffffff1a;-webkit-mask:repeating-linear-gradient(90deg,#000 0 9px,transparent 9px 12px);mask:repeating-linear-gradient(90deg,#000 0 9px,transparent 9px 12px)}
-#intro .bar i{display:block;height:100%;width:100%;transform-origin:left;transform:scaleX(0);background:linear-gradient(90deg,#8a0500,var(--red,#e10600),#ff6a4d)}
-#intro .pct{font-size:.72rem;letter-spacing:.25em;color:#d8c9c9;font-variant-numeric:tabular-nums}
-#intro .em{position:absolute;bottom:-10px;border-radius:50%;background:var(--red,#e10600);box-shadow:0 0 8px #e10600;opacity:0;animation:introEmber linear infinite}
-#intro .rays{position:absolute;left:50%;top:calc(50% - 90px);width:170vmax;height:170vmax;margin:-85vmax 0 0 -85vmax;background:repeating-conic-gradient(from 0deg,#e1060030 0 5deg,transparent 5deg 15deg);-webkit-mask:radial-gradient(circle closest-side,#000 0,transparent 70%);mask:radial-gradient(circle closest-side,#000 0,transparent 70%);opacity:0;animation:introFade 1.2s ease .2s forwards,introSpin 50s linear infinite}
-#intro .fire{position:absolute;left:0;right:0;bottom:0;height:46vh;-webkit-mask:linear-gradient(to top,#000 35%,transparent);mask:linear-gradient(to top,#000 35%,transparent);opacity:0;animation:introFade 1.4s ease .3s forwards}
-#intro .fire i{position:absolute;bottom:-12vh;left:var(--x);width:36vw;height:48vh;margin-left:-18vw;background:radial-gradient(ellipse 50% 70% at 50% 100%,#ffb12b 0,#ff4a1a 30%,#e10600 52%,transparent 76%);filter:blur(14px);transform-origin:50% 100%;animation:introFlame var(--d) ease-in-out infinite alternate}
-#intro .flash{position:absolute;inset:0;z-index:3;pointer-events:none;background:radial-gradient(circle at 50% calc(50% - 90px),#fff 0,#ffb199 30%,transparent 70%);opacity:0;animation:introFlash .7s ease-out .8s}
-@keyframes introFlash{0%{opacity:0}10%{opacity:.95}100%{opacity:0}}
-@keyframes introShake{0%,100%{transform:none}12%{transform:translate(-9px,5px)}25%{transform:translate(8px,-6px)}38%{transform:translate(-6px,-4px)}52%{transform:translate(5px,4px)}68%{transform:translate(-3px,2px)}84%{transform:translate(2px,-1px)}}
-@keyframes introFlame{0%{transform:scale(1,.7) translateX(-2vw)}100%{transform:scale(1.12,1.15) translateX(2vw)}}
-@keyframes introIn{from{opacity:0;transform:scale(.5) rotate(-12deg)}to{opacity:1;transform:none}}
-@keyframes introSpin{to{transform:rotate(360deg)}}
-@keyframes introWave{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(2.6)}}
-@keyframes introGlow{0%,100%{box-shadow:0 0 40px #e1060022 inset,0 0 20px #e1060022}50%{box-shadow:0 0 70px #e1060055 inset,0 0 50px #e1060044}}
-@keyframes introPulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 16px #e1060088)}50%{transform:scale(1.07);filter:drop-shadow(0 0 32px #e10600dd)}}
-@keyframes introLetter{to{opacity:1;transform:none}}
-@keyframes introFade{to{opacity:1}}
-@keyframes introGlitch{0%{transform:translate(-3px,0);text-shadow:3px 0 #e10600,-3px 0 #2ee6ff}25%{transform:translate(3px,1px);text-shadow:-3px 0 #e10600,3px 0 #2ee6ff}50%{transform:translate(-2px,-1px);text-shadow:2px 0 #e10600,-2px 0 #2ee6ff}75%{transform:translate(2px,0);text-shadow:-2px 0 #e10600,2px 0 #2ee6ff}100%{transform:none;text-shadow:none}}
-@keyframes introEmber{0%{transform:translateY(0) scale(1);opacity:0}15%{opacity:.9}100%{transform:translateY(-100vh) scale(.4);opacity:0}}
-#intro .snd{position:absolute;right:14px;bottom:14px;z-index:5;background:#000a;border:1px solid #e1060099;color:#fff;font:inherit;font-size:.78rem;padding:9px 14px;border-radius:999px;cursor:pointer;backdrop-filter:blur(4px)}
-#intro .snd[hidden]{display:none}
-#intro.wait,#intro.wait *,#intro.wait *::before,#intro.wait *::after{animation-play-state:paused!important}
-#intro .gate{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:radial-gradient(circle at 50% 45%,#2a0608 0,#0a0505 55%,#000 100%);border:0;color:#fff;font:inherit;cursor:pointer}
-#intro .gate img{width:clamp(110px,28vw,150px);filter:drop-shadow(0 0 22px #e10600aa)}
-#intro .gate span{font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:.3em;font-size:clamp(1.1rem,5vw,1.5rem);padding-left:.3em;animation:gatePulse 1.6s ease-in-out infinite}
-#intro .gate small{font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:#b9a9a9}
-#intro .gate[hidden]{display:none}
-@keyframes gatePulse{0%,100%{opacity:.55}50%{opacity:1}}
-@keyframes introAuto{to{opacity:0;visibility:hidden}}
-@media (prefers-reduced-motion:reduce){#intro .rays,#intro .fire i,#intro .flash,#intro .box,#intro .emblem::before,#intro .emblem::after,#intro .r2,#intro .wave,#intro .emblem img,#intro .em,#intro .nm{animation:none}}
+/* Mini carga */
+#mini{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%,#2a0608 0,#0a0505 55%,#000 100%);transition:opacity .45s ease,visibility 0s linear .45s;animation:miniAuto .01s linear 4s forwards}
+#mini.out{opacity:0;visibility:hidden}
+#mini .m{display:flex;flex-direction:column;align-items:center;gap:20px}
+#mini .ring{position:relative;width:124px;height:124px;display:grid;place-items:center}
+#mini .ring::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 55%,var(--red,#e10600) 100%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));animation:miniSpin 1s linear infinite}
+#mini .ring img{height:68px;width:auto;filter:drop-shadow(0 0 18px #e10600aa);animation:miniPulse 1.4s ease-in-out infinite}
+#mini .nm{font-weight:700;font-family:"Chakra Petch",sans-serif;letter-spacing:.3em;padding-left:.3em;font-size:1.15rem;color:#fff}
+#mini .nm b{font-weight:400;color:var(--red,#e10600)}
+@keyframes miniSpin{to{transform:rotate(360deg)}}
+@keyframes miniPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+@keyframes miniAuto{to{opacity:0;visibility:hidden}}
+@media (prefers-reduced-motion:reduce){#mini .ring::before,#mini .ring img{animation:none}}
+
+/* ===================== DISEÑO V2 ===================== */
+html{overflow-x:clip}
+.wrap{max-width:1120px}
+header.nav2{position:sticky;top:10px;z-index:50;margin-top:12px;padding:10px 18px;border:1px solid var(--line2);border-radius:18px;background:#0b0606cc;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);flex-wrap:nowrap}
+.nav2 nav{display:flex;gap:2px}
+.nav2 nav a{padding:8px 14px;border-radius:999px;font-size:.84rem;font-weight:700;color:var(--muted);transition:.15s}
+.nav2 nav a:hover{color:#fff;background:#ffffff12}
+@media(max-width:860px){.nav2 nav{display:none}}
+.hero2{display:grid;grid-template-columns:1.15fr .95fr;gap:34px;align-items:center;padding:64px 0 40px}
+.h2-eyebrow{display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:#ffb35a;border:1px solid #ff8a1f66;background:#0008;padding:5px 14px;border-radius:999px;margin-bottom:18px}
+.hero2 h1{font-weight:700;font-family:"Chakra Petch",sans-serif;font-size:clamp(3rem,8.5vw,5.8rem);line-height:.92}
+.hero2 h1 em{font-style:italic;background:linear-gradient(90deg,#ff3b1a,#ffb35a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 24px #ff4a1a55)}
+.hero2 p{color:var(--muted);max-width:480px;margin:20px 0 28px;font-size:1.05rem}
+.h2-cta{display:flex;gap:12px;flex-wrap:wrap}
+.h2-stats{display:flex;gap:30px;flex-wrap:wrap;margin-top:34px;padding-top:22px;border-top:1px solid var(--line)}
+.h2-stats b{display:block;font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:2.1rem;line-height:1;color:var(--gold)}
+.h2-stats span{font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.spot{position:relative;overflow:hidden;border:1px solid #ff8a1f55;border-radius:28px;padding:26px;background:radial-gradient(ellipse 80% 70% at 85% 0,#5c0a0f,transparent 70%),linear-gradient(160deg,#1b0b0b,#0b0606);box-shadow:0 30px 80px #e1060026}
+.spot::before{content:"";position:absolute;right:-40px;bottom:-40px;width:240px;height:260px;background:url(assets/logo.png) center/contain no-repeat;opacity:.08}
+.spot>*{position:relative}
+.sp-tag{display:inline-block;padding:5px 14px;border-radius:999px;font-size:.7rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:linear-gradient(90deg,#e10600,#ff8a1f)}
+.sp-tag.live{animation:spp 1.4s ease-in-out infinite}
+@keyframes spp{0%,100%{opacity:.7}50%{opacity:1}}
+.spot h3{font-weight:700;font-family:"Chakra Petch",sans-serif;font-size:clamp(1.5rem,3.4vw,2.1rem);line-height:1;margin:14px 0 6px}
+.sp-meta{color:var(--muted);font-size:.86rem;text-transform:capitalize}
+.sp-prize{margin:18px 0;padding:14px 18px;border-radius:16px;border:1px solid #f6c34377;background:linear-gradient(120deg,#f6c34325,#0009 75%)}
+.sp-prize small{display:block;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:#ffd766;font-weight:800}
+.sp-prize b{display:block;font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:2.6rem;line-height:1.05;color:var(--gold);text-shadow:0 0 24px #f6c34355}
+.spot .tn-cd{margin:0 0 18px}
+.spot .tn-cd div{flex:1;min-width:0}
+.sp-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:700;color:var(--muted);font-size:.9rem}
+.sp-empty{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:30px 10px;color:var(--muted)}
+.sp-empty b{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:1.8rem;color:var(--text)}
+@media(max-width:900px){.hero2{grid-template-columns:1fr;padding-top:36px}}
+.ticker{overflow:hidden;border-block:1px solid var(--line2);background:#0007;margin:8px -20px 56px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.ticker div{font-weight:700;display:flex;gap:44px;white-space:nowrap;width:max-content;padding:14px 0;animation:tk 34s linear infinite;font-family:"Chakra Petch",sans-serif;letter-spacing:.12em;font-size:.95rem;color:#ff6a4d}
+@keyframes tk{to{transform:translateX(-50%)}}
+section.rv{margin-bottom:68px}
+.sec-h{display:flex;align-items:center;gap:14px;margin:0 0 24px}
+.sec-h i{font-weight:700;font-style:normal;font-family:"Chakra Petch",sans-serif;font-size:3.2rem;line-height:1;color:transparent;-webkit-text-stroke:1.5px #6a2424}
+.sec-h h2{font-weight:700;margin:0;font-family:"Chakra Petch",sans-serif;font-size:clamp(1.6rem,4.6vw,2.5rem)}
+.sec-h::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent)}
+.bento{display:grid;grid-template-columns:1.5fr 1fr;grid-template-rows:1fr 1fr;gap:16px}
+.bento .product{grid-row:1/3;display:flex;flex-direction:column}
+.bento .product .art{flex:1;min-height:210px}
+.bt{display:flex;flex-direction:column;justify-content:space-between;gap:18px;padding:26px;border:1px solid var(--line2);border-radius:22px;background:radial-gradient(ellipse 80% 90% at 100% 0,#3d0709,transparent 70%),linear-gradient(160deg,#170909,#0b0606);transition:.25s}
+.bt:hover{transform:translateY(-4px);border-color:var(--red);box-shadow:0 14px 40px #e1060033}
+.bt b{font-weight:700;display:block;font-family:"Chakra Petch",sans-serif;font-size:1.6rem;line-height:1;margin-bottom:8px}
+.bt p{color:var(--muted);font-size:.9rem}
+.go2{font-weight:800;font-size:.78rem;letter-spacing:.16em;text-transform:uppercase;color:#ff6a4d}
+@media(max-width:820px){.bento{grid-template-columns:1fr;grid-template-rows:auto}.bento .product{grid-row:auto}}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:26px}
+.how div{position:relative;padding:18px 20px 18px 64px;border:1px solid var(--line);border-radius:18px;background:#0b0606;color:var(--muted);font-size:.9rem}
+.how div::before{font-weight:700;content:attr(data-n);position:absolute;left:20px;top:12px;font-family:"Chakra Petch",sans-serif;font-size:2.2rem;color:#e10600}
+.how b{display:block;color:var(--text);font-size:1rem}
+.tornos{gap:22px}
+.tn3{display:grid;grid-template-columns:132px 1fr 330px;grid-template-areas:"date body side" "more more more";padding:0;overflow:hidden;border-radius:24px;border:1px solid var(--line2);background:linear-gradient(160deg,#150909,#0b0606);position:relative}
+.tn3.vivo{border-color:#ff8a1f88;box-shadow:0 0 44px #ff4a1a22}
+.tn3-date{grid-area:date;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:20px 10px;text-align:center;color:#fff;background:linear-gradient(180deg,#e10600,#7a0300)}
+.tn3.vivo .tn3-date{background:linear-gradient(180deg,#ff8a1f,#d43a00)}
+.tn3.cerrado .tn3-date{background:linear-gradient(180deg,#4a4040,#221a1a)}
+.tn3-date small{text-transform:uppercase;letter-spacing:.2em;font-weight:800;font-size:.7rem;opacity:.85}
+.tn3-date b{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:3.7rem;line-height:1}
+.tn3-date span{text-transform:uppercase;letter-spacing:.16em;font-weight:800;font-size:.85rem}
+.tn3-date em{white-space:nowrap;font-style:normal;margin-top:10px;background:#0006;border-radius:999px;padding:3px 12px;font-weight:700;font-size:.78rem}
+.tn3-body{grid-area:body;padding:22px 24px;min-width:0}
+.tn3-side{grid-area:side;padding:22px;border-left:1px dashed var(--line2);display:flex;flex-direction:column;gap:14px;background:#0004}
+.tn3-more{grid-area:more;padding:0 22px 8px}
+.tn3-more:empty{display:none}
+.tn3 h3{font-size:clamp(1.45rem,3vw,2rem);margin-bottom:6px}
+.tn3 .tn-pod,.tn3 .tn-pozo,.tn3 .tn-kill{margin:14px 0}
+.tn3 .tn-cd,.tn3 .tn-cup,.tn3 .tn-lock,.tn3 .tn-min{margin:0}
+.tn3 .tn-cd div{flex:1;min-width:0}
+.tn3 .tn-cta{flex-direction:column;align-items:stretch;margin:0;padding:0;border:0}
+.tn3 .tn-cta .btn{width:100%;text-align:center}
+.tn3 .tn2-chips{margin:0}
+@media(max-width:920px){.tn3{grid-template-columns:1fr;grid-template-areas:"date" "body" "side" "more"}.tn3-date{flex-direction:row;gap:14px;padding:12px}.tn3-date b{font-size:2.3rem}.tn3-date em{margin:0}.tn3-side{border-left:0;border-top:1px dashed var(--line2)}}
+.foot2{margin-top:30px;padding:30px 0 10px;border-top:1px solid var(--line2);text-align:left}
+.f-top{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+.f-top nav{display:flex;gap:6px;flex-wrap:wrap}
+.f-top nav a{padding:7px 14px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-size:.84rem;font-weight:700;text-decoration:none}
+.f-top nav a:hover{color:#fff;border-color:var(--red)}
+.f-bot{margin-top:22px;color:var(--muted);font-size:.8rem;text-align:center}
 </style>
+<link rel="stylesheet" href="assets/tema.css">
 </head>
 <body>
-<div id="intro" class="wait" role="status" aria-label="Cargando">
-  <div class="door dl"></div><div class="door dr"></div>
-  <div class="embers" id="introEmbers"><div class="rays"></div><div class="fire"><i style="--x:5%;--d:1.3s;animation-delay:-0.2s"></i><i style="--x:20%;--d:1.0s;animation-delay:-0.7s"></i><i style="--x:35%;--d:1.5s;animation-delay:-0.4s"></i><i style="--x:50%;--d:1.1s;animation-delay:-0.9s"></i><i style="--x:65%;--d:1.4s;animation-delay:-0.1s"></i><i style="--x:80%;--d:1.0s;animation-delay:-0.6s"></i><i style="--x:95%;--d:1.3s;animation-delay:-0.3s"></i></div></div>
-  <div class="box">
-    <div class="emblem"><span class="r2"></span><span class="wave"></span><img src="assets/logo.png" alt=""></div>
-    <div class="nm" aria-hidden="true"><span style="--i:0">X</span><span style="--i:1">I</span><span style="--i:2">T</span><span style="--i:3">E</span><span style="--i:4">R</span><span style="--i:5">K</span><span style="--i:6">I</span><span style="--i:7">N</span><span style="--i:8">G</span></div>
-    <div class="tag">Diamantes · Torneos</div>
-    <div class="load"><div class="bar"><i id="introBar"></i></div><div class="pct" id="introPct">0%</div></div>
-  </div>
-  <div class="flash"></div>
-  <button type="button" class="gate" id="introGo"><img src="assets/logo.png" alt=""><span>Tocá para entrar</span><small>🔊 Con sonido</small></button>
-  <button type="button" class="snd" id="introSnd" hidden>🔊 Activar sonido</button>
-</div>
+<div id="mini" role="status" aria-label="Cargando"><div class="m"><div class="ring"><img src="assets/logo.png" alt=""></div><div class="nm" aria-hidden="true">XITER<b>KING</b></div></div></div>
 <script>
-  // Dura unos 5 s; si la página tarda más en cargar, espera en 90% hasta que termine
+  // Mini carga: ~1 segundo, solo la primera vez que entrás en cada sesión
   (function(){
-    var el = document.getElementById("intro"), bar = document.getElementById("introBar"), pct = document.getElementById("introPct"), em = document.getElementById("introEmbers");
-    var DUR = 5000, t0 = Date.now(), listo = document.readyState === "complete";
-    if(!listo) window.addEventListener("load", function(){ listo = true; });
-    for(var k = 0; k < 22; k++){
-      var d = document.createElement("i"), z = 2 + Math.random()*4; d.className = "em";
-      d.style.cssText = "left:" + (Math.random()*100) + "%;width:" + z + "px;height:" + z + "px;animation-duration:" + (3 + Math.random()*4) + "s;animation-delay:" + (-Math.random()*5) + "s";
-      em.appendChild(d);
-    }
-    function paso(){
-      var p = Math.min((Date.now() - t0) / DUR, 1);
-      if(!listo) p = Math.min(p, .9);
-      p = 1 - Math.pow(1 - p, 1.6);   // arranca rápido y frena al final
-      if(listo && Date.now() - t0 >= DUR) p = 1;
-      bar.style.transform = "scaleX(" + p + ")";
-      pct.textContent = Math.round(p * 100) + "%";
-      if(p < 1) return requestAnimationFrame(paso);
-      setTimeout(function(){ el.classList.add("out"); if(window._introApagar) window._introApagar(); setTimeout(function(){ el.remove(); }, 1200); }, 300);
-    }
-    // ---- Música de la pantalla de carga (poné tu clip en assets/intro.mp3) ----
-    var au = new Audio("assets/intro.mp3"), snd = document.getElementById("introSnd"), sonando = false;
-    var INICIO = 0;   // el clip ya viene cortado desde 1:41 (si usás la canción entera, poné 101)
-    au.volume = .7; au.preload = "auto";
-    au.addEventListener("loadedmetadata", function(){ try{ if(INICIO && au.currentTime < INICIO) au.currentTime = INICIO; }catch(e){} });
-    function sonar(){
-      if(sonando) return;
-      var r = au.play();
-      if(r && r.then) r.then(function(){ sonando = true; snd.hidden = true; }).catch(function(){ if(!sonando) snd.hidden = false; });
-    }
-    var fallo = false;
-    au.addEventListener("error", function(){ fallo = true; snd.hidden = false; snd.textContent = "⚠ No se encontró assets/intro.mp3"; });
-    snd.addEventListener("click", function(e){ e.stopPropagation(); sonar(); });
-    window._introApagar = function(){
-      if(!sonando) return;
-      var iv = setInterval(function(){ if(au.volume > .07) au.volume -= .07; else { clearInterval(iv); au.pause(); } }, 70);
-    };
-
-    // ---- Pantalla "Tocá para entrar": el toque permite que el navegador deje sonar la música ----
-    var go = document.getElementById("introGo");
-    function empezar(){
-      go.hidden = true; el.classList.remove("wait");
-      t0 = Date.now(); sonar(); paso();
-      try{ sessionStorage.setItem("introVista", "1"); }catch(e){}
-    }
-    var vista = false; try{ vista = sessionStorage.getItem("introVista") === "1"; }catch(e){}
-    go.addEventListener("click", empezar);
-    if(vista) empezar();   // si ya la viste en esta sesión, no pide el toque otra vez
+    var el = document.getElementById("mini"); if(!el) return;
+    var vista = false; try{ vista = sessionStorage.getItem("miniVista") === "1"; }catch(e){}
+    if(vista){ el.remove(); return; }
+    try{ sessionStorage.setItem("miniVista", "1"); }catch(e){}
+    var t0 = Date.now(), MIN = 900;   // tiempo mínimo en pantalla (ms)
+    function fin(){ setTimeout(function(){ el.classList.add("out"); setTimeout(function(){ el.remove(); }, 500); }, Math.max(0, MIN - (Date.now() - t0))); }
+    if(document.readyState === "complete") fin(); else window.addEventListener("load", fin);
   })();
 </script>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
@@ -150,20 +149,27 @@
   <path d="M80 7l2 7 7 2-7 2-2 7-2-7-7-2 7-2z" fill="#fff"/></symbol>
 </defs></svg>
 <div class="wrap">
-  <header><div class="logo"><img src="assets/logo.png" alt="" width="34" height="38"> XITERKING</div><div id="acct"></div></header>
+  <header class="nav2"><a class="logo" href="#top"><img src="assets/logo.png" alt="" width="34" height="38"> XITERKING</a>
+    <nav><a href="free-fire-latam.html">Recargas</a><a href="#torneos">Torneos</a><a href="#ranking">Ranking</a><a href="#resultados">Ganadores</a></nav>
+    <div id="acct"></div></header>
 
-  <section class="hero">
-    <div class="hero-emblem"><span class="glow"></span><span class="orb"></span><span class="orb o2"></span><img src="assets/logo.png" alt="XITERKING" width="112" height="126"></div>
-    <h1>Bienvenido a <span>XITERKING</span></h1>
-    <p>Diamantes de Free Fire al toque y torneos para demostrar quién manda.</p>
-    <a class="btn" href="free-fire-latam.html">Ver recargas</a>
+  <div id="ckaviso" style="max-width:1100px;margin:0 auto;padding:0 16px"></div>
+  <section class="hero2" id="top">
+    <div>
+      <span class="h2-eyebrow">⚔ Free Fire LATAM</span>
+      <h1>Demostrá<br>quién <em>manda</em></h1>
+      <p>Torneos con premios reales, ranking de temporada y recargas de diamantes al toque. Todo en un solo lugar.</p>
+      <div class="h2-cta"><a class="btn" href="#torneos">Ver torneos</a><a class="btn ghost" href="free-fire-latam.html">Recargar diamantes</a></div>
+      <div class="h2-stats"><div><b id="st-t">0</b><span>Torneos</span></div><div><b id="st-e">0</b><span>Inscriptos</span></div><div><b id="st-p">—</b><span>Próxima fecha</span></div></div>
+    </div>
+    <aside class="spot" id="spot"><div class="sp-empty"><b>Cargando…</b></div></aside>
   </section>
 
-
+  <div class="ticker" aria-hidden="true"><div><span>🔥 Torneos en vivo</span><span>💎 Recargas al toque</span><span>🏆 Premios reales</span><span>⚔ Solo · Dúo · Escuadra</span><span>📈 Ranking de temporada</span><span>👑 Demostrá quién manda</span><span>🔥 Torneos en vivo</span><span>💎 Recargas al toque</span><span>🏆 Premios reales</span><span>⚔ Solo · Dúo · Escuadra</span><span>📈 Ranking de temporada</span><span>👑 Demostrá quién manda</span><span>🔥 Torneos en vivo</span><span>💎 Recargas al toque</span><span>🏆 Premios reales</span><span>⚔ Solo · Dúo · Escuadra</span><span>📈 Ranking de temporada</span><span>👑 Demostrá quién manda</span><span>🔥 Torneos en vivo</span><span>💎 Recargas al toque</span><span>🏆 Premios reales</span><span>⚔ Solo · Dúo · Escuadra</span><span>📈 Ranking de temporada</span><span>👑 Demostrá quién manda</span></div></div>
 
   <section class="rv">
-    <h2>Productos disponibles</h2>
-    <div class="products">
+    <div class="sec-h"><i>01</i><h2>Qué hacés acá</h2></div>
+    <div class="bento">
       <a class="product" href="free-fire-latam.html">
         <div class="art ff"><span class="badge">Disponible</span><div class="aflames"><span style="--x:5%;--d:1.3s;animation-delay:-0.2s"></span><span style="--x:25%;--d:1.0s;animation-delay:-0.7s"></span><span style="--x:45%;--d:1.5s;animation-delay:-0.4s"></span><span style="--x:65%;--d:1.1s;animation-delay:-0.9s"></span><span style="--x:85%;--d:1.4s;animation-delay:-0.1s"></span><span style="--x:100%;--d:1.2s;animation-delay:-0.6s"></span></div><span class="prays"></span>
           <div class="ffname"><b>FREE<br>FIRE</b><span class="chip"><svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="currentColor" d="M12 2c1 4-3 5-3 9a4 4 0 0 0 8 0c0-2-1-3-1-5 2 1 4 4 4 7a8 8 0 0 1-16 0c0-6 6-7 8-11z"/></svg>LATAM</span></div>
@@ -173,30 +179,19 @@
           <span class="cta">Recargar <span aria-hidden="true">›</span></span>
         </div>
       </a>
+      <a class="bt" href="#torneos"><div><b>Torneos</b><p>Solo, dúo o escuadra. Premios en pozo, por kills o fijos.</p></div><span class="go2">Ver torneos ›</span></a>
+      <a class="bt" href="#ranking"><div><b>Ranking</b><p>Sumá puntos en cada torneo y subí en la tabla de la temporada.</p></div><span class="go2">Ver ranking ›</span></a>
     </div>
   </section>
 
   <section class="rv" id="torneos">
-    <h2>Torneos</h2>
-    <div class="arena">
-      <div class="arena-top">
-        <div>
-          <span class="arena-tag">⚔ Competitivo · Free Fire</span>
-          <div class="arena-title">Arena XITERKING</div>
-          <p>Elegí tu modo: Solo, Dúo o Escuadra. Anotá tu nombre y tu ID, juntá a tu equipo y peleá por premios reales.</p>
-        </div>
-        <div class="arena-stats">
-          <div><b id="st-t">0</b><span>Torneos</span></div>
-          <div><b id="st-e">0</b><span>Inscriptos</span></div>
-          <div><b id="st-p">—</b><span>Próxima fecha</span></div>
-        </div>
-      </div>
-      <ol class="arena-steps">
-        <li><div><b>Creá tu cuenta</b>Es gratis y te lleva un minuto.</div></li>
-        <li><div><b>Inscribite</b>Poné el nombre e ID de cada jugador.</div></li>
-        <li><div><b>Jugá y ganá</b>Entrá a la sala a la hora indicada.</div></li>
-      </ol>
+    <div class="sec-h"><i>02</i><h2>Torneos</h2></div>
+    <div class="how">
+      <div data-n="1"><b>Creá tu cuenta</b>Es gratis y te lleva un minuto.</div>
+      <div data-n="2"><b>Inscribite</b>Poné el nombre e ID de cada jugador.</div>
+      <div data-n="3"><b>Jugá y ganá</b>Hacé el check-in y entrá a la sala.</div>
     </div>
+    <div class="tn-min" style="margin-bottom:18px">📜 <b>Antes de anotarte, leé el <a href="legal.html#reglamento" style="color:#ff6a4d;text-decoration:underline">reglamento de torneos</a></b>: check-in obligatorio, faltas, premios y devoluciones. También tenés los <a href="legal.html#terminos" style="color:#ff6a4d;text-decoration:underline">términos</a> y la <a href="legal.html#reembolsos" style="color:#ff6a4d;text-decoration:underline">política de reembolsos</a>.</div>
     <div class="tn-fil" id="tfil">
       <button type="button" data-f="todos" class="on">Todos</button>
       <button type="button" data-f="1">Solo</button>
@@ -207,7 +202,7 @@
   </section>
 
   <section class="rv" id="ranking">
-    <h2>Ranking de la temporada</h2>
+    <div class="sec-h"><i>03</i><h2>Ranking de la temporada</h2></div>
     <div class="rk-box">
       <div class="tn-fil" id="rkmodo"><button type="button" data-m="Solo" class="on">🎯 Individual</button><button type="button" data-m="Dúo">🤝 Dúo</button><button type="button" data-m="Escuadra">🛡 Escuadra</button></div>
       <div class="tn-fil" id="rkfil"><button type="button" data-d="mes" class="on">Este mes</button><button type="button" data-d="todo">Histórico</button></div>
@@ -217,7 +212,7 @@
   </section>
 
   <section class="rv" id="resultados">
-    <h2>Últimos ganadores</h2>
+    <div class="sec-h"><i>04</i><h2>Últimos ganadores</h2></div>
     <div id="res"><div class="tvacio">Cargando resultados…</div></div>
   </section>
 
@@ -225,7 +220,24 @@
 
 
 
-  <footer>© 2026 XITERKING · Tienda independiente.<br><button type="button" id="adm" style="background:none;border:0;color:var(--muted);font:inherit;font-size:.8rem;text-decoration:underline;cursor:pointer;margin-top:10px;opacity:.7">Acceso administrador</button></footer>
+    <section class="rv faq" id="faq">
+    <div class="sec-h"><i>05</i><h2>Preguntas frecuentes</h2></div>
+    <details><summary>¿Cómo recargo diamantes?</summary><p>Primero cargás saldo pagando por Binance Pay e subiendo una foto del comprobante. Revisamos el pago y acreditamos lo que recibimos. Después elegís el paquete, escribís tu UID de Free Fire y confirmás. La entrega es automática; algunas demoran un poco más y las ves como “En proceso”.</p></details>
+    <details><summary>¿Qué pasa si una recarga no se puede entregar?</summary><p>Si el pedido se rechaza, el saldo vuelve solo a tu cuenta. Lo ves en tu historial como “Rechazado · saldo devuelto”.</p></details>
+    <details><summary>¿Puedo pedir reembolso de una recarga ya entregada?</summary><p>No, es un producto digital de entrega inmediata. Si hubo un error nuestro (diamantes distintos al paquete o una recarga duplicada), escribinos y lo corregimos. Revisá bien tu UID antes de confirmar: una recarga entregada en otra cuenta no se puede revertir.</p></details>
+    <details><summary>¿Cómo pago la inscripción a un torneo?</summary><p>Podés elegir entre Mercado Pago y Binance Pay al inscribirte (te mostramos el monto en pesos o en USDT); no se paga con el saldo de diamantes. Tu lugar queda confirmado cuando aprobamos el pago.</p></details>
+    <details><summary>¿Qué es el check-in y por qué es obligatorio?</summary><p>Es la confirmación de que vas a jugar. Se abre 1 hora antes del inicio y cierra 30 minutos antes, desde la tarjeta del torneo o desde Mis torneos. Si no lo hacés, perdés tu lugar y no se devuelve la inscripción.</p></details>
+    <details><summary>¿Cuándo y cómo cobro un premio?</summary><p>Después de que termina el torneo y verificamos los resultados, a la cuenta que indicaste al inscribirte (Binance Pay o Mercado Pago). Revisá bien ese dato: no podemos pagar a otra cuenta.</p></details>
+    <details><summary>¿Qué pasa si se cancela el torneo?</summary><p>Devolvemos el 100% de la inscripción. Si no se llega al mínimo de equipos al cerrar las inscripciones, el torneo se cancela.</p></details>
+    <p class="note" style="margin-top:14px">¿Otra duda? Escribinos por el botón de Soporte o mirá el <a href="legal.html#reglamento" style="text-decoration:underline">reglamento completo</a>.</p>
+  </section>
+
+  <div id="comunidad"></div>
+<footer class="foot2">
+    <div class="f-top"><div class="logo"><img src="assets/logo.png" alt="" width="30" height="34"> XITERKING</div>
+      <nav><a href="free-fire-latam.html">Recargas</a><a href="#torneos">Torneos</a><a href="#ranking">Ranking</a><a href="resultados.html">Ganadores</a><a href="#faq">Preguntas</a><a href="mis-torneos.html">Mis torneos</a><a href="legal.html#reglamento">Reglamento</a><a href="legal.html#terminos">Términos</a><a href="legal.html#reembolsos">Reembolsos</a></nav></div>
+    <div class="f-bot">© 2026 XITERKING · Tienda independiente. No afiliada a Garena ni a Free Fire.<br><button type="button" id="adm" style="background:none;border:0;color:var(--muted);font:inherit;font-size:.8rem;text-decoration:underline;cursor:pointer;margin-top:10px;opacity:.7">Acceso administrador</button></div>
+  </footer>
 </div>
   <!-- Cambiá el número por el tuyo (código de país + número, sin + ni espacios) -->
   <a class="wa" href="https://wa.me/5491151042005?text=Hola%2C%20tuve%20un%20problema%20con%20mi%20compra" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>Soporte</a>
@@ -249,15 +261,18 @@
     const icono = n => '<span class="tn-ic">' + '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/></svg>'.repeat(n) + '</span>';
     let LISTA = [], CUP = {}, CONF = {}, MIS = {}, ESP = {}, filtro = "todos", timer = null;
 
+    let LLV = {};
     async function cargar(){
       await Auth.listo;
       const u = Auth.actual();
-      const [t, c, m, es] = await Promise.all([
+      const [t, c, m, es, lk] = await Promise.all([
         sb.from("torneos").select("id,titulo,modo,fecha,premio,premio2,premio3,mapa,formato,reglas,cupos,costo,descripcion,estado,tipo,pago_kill,moneda,cierre_horas,minimo,pozo_pct,pozo_base,reparto,cancelado,link_vivo").neq("estado","finalizado").order("fecha"),
         sb.rpc("inscriptos_torneos"),
         u ? sb.from("inscripciones").select("id,torneo_id,equipo,estado,monto,checkin,creado").eq("usuario",u.id).in("estado",["pendiente","confirmada"]) : Promise.resolve({ data:[] }),
-        u ? sb.from("lista_espera").select("torneo_id").eq("usuario",u.id) : Promise.resolve({ data:[] })
+        u ? sb.from("lista_espera").select("torneo_id").eq("usuario",u.id) : Promise.resolve({ data:[] }),
+        sb.rpc("torneos_con_llaves")
       ]);
+      LLV = {}; (lk.data || []).forEach(id => LLV[id] = 1);
       ESP = {}; (es.data || []).forEach(x => ESP[x.torneo_id] = 1);
       if(t.error){ console.error(t.error); box.innerHTML = '<div class="tvacio">No pudimos cargar los torneos. Probá de nuevo en un momento.</div>'; return; }
       LISTA = t.data || [];
@@ -275,7 +290,8 @@
       const unidad = n > 1 ? "equipos" : "jugadores";
       const pct = t.cupos ? Math.min(100, Math.round(insc / t.cupos * 100)) : 0;
       const fecha = d.toLocaleDateString("es-AR",{ weekday:"long", day:"numeric", month:"long" });
-      const hora = d.toLocaleTimeString("es-AR",{ hour:"2-digit", minute:"2-digit" });
+      const hora = d.toLocaleTimeString("es-AR",{ hour:"2-digit", minute:"2-digit", hour12:false });
+      const dsem = d.toLocaleDateString("es-AR",{ weekday:"short" }).replace(".",""), ddia = d.getDate(), dmes = d.toLocaleDateString("es-AR",{ month:"short" }).replace(".","");
 
       const kills = t.tipo === "kills", pozoPct = Number(t.pozo_pct) || 0, pozoOn = pozoPct > 0 && !kills, pk = Number(t.pago_kill) || 0, nf = x => x.toLocaleString("es-AR");
       let pod = "";
@@ -297,10 +313,9 @@
       }
 
       const info = [
-        ["Fecha", fecha], ["Hora", hora + " hs"],
         ["Jugadores", n === 1 ? "Individual" : n + " por equipo"],
         ["Cierre de inscripción", !vivo && ch > 0 ? new Date(cierreT).toLocaleString("es-AR",{ weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" }) + " hs" : ""], ["Mapa", t.mapa], ["Formato", t.formato], ["Inscripción", costo], kills ? ["Pago por kill", mon(pk, t.moneda)] : []
-      ].filter(x => x[1]).map(x => `<div><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join("");
+      ].filter(x => x[1]).map(x => `<span class="tn2-chip"><i>${x[0]}</i><b>${esc(x[1])}</b></span>`).join("");
 
       const cup = t.cupos
         ? `<div class="tn-cup"><div class="tn-bar"><i style="width:${pct}%"></i></div><small>${insc} / ${t.cupos} ${unidad} · ${lleno ? "¡Cupos agotados!" : "quedan " + (t.cupos - insc)}</small></div>`
@@ -311,8 +326,11 @@
         : `<div class="tn-min">⚠ Mínimo ${t.minimo} ${unidad} para que se juegue · faltan <b>${t.minimo - insc}</b>. Si no se llega al cierre, se cancela y se devuelven los pagos.</div>`) : "";
       const faltaMin = !t.cancelado && cerrado && t.minimo && insc < t.minimo;
       const reglas = (t.reglas || "").split("\n").map(x => x.trim()).filter(Boolean);
-      const regHtml = reglas.length ? `<details class="tn-det"><summary>Reglas y requisitos</summary><ul>${reglas.map(r => `<li>${esc(r)}</li>`).join("")}</ul></details>` : "";
+      const regHtml = reglas.length
+        ? `<details class="tn-det"><summary>Reglas y requisitos de este torneo</summary><ul>${reglas.map(r => `<li>${esc(r)}</li>`).join("")}</ul><p style="margin:0;padding:0 16px 14px;font-size:.85rem;color:var(--muted)">📜 Rige también el <a href="legal.html#reglamento" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">reglamento general</a>.</p></details>`
+        : `<div class="tn-min" style="margin-bottom:10px">📜 Rige el <a href="legal.html#reglamento" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">reglamento general de torneos</a>.</div>`;
       const rkHtml = kills ? `<details class="tn-det" data-rank="${t.id}"><summary>Ranking de kills</summary><div class="tn-plist">Cargando…</div></details>` : "";
+      const llvHtml = LLV[t.id] ? `<details class="tn-det" data-llave="${t.id}"><summary>🥊 Llaves: cuartos, semifinal y final</summary><div class="tn-llaves">Cargando…</div></details>` : "";
       const parHtml = insc ? `<details class="tn-det" data-part="${t.id}"><summary>Quiénes ya se anotaron (${insc})</summary><div class="tn-plist">Cargando…</div></details>` : "";
 
       let cta;
@@ -334,19 +352,60 @@
       else if(lleno){ cta = ESP[t.id] ? `<div class="tn-ok pend">⏳ En lista de espera · te avisamos si se libera un lugar</div><button class="btn ghost sm" type="button" data-sal="${t.id}">Salir de la lista</button>` : `<button class="btn" type="button" data-esp="${t.id}">Cupos agotados · Anotarme en lista de espera</button>`; }
       else { cta = `<button class="btn" type="button" data-ins="${t.id}">Inscribirme · ${costo}</button>`; }
 
-      return `<article class="tn${vivo ? " vivo" : ""}">
+      return `<article class="tn tn3${vivo ? " vivo" : ""}${(cerrado || t.cancelado) ? " cerrado" : ""}">
+        <div class="tn3-date"><small>${dsem}</small><b>${ddia}</b><span>${dmes}</span><em>${hora} hs</em></div>
+        <div class="tn3-body">
         <div class="tn-head"><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="tn-badge">${icono(n)}${esc(t.modo)}</span>${kills ? '<span class="tn-kt">💀 Por kills</span>' : ""}</div><span class="tn-st">${vivo ? "En vivo" : "Próximamente"}</span></div>
         <h3>${esc(t.titulo)}</h3>
         ${t.descripcion ? `<p class="tn-desc">${esc(t.descripcion)}</p>` : ""}
+        ${pod}
+        <div class="tn2-chips">${info}</div>
+        </div>
+        <div class="tn3-side">
         ${vivo ? '<div class="tn-live">🔥 Torneo en juego' + (/^https:\/\//.test(t.link_vivo || "") ? ' · <a href="' + esc(t.link_vivo) + '" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline">📺 Ver transmisión</a>' : '') + '</div>'
                : `<div class="tn-cd" data-cd="${d.getTime()}"><div><b>00</b><span>días</span></div><div><b>00</b><span>hs</span></div><div><b>00</b><span>min</span></div><div><b>00</b><span>seg</span></div></div>`}
-        ${pod}
-        <div class="tn-grid">${info}</div>
+        ${cup}
         ${t.cancelado ? '<div class="tn-lock">❌ Torneo cancelado · no se llegó al mínimo de equipos. Los pagos se devuelven.</div>' : vivo ? "" : cerrado ? '<div class="tn-lock">🔒 Inscripciones cerradas</div>' : `<div class="tn-lock open">⏱ Las inscripciones cierran en <b data-cl="${cierreT}">…</b>${ch > 0 ? " (" + ch + " h antes del inicio)" : ""}</div>`}
-        ${t.cancelado ? "" : minHtml}${faltaMin ? '<div class="tn-min">⚠ No se llegó al mínimo: este torneo se cancelará y se devuelven los pagos.</div>' : ""}${cup}${regHtml}${rkHtml}${parHtml}
+        ${t.cancelado ? "" : minHtml}${faltaMin ? '<div class="tn-min">⚠ No se llegó al mínimo: este torneo se cancelará y se devuelven los pagos.</div>' : ""}
         <div class="tn-cta">${cta}<a class="btn ghost sm" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent("🔥 " + t.titulo + " · " + fecha + " " + hora + " hs. Inscribite acá: " + location.origin + location.pathname)}">Compartir por WhatsApp</a></div>
+        </div>
+        <div class="tn3-more">${regHtml}${llvHtml}${rkHtml}${parHtml}</div>
       </article>`;
     }
+
+    function spot(){
+      const el = $("spot"); if(!el) return;
+      const t = LISTA.find(x => x.estado === "en_curso") || LISTA.find(x => x.estado === "proximo");
+      if(!t){ el.innerHTML = '<div class="sp-empty"><img src="assets/logo.png" alt="" width="90"><b>Próximamente</b><span>Estamos preparando los primeros torneos.</span></div>'; return; }
+      const d = new Date(t.fecha), vivo = t.estado === "en_curso", kills = t.tipo === "kills", pp = Number(t.pozo_pct) || 0, insc = CUP[t.id] || 0;
+      let lab = "1º puesto", val = t.premio || "";
+      if(kills){ lab = "Cada kill paga"; val = mon(Number(t.pago_kill) || 0, t.moneda); }
+      else if(pp > 0){ lab = "Premio acumulado"; val = mon(Math.floor(Number(t.pozo_base || 0) + (CONF[t.id] || 0) * Number(t.costo || 0) * pp / 100), t.moneda); }
+      el.innerHTML = `<span class="sp-tag${vivo ? " live" : ""}">${vivo ? "🔴 En vivo ahora" : "⭐ Próximo torneo"}</span>
+        <h3>${esc(t.titulo)}</h3>
+        <div class="sp-meta">${esc(t.modo)} · ${d.toLocaleDateString("es-AR",{ weekday:"long", day:"numeric", month:"long" })} · ${d.toLocaleTimeString("es-AR",{ hour:"2-digit", minute:"2-digit" })} hs</div>
+        ${val ? `<div class="sp-prize"><small>${lab}</small><b>${esc(val)}</b></div>` : ""}
+        ${vivo ? "" : `<div class="tn-cd" data-cd="${d.getTime()}"><div><b>00</b><span>días</span></div><div><b>00</b><span>hs</span></div><div><b>00</b><span>min</span></div><div><b>00</b><span>seg</span></div></div>`}
+        <div class="sp-foot"><span>${t.cupos ? insc + " / " + t.cupos + " cupos" : insc + " inscriptos"}</span><a class="btn sm" href="#torneos">${vivo ? "Ver torneo" : "Anotarme"}</a></div>`;
+    }
+    const ckBox = $("ckaviso");
+    function avisoCheckin(){
+      if(!ckBox) return;
+      const ahora = Date.now(), hh = ms => new Date(ms).toLocaleTimeString("es-AR",{ hour:"2-digit", minute:"2-digit" });
+      ckBox.innerHTML = LISTA.map(t => {
+        const mi = MIS[t.id];
+        if(!mi || t.cancelado || t.estado !== "proximo" || mi.estado !== "confirmada" || mi.checkin) return "";
+        const f = new Date(t.fecha).getTime(), ini = f - 3600000, fin = f - 1800000;
+        if(ahora < ini || ahora >= fin || new Date(mi.creado).getTime() >= fin) return "";
+        return `<div class="tn-min" style="margin:14px 0 0;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>⏰ <b>Abrió el check-in</b> de ${esc(t.titulo)}. Confirmá antes de las <b>${hh(fin)}</b> o perdés tu lugar.</span><button class="btn sm" type="button" data-ck="${mi.id}">✅ Confirmar que juego</button></div>`;
+      }).join("");
+    }
+    if(ckBox) ckBox.addEventListener("click", async e => {
+      const b = e.target.closest("button[data-ck]"); if(!b) return;
+      b.disabled = true; const r = await sb.rpc("hacer_checkin",{ p_id: +b.dataset.ck });
+      toast(r.error ? "El check-in se abre 1 hora antes y cierra 30 minutos antes" : "¡Check-in hecho!"); cargar();
+    });
+    setInterval(avisoCheckin, 30000);
 
     function render(){
       clearInterval(timer);
@@ -354,6 +413,8 @@
       $("st-t").textContent = LISTA.length;
       $("st-e").textContent = LISTA.reduce((a,t) => a + (CUP[t.id] || 0), 0);
       $("st-p").textContent = prox ? new Date(prox.fecha).toLocaleDateString("es-AR",{ day:"numeric", month:"short" }).replace(".","") : "—";
+      spot();
+      avisoCheckin();
       fil.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.f === filtro));
       if(!LISTA.length){ box.innerHTML = '<div class="tvacio"><b>Próximamente</b>Estamos preparando los primeros torneos de XITERKING. ¡Volvé pronto!</div>'; return; }
       const vis = LISTA.filter(t => filtro === "todos" || nj(t.modo) === +filtro);
@@ -392,6 +453,10 @@
         d.querySelector(".tn-plist").innerHTML = (r.error || !(r.data || []).length)
           ? "Todavía no hay equipos."
           : r.data.map((x,i) => `<span><i>${i+1}</i>${esc(x.etiqueta)}</span>`).join("");
+      } else if(d.dataset.llave){
+        d.dataset.ok = "1";
+        const r = await sb.rpc("llaves_torneo",{ p_id: +d.dataset.llave });
+        d.querySelector(".tn-llaves").innerHTML = (r.error || !(r.data || []).length) ? '<p style="padding:0 16px 14px;color:var(--muted)">Todavía no se armaron las llaves.</p>' : llavesHtml(r.data);
       } else if(d.dataset.rank){
         d.dataset.ok = "1";
         const r = await sb.rpc("ranking_kills",{ p_id: +d.dataset.rank });
@@ -427,11 +492,11 @@
 
     const ERR = {
       sesion:"Tu sesión venció. Volvé a ingresar.",
-      lleno:"Se agotaron los cupos.", ya:"Ya estás inscripto en este torneo.",
+      lleno:"Se agotaron los cupos.", ya:"Ya estás inscripto en este torneo. Mirá el estado en Mis torneos.", comprobante:"Ese comprobante ya fue usado en otra inscripción. Revisá Mis torneos: puede que ya estés anotado.",
       duplicado:"Alguno de esos IDs ya está inscripto en este torneo.", cerrado:"Las inscripciones ya cerraron.",
       jugadores:"Faltan datos de jugadores.", nombre:"Revisá los nombres (2 a 30 caracteres).", id:"Revisá los IDs (solo números).",
-      torneo:"El torneo ya no existe.", metodo:"Método de pago inválido.", referencia:"Escribí el número de comprobante.",
-      cobro:"Escribí dónde querés cobrar tus kills.", bloqueado:"Tenés 2 faltas recientes: por ahora solo podés anotarte a torneos con inscripción paga.", pagada:"Tu inscripción ya está pagada. Escribinos por soporte si necesitás cancelarla."
+      torneo:"El torneo ya no existe.", metodo:"Método de pago inválido.", referencia:"Subí la foto del comprobante.",
+      cobro:"Escribí dónde querés cobrar tu premio.", bloqueado:"Tenés 2 faltas recientes: por ahora solo podés anotarte a torneos con inscripción paga.", pagada:"Tu inscripción ya está pagada. Escribinos por soporte si necesitás cancelarla."
     };
     const errTxt = m => { const k = Object.keys(ERR).find(k => String(m).trim() === k) || Object.keys(ERR).find(k => String(m).includes(k)); return k ? ERR[k] : "No se pudo inscribir. Probá de nuevo."; };
 
@@ -444,32 +509,63 @@
         ov.classList.add("open"); return;
       }
       modal.classList.add("wide");
+      const reglasT = (t.reglas || "").split("\n").map(x => x.trim()).filter(Boolean);
       const jug = Array.from({ length:n }, (_,i) => `<div class="tn-pl">
           <div class="tn-pn">${n === 1 ? "Tu cuenta de Free Fire" : i === 0 ? "Jugador 1 · Capitán" : "Jugador " + (i+1)}</div>
           <div class="tn-pg">
             <div class="field"><label for="n${i}">Nombre en el juego</label><input id="n${i}" maxlength="30" autocomplete="off"></div>
             <div class="field"><label for="i${i}">ID de jugador</label><input id="i${i}" inputmode="numeric" maxlength="15" autocomplete="off" placeholder="Ej: 123456789"></div>
           </div></div>`).join("");
-      const cobro = kills ? `<div class="field"><label for="ico">${usdt ? "ID de Binance Pay" : "Alias de Mercado Pago"} donde cobrar tus kills</label><input id="ico" maxlength="100" autocomplete="off"></div>` : "";
-      const pago = costo <= 0 ? "" : `<div class="tn-pay">
-          <div class="tn-pn">Pagá ${mon(costo, t.moneda)} ${usdt ? "por Binance Pay" : "por Mercado Pago"}</div>
-          ${usdt
-            ? `<div class="row"><span>Pay ID</span><b>${esc(PAGOS.binance.payId)}</b></div><div class="row"><span>Moneda</span><b>${esc(PAGOS.binance.nota)}</b></div><img src="${esc(PAGOS.binance.qr)}" alt="QR de Binance Pay">`
-            : `<div class="row"><span>Alias</span><b>${esc(PAGOS.mp.alias)}</b></div><div class="row"><span>Titular</span><b>${esc(PAGOS.mp.titular)}</b></div>`}
-          <div class="field" style="margin-top:12px"><label for="ir">Nº de comprobante / operación</label><input id="ir" maxlength="100" autocomplete="off"></div>
+      const cobraPremio = kills || Number(t.pozo_pct) > 0 || [t.premio, t.premio2, t.premio3].some(x => x && String(x).trim());   // clásicos con premio también piden dónde cobrar
+      let metodo = usdt ? "binance" : "mercadopago";   // el cliente puede cambiarlo abajo
+      let paso = 1, gu = [];
+      try{ gu = JSON.parse(localStorage.getItem("xk_jug_" + u.id) || "[]"); if(!Array.isArray(gu)) gu = []; }catch(_){ gu = []; }
+      const monto = m => Cobro.convertir(costo, t.moneda, m);
+      const cobro = cobraPremio ? `<div class="field"><label for="ico" id="icl"></label><input id="ico" maxlength="100" autocomplete="off"></div>` : "";
+      const pago = (costo <= 0 && !cobraPremio) ? "" : `<div class="tn-pay">
+          <div class="tn-pn">${costo > 0 ? "Elegí cómo pagar" : (kills ? "Elegí cómo querés cobrar tus kills" : "Elegí cómo querés cobrar tu premio")}</div>
+          <div class="mpick" id="mp" role="group" aria-label="Método de pago">${["mercadopago","binance"].map(m => `<button type="button" data-m="${m}"><b>${Cobro.nombre[m]}</b>${costo > 0 ? "<span>" + Cobro.texto(monto(m), m) + "</span>" : ""}</button>`).join("")}</div>
+          ${costo > 0 ? `<div id="pd"></div>${Comprobante.campo("ir")}` : ""}
         </div>`;
       modal.innerHTML = `<h3>Inscripción · ${esc(t.modo)}</h3>
-        <p style="margin-bottom:14px"><b style="color:var(--text)">${esc(t.titulo)}</b></p>
+        <p style="margin-bottom:10px"><b style="color:var(--text)">${esc(t.titulo)}</b></p>
+        <div class="tn-pn" id="ipas" style="margin:0 0 10px">Paso 1 de 2 · Jugadores</div>
+        <div id="p1">${gu.length ? '<p class="note" style="margin:0 0 10px">Completamos tus datos de la última vez. Revisalos antes de seguir.</p>' : ""}
         ${n > 1 ? '<div class="field"><label for="ie">Nombre del equipo (opcional)</label><input id="ie" maxlength="30" autocomplete="off" placeholder="Ej: Los Diablos"></div>' : ""}
-        ${jug}${cobro}${pago}
-        <div class="row"><span>Inscripción</span><b>${costo > 0 ? mon(costo, t.moneda) : "Gratis"}</b></div>
+        ${jug}</div>
+        <div id="p2" hidden>${pago}${cobro}
+        <div class="row"><span>Inscripción</span><b id="itot">${costo > 0 ? mon(costo, t.moneda) : "Gratis"}</b></div>
         ${costo > 0 ? '<p class="note">Revisamos tu pago y te confirmamos el lugar. Este pago no usa tu saldo de diamantes.</p>' : ""}
-        <label style="display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:.88rem;cursor:pointer"><input type="checkbox" id="iac" style="margin-top:3px"><span>Leí y acepto las reglas y requisitos del torneo. Entiendo que debo hacer el check-in entre 1 hora y 30 minutos antes del inicio (si no, me dan de baja sin devolución) y que usar hacks implica la descalificación.</span></label>
+        <div class="tn-min" style="margin-top:14px"><b>Reglas de este torneo</b>${reglasT.length ? '<ul style="margin:8px 0 0;padding-left:20px">' + reglasT.map(r => "<li>" + esc(r) + "</li>").join("") + "</ul>" : '<div style="margin-top:6px">Este torneo no tiene reglas extra: rige el reglamento general.</div>'}<div style="margin-top:8px">📜 <a href="legal.html#reglamento" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">Reglamento general</a> · <a href="legal.html#reembolsos" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">Devoluciones</a></div></div>
+        <label style="display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:.88rem;cursor:pointer"><input type="checkbox" id="iac" style="margin-top:3px"><span>Leí y acepto las reglas de este torneo, el <a href="legal.html#reglamento" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">reglamento general</a> y los <a href="legal.html#terminos" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">términos y condiciones</a>. Sé que tengo que hacer el check-in entre 1 hora y 30 minutos antes del inicio.</span></label>
+        </div>
         <div class="msg" id="im" role="alert" style="margin-top:12px"></div>
         <div class="acts" style="margin-top:6px"><button class="btn ghost" type="button" id="ic">Cancelar</button><button class="btn" type="button" id="ig">${costo > 0 ? "Enviar inscripción" : "Confirmar inscripción"}</button></div>`;
       ov.classList.add("open");
       $("n0").focus();
-      $("ic").onclick = cerrar;
+      for(let i = 0; i < n; i++){ if(gu[i]){ $("n"+i).value = String(gu[i].nombre || "").slice(0,30); $("i"+i).value = String(gu[i].id || "").replace(/\D/g,"").slice(0,15); } }
+      const mostrar = () => {
+        $("p1").hidden = paso !== 1; $("p2").hidden = paso !== 2;
+        $("ipas").textContent = paso === 1 ? "Paso 1 de 2 · Jugadores" : "Paso 2 de 2 · " + ((costo > 0 || cobraPremio) ? "Pago y confirmación" : "Confirmación");
+        $("ic").textContent = paso === 1 ? "Cancelar" : "‹ Atrás";
+        $("ig").textContent = paso === 1 ? "Siguiente" : (costo > 0 ? "Enviar inscripción" : "Confirmar inscripción");
+        $("im").textContent = ""; modal.scrollTop = 0;
+      };
+      $("ic").onclick = () => { if(paso === 2){ paso = 1; mostrar(); } else cerrar(); };
+      mostrar();
+      const pintar = () => {
+        document.querySelectorAll("#mp button").forEach(b => { const on = b.dataset.m === metodo; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+        const l = $("icl"); if(l) l.textContent = (metodo === "binance" ? "ID de Binance Pay" : "Alias de Mercado Pago") + (kills ? " donde cobrar tus kills" : " donde cobrar tu premio");
+        if(costo <= 0) return;
+        const bin = metodo === "binance", otra = Cobro.monedaDe(metodo) !== (usdt ? "USDT" : "ARS");
+        $("pd").innerHTML = `<div class="tn-pn" style="margin-top:14px">Pagá ${Cobro.texto(monto(metodo), metodo)} por ${Cobro.nombre[metodo]}</div>`
+          + (bin ? `<div class="row"><span>Pay ID</span><b>${esc(PAGOS.binance.payId)}</b></div><div class="row"><span>Moneda</span><b>${esc(PAGOS.binance.nota)}</b></div><img src="${esc(PAGOS.binance.qr)}" alt="QR de Binance Pay">`
+                 : `<div class="row"><span>Alias</span><b>${esc(PAGOS.mp.alias)}</b></div><div class="row"><span>Titular</span><b>${esc(PAGOS.mp.titular)}</b></div>`)
+          + (otra ? `<p class="note">Precio del torneo: ${mon(costo, t.moneda)}. Calculado a ${PAGOS.tasaUSDT.toLocaleString("es-AR")} pesos por USDT.</p>` : "");
+        $("itot").textContent = Cobro.texto(monto(metodo), metodo);
+      };
+      const mp = $("mp"); if(mp) mp.addEventListener("click", e => { const b = e.target.closest("button[data-m]"); if(b){ metodo = b.dataset.m; pintar(); } });
+      pintar();
       $("ig").onclick = async () => {
         const msg = $("im"), b = $("ig"), jugadores = [];
         for(let i = 0; i < n; i++){
@@ -479,23 +575,31 @@
           jugadores.push({ nombre, id });
         }
         if(new Set(jugadores.map(j => j.id)).size < n){ msg.textContent = "Hay IDs repetidos en el equipo."; return; }
-        const co = kills ? $("ico").value.trim() : "", ref = costo > 0 ? $("ir").value.trim() : "";
-        if(kills && co.length < 3){ msg.textContent = "Escribí dónde querés cobrar tus kills."; return; }
-        if(costo > 0 && ref.length < 4){ msg.textContent = "Escribí el número de comprobante de tu pago."; return; }
+        if(paso === 1){ paso = 2; mostrar(); return; }
+        const co = cobraPremio ? $("ico").value.trim() : "", arch = costo > 0 ? $("ir").files[0] : null;
+        if(cobraPremio && co.length < 3){ msg.textContent = kills ? "Escribí dónde querés cobrar tus kills." : "Escribí dónde querés cobrar tu premio."; return; }
+        if(costo > 0){ const ev = Comprobante.validar(arch); if(ev){ msg.textContent = ev; return; } }
         if(!$("iac").checked){ msg.textContent = "Tenés que aceptar las reglas del torneo."; return; }
         msg.textContent = ""; b.disabled = true; b.innerHTML = '<span class="spin"></span>';
+        let sub = null;
+        if(costo > 0){
+          try{ sub = await Comprobante.subir(arch); }
+          catch(_){ b.disabled = false; b.textContent = "Enviar inscripción"; msg.textContent = "No se pudo subir la foto. Probá de nuevo."; return; }
+        }
         const r = await sb.rpc("inscribir_torneo",{
           p_torneo: t.id, p_equipo: n > 1 ? $("ie").value.trim() : null, p_jugadores: jugadores,
-          p_metodo: costo > 0 ? (usdt ? "binance" : "mercadopago") : null, p_ref: ref || null, p_cobro: co || null
+          p_metodo: costo > 0 ? metodo : null, p_ref: sub ? sub.ref : null, p_cobro: co ? Cobro.nombre[metodo] + ": " + co : null
         });
         if(r.error){ b.disabled = false; b.textContent = costo > 0 ? "Enviar inscripción" : "Confirmar inscripción"; msg.textContent = errTxt(r.error.message); return; }
+        if(sub && r.data) await Comprobante.adjuntar("inscripcion", r.data, sub.ruta);
+        try{ localStorage.setItem("xk_jug_" + u.id, JSON.stringify(jugadores)); }catch(_){}
         sb.functions.invoke("co",{ body:{ action:"aviso", id:r.data } }).catch(()=>{});   // te avisa por Discord/WhatsApp
         modal.classList.remove("wide");
         modal.innerHTML = `<h3>${costo > 0 ? "¡Inscripción enviada!" : "¡Inscripción confirmada!"}</h3>
-          <p>${costo > 0 ? "Vamos a revisar tu pago y te confirmamos el lugar en <b style=\"color:var(--text)\">" + esc(t.titulo) + "</b>. Vas a verlo en la tarjeta del torneo." : "Ya estás anotado en <b style=\"color:var(--text)\">" + esc(t.titulo) + "</b>."}</p>
+          <p>${costo > 0 ? "Vamos a revisar tu pago y te confirmamos el lugar en <b style=\"color:var(--text)\">" + esc(t.titulo) + "</b>. Podés seguir el estado en Mis torneos." : "Ya estás anotado en <b style=\"color:var(--text)\">" + esc(t.titulo) + "</b>."}</p>
           ${jugadores.map((j,i) => `<div class="row"><span>${n === 1 ? "Jugador" : "Jugador " + (i+1)}</span><b>${esc(j.nombre)} · ${esc(j.id)}</b></div>`).join("")}
           <p class="note">Torneo: ${new Date(t.fecha).toLocaleDateString("es-AR",{ day:"numeric", month:"long" })} a las ${new Date(t.fecha).toLocaleTimeString("es-AR",{ hour:"2-digit", minute:"2-digit" })} hs.</p>
-          <div class="acts"><button class="btn" type="button" id="iok">Listo</button></div>`;
+          <div class="acts"><button class="btn ghost" type="button" id="iok">Cerrar</button><a class="btn" href="mis-torneos.html">Ver mis torneos</a></div>`;
         $("iok").onclick = cerrar;
         cargar();
       };
