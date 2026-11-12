@@ -34,6 +34,12 @@
     cargar();
   });
   const quien = p => `${esc(p?.nombre)} <span style="color:var(--muted)">(${esc(p?.email)})</span>`;
+  // WhatsApp: número normalizado (los de Argentina sin el 9 se arreglan solos) y botones con el mensaje ya escrito
+  const numWa = i => { let n = String(i.telefono || "").replace(/\D/g,""); if(n.startsWith("54") && !n.startsWith("549") && n.length === 12) n = "549" + n.slice(2); return n; };
+  const tel = i => { const n = numWa(i); return n ? ` · 📱 <a href="https://wa.me/${n}" target="_blank" rel="noopener" style="color:var(--wa)">${esc(i.telefono)}</a>` : ""; };
+  const waBtn = (i, label, txt) => { const n = numWa(i); return n ? `<a class="btn ghost sm" href="https://wa.me/${n}?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">💬 ${label}</a>` : ""; };
+  const pnom = i => String((i.perfiles && i.perfiles.nombre) || "").trim().split(" ")[0] || "jugador";
+  const plano = h => String(h).replace(/<[^>]*>/g, "");
   const fecha = t => new Date(t).toLocaleString("es-AR",{dateStyle:"short",timeStyle:"short"});
 
   let TAB = "pend", FILT = "todos", OT = new Set(), editId = null, TORN = {}, INSC = {}, PEND = [], ESPERA = {}, DEV = [], INSBYID = {}, KP = {}, CAP = {}, FAL = {}, CFGS = {}, LLAV = {};
@@ -165,6 +171,11 @@
         canc && pagado ? (i.reembolsado ? '<span class="ix-b ok">↩ Devuelto</span>' : '<span class="ix-b bad">↩ Falta devolver</span>') : ""
       ].join("");
       const premioC = t.tipo !== "kills" && fin && i.puesto && i.puesto <= 3 ? premioClasico(t, i.puesto, L.length) : "";
+      const premioTxt = t.tipo === "kills" ? (!canc && i.kills != null && Number(i.premio_kills) > 0 ? plano(cobrar(i.premio_kills, t, metCobro(i))) : "") : premioC;
+      const pn = pnom(i), mt = t.titulo;
+      const waConf = !canc && i.estado === "confirmada" && (prox || vivo) ? waBtn(i, "Avisar: confirmada", `Hola ${pn}! 👋 Tu inscripción a "${mt}" está confirmada ✅\n📅 ${fecha(t.fecha)}\n⏰ Hacé el check-in desde Mis torneos entre 1 hora y 30 minutos antes del inicio: ${new URL("mis-torneos.html", location.href).href}\n¡Éxitos!`) : "";
+      const waGan = fin && !canc && premioTxt && !i.premio_pagado ? waBtn(i, "Avisar: ganaste", `¡Felicitaciones ${pn}! 🏆 ${i.puesto ? "Quedaste " + i.puesto + "º" : "Ganaste"} en "${mt}"${i.kills != null ? " con " + i.kills + " kills" : ""}.\nTu premio: ${premioTxt}.\nTe lo pagamos a: ${i.cobro || "la cuenta que indicaste"}. Apenas lo hagamos te paso el comprobante por acá.`) : "";
+      const waPago = fin && !canc && premioTxt && i.premio_pagado ? waBtn(i, "Enviar comprobante", `Hola ${pn}! Ya te pagamos tu premio de "${mt}": ${premioTxt}${i.cobro ? " a " + i.cobro : ""} ✅\nAcá te paso el comprobante. ¡Gracias por jugar en XITERKING! 🔥`) : "";
       const celdas = [
         pagado ? ["Pagó", cobrar(i.monto, t, i.metodo) + " · " + metN] : [],
         pagado ? ["Comprobante", i.comprobante_ruta ? `<button class="btn ghost sm" type="button" data-comp="${esc(i.comprobante_ruta)}">📷 Ver foto</button>` : (/^foto:/.test(i.referencia || "") ? "📷 sin archivo" : esc(i.referencia || "—"))] : [],
@@ -174,13 +185,14 @@
         premioC ? ["Debés pagar (" + i.puesto + "º)", esc(premioC)] : []
       ].filter(x => x.length).map(x => `<div class="ix-c"><small>${x[0]}</small><b>${x[1]}</b></div>`).join("");
       const botones = [
+        waConf, waGan, waPago,
         canc && pagado && !i.reembolsado ? `<button class="btn sm" type="button" data-rb="${i.id}">Marcar devuelto</button>` : "",
         !canc && t.tipo === "kills" && i.kills != null && !i.premio_pagado ? `<button class="btn ghost sm" type="button" data-pp="${i.id}">Marcar premio pagado</button>` : "",
         premioC && !i.premio_pagado ? `<button class="btn ghost sm" type="button" data-ppc="${i.id}">Marcar premio pagado</button>` : "",
         (prox || vivo) ? `<button class="btn danger sm" type="button" data-ci="${i.id}">Quitar inscripción</button>` : ""
       ].join("");
       return `<div class="ix">
-        <div class="ix-h"><div><b>${esc(etiq(i))}</b><small>${quien(i.perfiles)}</small></div><div class="ix-bs">${badges}</div></div>
+        <div class="ix-h"><div><b>${esc(etiq(i))}</b><small>${quien(i.perfiles)}${tel(i)}</small></div><div class="ix-bs">${badges}</div></div>
         <div class="ix-j">${(i.inscripcion_jugadores || []).map(j => `<span class="ix-p">${esc(j.nombre)} <i>${esc(j.id_jugador)}</i></span>`).join("")}</div>
         ${celdas ? `<div class="ix-g">${celdas}</div>` : ""}
         <div data-compout></div>
@@ -251,7 +263,7 @@
       sb.from("depositos").select("id,metodo,monto,referencia,comprobante_ruta,creado,perfiles(nombre,email)").eq("estado","pendiente").order("creado"),
       sb.from("pedidos").select("id,diamantes,precio,id_jugador,creado,co_reference,motivo,perfiles(nombre,email)").eq("estado","pendiente").order("creado"),
       sb.from("torneos").select("id,titulo,modo,fecha,premio,premio2,premio3,mapa,formato,reglas,cupos,costo,descripcion,estado,tipo,pago_kill,moneda,cierre_horas,minimo,pozo_pct,pozo_base,reparto,cancelado,partidas,link_vivo,fecha_anterior,fecha_cambiada,por_fases,tercer_puesto").order("fecha",{ascending:false}),
-      sb.from("inscripciones").select("id,torneo_id,equipo,monto,metodo,referencia,comprobante_ruta,cobro,usuario,checkin,no_presento,estado,puesto,kills,premio_kills,premio_pagado,reembolsado,creado,perfiles(nombre,email),torneos(titulo,moneda),inscripcion_jugadores(nombre,id_jugador)").in("estado",["pendiente","confirmada"]).order("creado"),
+      sb.from("inscripciones").select("id,torneo_id,equipo,monto,metodo,referencia,comprobante_ruta,cobro,usuario,checkin,no_presento,estado,puesto,kills,premio_kills,premio_pagado,reembolsado,creado,telefono,perfiles(nombre,email),torneos(titulo,moneda),inscripcion_jugadores(nombre,id_jugador)").in("estado",["pendiente","confirmada"]).order("creado"),
       sb.from("kills_partidas").select("inscripcion_id,partida,kills").order("partida"),
       sb.from("capturas").select("inscripcion_id,ruta"),
       sb.from("faltas").select("usuario").gte("creado", new Date(Date.now() - 30 * 864e5).toISOString()),
@@ -291,14 +303,14 @@
       <h2>Inscripciones a torneos pendientes (${PEND.length})</h2>
       <div class="adm" style="margin-bottom:44px">${PEND.map(x=>`
         <div class="step" data-insc="${x.id}">
-          <div class="row"><b>${quien(x.perfiles)}</b></div>
+          <div class="row"><b>${quien(x.perfiles)}${tel(x)}</b></div>
           <div class="row"><span>Torneo</span><b>${esc(x.torneos && x.torneos.titulo)}</b></div>
           <div class="row"><span>${x.equipo?esc(x.equipo):"Jugadores"}</span><b>${(x.inscripcion_jugadores||[]).map(j=>esc(j.nombre)+" ("+esc(j.id_jugador)+")").join(", ")}</b></div>
           <div class="row"><span>Debe pagar</span><b>${cobrar(x.monto, x.torneos, x.metodo)} · ${x.metodo==="binance"?"Binance":"Mercado Pago"}</b></div>
           ${compRow(x)}
           ${x.cobro?`<div class="row"><span>Cobra en</span><b>${esc(x.cobro)}</b></div>`:""}
           <div class="row"><span>Fecha</span><b>${fecha(x.creado)}</b></div>
-          <div class="acts"><button class="btn" type="button" data-ra="ok">Aprobar pago</button><button class="btn ghost" type="button" data-ra="no">Rechazar</button></div>
+          <div class="acts"><button class="btn" type="button" data-ra="ok">Aprobar pago</button><button class="btn ghost" type="button" data-ra="no">Rechazar</button>${waBtn(x, "Escribirle", `Hola ${pnom(x)}! Te escribo de XITERKING por tu inscripción a "${x.torneos && x.torneos.titulo}".`)}</div>
         </div>`).join("") || '<p style="color:var(--muted)">No hay inscripciones pendientes.</p>'}</div>
       <h2>Devoluciones solicitadas (${DEV.length})</h2>
       <div class="adm" style="margin-bottom:44px">${DEV.map(s => { const i = INSBYID[s.inscripcion_id] || {}, t = TORN[s.torneo_id] || {}; return `

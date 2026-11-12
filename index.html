@@ -240,7 +240,7 @@ section.rv{margin-bottom:68px}
   </footer>
 </div>
   <!-- Cambiá el número por el tuyo (código de país + número, sin + ni espacios) -->
-  <a class="wa" href="https://wa.me/5491151042005?text=Hola%2C%20tuve%20un%20problema%20con%20mi%20compra" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>Soporte</a>
+  <a class="wa" href="https://wa.me/5491151741432?text=Hola%2C%20tuve%20un%20problema%20con%20mi%20compra" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>Soporte</a>
 <div id="ov"><div class="modal" id="modal"></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
 <script src="assets/app.js"></script>
@@ -492,7 +492,7 @@ section.rv{margin-bottom:68px}
 
     const ERR = {
       sesion:"Tu sesión venció. Volvé a ingresar.",
-      lleno:"Se agotaron los cupos.", ya:"Ya estás inscripto en este torneo. Mirá el estado en Mis torneos.", comprobante:"Ese comprobante ya fue usado en otra inscripción. Revisá Mis torneos: puede que ya estés anotado.",
+      lleno:"Se agotaron los cupos.", ya:"Ya estás inscripto en este torneo. Mirá el estado en Mis torneos.", telefono:"Escribí un teléfono válido con código de país.", comprobante:"Ese comprobante ya fue usado en otra inscripción. Revisá Mis torneos: puede que ya estés anotado.",
       duplicado:"Alguno de esos IDs ya está inscripto en este torneo.", cerrado:"Las inscripciones ya cerraron.",
       jugadores:"Faltan datos de jugadores.", nombre:"Revisá los nombres (2 a 30 caracteres).", id:"Revisá los IDs (solo números).",
       torneo:"El torneo ya no existe.", metodo:"Método de pago inválido.", referencia:"Subí la foto del comprobante.",
@@ -532,7 +532,9 @@ section.rv{margin-bottom:68px}
         <div class="tn-pn" id="ipas" style="margin:0 0 10px">Paso 1 de 2 · Jugadores</div>
         <div id="p1">${gu.length ? '<p class="note" style="margin:0 0 10px">Completamos tus datos de la última vez. Revisalos antes de seguir.</p>' : ""}
         ${n > 1 ? '<div class="field"><label for="ie">Nombre del equipo (opcional)</label><input id="ie" maxlength="30" autocomplete="off" placeholder="Ej: Los Diablos"></div>' : ""}
-        ${jug}</div>
+        ${jug}
+        <div class="field"><label for="itel">Tu teléfono (WhatsApp)</label><input id="itel" type="tel" inputmode="tel" maxlength="20" autocomplete="tel" placeholder="Ej: +54 9 11 5555 5555"><small style="color:var(--muted);display:block;margin-top:6px">Lo usamos solo para enviarte el comprobante si ganás un premio. Con código de país.</small></div>
+        </div>
         <div id="p2" hidden>${pago}${cobro}
         <div class="row"><span>Inscripción</span><b id="itot">${costo > 0 ? mon(costo, t.moneda) : "Gratis"}</b></div>
         ${costo > 0 ? '<p class="note">Revisamos tu pago y te confirmamos el lugar. Este pago no usa tu saldo de diamantes.</p>' : ""}
@@ -544,6 +546,7 @@ section.rv{margin-bottom:68px}
       ov.classList.add("open");
       $("n0").focus();
       for(let i = 0; i < n; i++){ if(gu[i]){ $("n"+i).value = String(gu[i].nombre || "").slice(0,30); $("i"+i).value = String(gu[i].id || "").replace(/\D/g,"").slice(0,15); } }
+      try{ $("itel").value = localStorage.getItem("xk_tel_" + u.id) || ""; }catch(_){}
       const mostrar = () => {
         $("p1").hidden = paso !== 1; $("p2").hidden = paso !== 2;
         $("ipas").textContent = paso === 1 ? "Paso 1 de 2 · Jugadores" : "Paso 2 de 2 · " + ((costo > 0 || cobraPremio) ? "Pago y confirmación" : "Confirmación");
@@ -575,6 +578,8 @@ section.rv{margin-bottom:68px}
           jugadores.push({ nombre, id });
         }
         if(new Set(jugadores.map(j => j.id)).size < n){ msg.textContent = "Hay IDs repetidos en el equipo."; return; }
+        const tel = $("itel").value.trim().replace(/[\s().-]/g,"");
+        if(!/^\+?[0-9]{8,15}$/.test(tel)){ msg.textContent = "Escribí un teléfono válido con código de país (solo números)."; return; }
         if(paso === 1){ paso = 2; mostrar(); return; }
         const co = cobraPremio ? $("ico").value.trim() : "", arch = costo > 0 ? $("ir").files[0] : null;
         if(cobraPremio && co.length < 3){ msg.textContent = kills ? "Escribí dónde querés cobrar tus kills." : "Escribí dónde querés cobrar tu premio."; return; }
@@ -587,18 +592,19 @@ section.rv{margin-bottom:68px}
           catch(_){ b.disabled = false; b.textContent = "Enviar inscripción"; msg.textContent = "No se pudo subir la foto. Probá de nuevo."; return; }
         }
         const r = await sb.rpc("inscribir_torneo",{
-          p_torneo: t.id, p_equipo: n > 1 ? $("ie").value.trim() : null, p_jugadores: jugadores,
+          p_torneo: t.id, p_telefono: tel, p_equipo: n > 1 ? $("ie").value.trim() : null, p_jugadores: jugadores,
           p_metodo: costo > 0 ? metodo : null, p_ref: sub ? sub.ref : null, p_cobro: co ? Cobro.nombre[metodo] + ": " + co : null
         });
         if(r.error){ b.disabled = false; b.textContent = costo > 0 ? "Enviar inscripción" : "Confirmar inscripción"; msg.textContent = errTxt(r.error.message); return; }
         if(sub && r.data) await Comprobante.adjuntar("inscripcion", r.data, sub.ruta);
-        try{ localStorage.setItem("xk_jug_" + u.id, JSON.stringify(jugadores)); }catch(_){}
+        try{ localStorage.setItem("xk_jug_" + u.id, JSON.stringify(jugadores)); localStorage.setItem("xk_tel_" + u.id, tel); }catch(_){}
         sb.functions.invoke("co",{ body:{ action:"aviso", id:r.data } }).catch(()=>{});   // te avisa por Discord/WhatsApp
         modal.classList.remove("wide");
         modal.innerHTML = `<h3>${costo > 0 ? "¡Inscripción enviada!" : "¡Inscripción confirmada!"}</h3>
           <p>${costo > 0 ? "Vamos a revisar tu pago y te confirmamos el lugar en <b style=\"color:var(--text)\">" + esc(t.titulo) + "</b>. Podés seguir el estado en Mis torneos." : "Ya estás anotado en <b style=\"color:var(--text)\">" + esc(t.titulo) + "</b>."}</p>
           ${jugadores.map((j,i) => `<div class="row"><span>${n === 1 ? "Jugador" : "Jugador " + (i+1)}</span><b>${esc(j.nombre)} · ${esc(j.id)}</b></div>`).join("")}
           <p class="note">Torneo: ${new Date(t.fecha).toLocaleDateString("es-AR",{ day:"numeric", month:"long" })} a las ${new Date(t.fecha).toLocaleTimeString("es-AR",{ hour:"2-digit", minute:"2-digit" })} hs.</p>
+          ${/^https:\/\//.test(COMUNIDAD.whatsapp || "") ? `<a class="btn ghost" style="display:block;text-align:center;margin-bottom:10px" href="${esc(COMUNIDAD.whatsapp)}" target="_blank" rel="noopener">📢 Sumate al canal de WhatsApp y enterate de los torneos</a>` : ""}
           <div class="acts"><button class="btn ghost" type="button" id="iok">Cerrar</button><a class="btn" href="mis-torneos.html">Ver mis torneos</a></div>`;
         $("iok").onclick = cerrar;
         cargar();

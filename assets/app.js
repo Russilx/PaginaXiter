@@ -185,6 +185,23 @@ Auth.listo.then(()=>{
   document.body.appendChild(n);
 });
 
+// ===== SOPORTE POR WHATSAPP: el mensaje ya viaja con tu cuenta y el tema de la página =====
+const Soporte = {
+  numero: "5491151741432",
+  url(texto){
+    const u = Auth.actual();
+    const cuenta = u && u.email ? "\n\nMi cuenta: " + (u.nombre ? u.nombre + " · " : "") + u.email : "";
+    return "https://wa.me/" + this.numero + "?text=" + encodeURIComponent(texto + cuenta);
+  },
+  tema(){
+    const p = location.pathname.split("/").pop() || "index.html";
+    return { "index.html":"los torneos", "free-fire-latam.html":"mis recargas de diamantes", "legal.html":"las reglas y políticas", "mis-torneos.html":"mis torneos", "cuenta.html":"mi cuenta", "resultados.html":"los resultados" }[p] || "la tienda";
+  }
+};
+Auth.listo.then(() => {
+  document.querySelectorAll("a.wa").forEach(a => { a.href = Soporte.url("Hola, tengo una consulta sobre " + Soporte.tema() + "."); });
+});
+
 // ===== COMUNIDAD: pegá acá tus links (si dejás uno vacío, ese botón no aparece) =====
 const COMUNIDAD = {
   discord: "",    // ej: "https://discord.gg/tuinvitacion"

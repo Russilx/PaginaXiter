@@ -21,6 +21,7 @@
   <div id="aviso"></div>
   <div id="stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:18px 0"></div>
   <div id="lista"><div class="tvacio">Cargando…</div></div>
+  <div id="comunidad"></div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
 <script src="assets/app.js"></script>
@@ -67,6 +68,7 @@
         <div style="margin-bottom:10px"><span class="hist-chip">${t.cancelado ? "❌ Cancelado" : ESTADO[t.estado] || ""}</span>${pend ? '<span class="hist-chip">⏳ Pago en revisión</span>' : ""}${x.equipo ? `<span class="hist-chip">${esc(x.equipo)}</span>` : ""}${/^https:\/\//.test(t.link_vivo || "") ? `<a class="hist-chip" href="${esc(t.link_vivo)}" target="_blank" rel="noopener">📺 Transmisión</a>` : ""}</div>
         ${res}${llave}${ck}${dev}
         ${sube ? `<div style="margin-top:12px"><label class="btn ghost sm" style="cursor:pointer">📎 Subir captura de resultados${CAPN[x.id] ? " (" + CAPN[x.id] + " subida" + (CAPN[x.id] > 1 ? "s" : "") + ")" : ""}<input type="file" accept="image/*" data-up="${x.id}" hidden></label><small style="display:block;color:var(--muted);margin-top:6px">Subí la captura de la pantalla final de cada partida: sirve para verificar las kills.</small></div>` : ""}
+        <div style="margin-top:12px"><a class="btn ghost sm" href="${esc(Soporte.url('Hola, tengo una consulta sobre mi inscripción en "' + t.titulo + '" (inscripción #' + x.id + ').'))}" target="_blank" rel="noopener">💬 Consultar por este torneo</a></div>
       </article>`;
     }).join("");
     $("lista").innerHTML = (esp + cards) || '<div class="tvacio"><b>Todavía no te anotaste a ningún torneo</b>Cuando te inscribas, vas a ver acá tu historial y tus estadísticas.</div>';

@@ -98,7 +98,7 @@
 </div>
 
 <!-- Cambiá el número por el tuyo (código de país + número, sin + ni espacios) -->
-<a class="wa" href="https://wa.me/5491151042005?text=Hola%2C%20tuve%20un%20problema%20con%20mi%20compra" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>Soporte</a>
+<a class="wa" href="https://wa.me/5491151741432?text=Hola%2C%20tuve%20un%20problema%20con%20mi%20compra" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>Soporte</a>
 <div id="ov"><div class="modal" id="modal"></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
 <script src="assets/app.js"></script>
@@ -309,7 +309,7 @@
       await sb.functions.invoke("co",{ body:{ action:"sync" } }).catch(()=>{});
       await Saldo.refrescar(); listar();
     }, 30000);
-    document.getElementById("hist").innerHTML = (p.data&&p.data.length) ? p.data.map(c=>`<div><div><strong>${c.diamantes.toLocaleString("es-AR")} diamantes</strong><br><span>ID ${esc(c.id_jugador)} · ${fecha(c.creado)}</span></div><div style="text-align:right"><b>${fmt(c.precio)}</b><br><span class="est ${c.estado}">${c.estado==="rechazado"?"Rechazado · saldo devuelto":ESTADO[c.estado]}</span></div></div>`).join("") : vacio("Todavía no hiciste compras.");
+    document.getElementById("hist").innerHTML = (p.data&&p.data.length) ? p.data.map(c=>`<div><div><strong>${c.diamantes.toLocaleString("es-AR")} diamantes</strong><br><span>ID ${esc(c.id_jugador)} · ${fecha(c.creado)}</span></div><div style="text-align:right"><b>${fmt(c.precio)}</b><br><span class="est ${c.estado}">${c.estado==="rechazado"?"Rechazado · saldo devuelto":ESTADO[c.estado]}</span>${c.estado==="pendiente" ? `<br><a href="${esc(Soporte.url("Hola, consulto por mi pedido #" + c.id + " de " + c.diamantes + " diamantes (ID de jugador " + c.id_jugador + "). Figura En proceso."))}" target="_blank" rel="noopener" style="color:var(--wa);font-size:.8rem">💬 Consultar</a>` : ""}</div></div>`).join("") : vacio("Todavía no hiciste compras.");
     document.getElementById("hist2").innerHTML = (d.data&&d.data.length) ? d.data.map(c=>`<div><div><strong>${c.metodo==="binance"?"Binance":"Mercado Pago"}</strong><br><span>${fecha(c.creado)}</span></div><div style="text-align:right"><b>${fmt(c.monto)}</b><br><span class="est ${c.estado}">${ESTADO[c.estado]}</span></div></div>`).join("") : vacio("Todavía no cargaste saldo.");
   }
 
