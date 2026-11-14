@@ -227,7 +227,7 @@ section.rv{margin-bottom:68px}
     <details><summary>¿Puedo pedir reembolso de una recarga ya entregada?</summary><p>No, es un producto digital de entrega inmediata. Si hubo un error nuestro (diamantes distintos al paquete o una recarga duplicada), escribinos y lo corregimos. Revisá bien tu UID antes de confirmar: una recarga entregada en otra cuenta no se puede revertir.</p></details>
     <details><summary>¿Cómo pago la inscripción a un torneo?</summary><p>Podés elegir entre Mercado Pago y Binance Pay al inscribirte (te mostramos el monto en pesos o en USDT); no se paga con el saldo de diamantes. Tu lugar queda confirmado cuando aprobamos el pago.</p></details>
     <details><summary>¿Qué es el check-in y por qué es obligatorio?</summary><p>Es la confirmación de que vas a jugar. Se abre 1 hora antes del inicio y cierra 30 minutos antes, desde la tarjeta del torneo o desde Mis torneos. Si no lo hacés, perdés tu lugar y no se devuelve la inscripción.</p></details>
-    <details><summary>¿Cuándo y cómo cobro un premio?</summary><p>Después de que termina el torneo y verificamos los resultados, a la cuenta que indicaste al inscribirte (Binance Pay o Mercado Pago). Revisá bien ese dato: no podemos pagar a otra cuenta.</p></details>
+    <details><summary>¿Cuándo y cómo cobro un premio?</summary><p>Después de que termina el torneo y verificamos los resultados, a la cuenta que indicaste al inscribirte (Binance Pay o Mercado Pago). Revisá bien ese dato: no podemos pagar a otra cuenta. Si el torneo premia con diamantes, se entregan directo al ID de Free Fire que cargaste al inscribirte, así que revisá bien ese ID.</p></details>
     <details><summary>¿Qué pasa si se cancela el torneo?</summary><p>Devolvemos el 100% de la inscripción. Si no se llega al mínimo de equipos al cerrar las inscripciones, el torneo se cancela.</p></details>
     <p class="note" style="margin-top:14px">¿Otra duda? Escribinos por el botón de Soporte o mirá el <a href="legal.html#reglamento" style="text-decoration:underline">reglamento completo</a>.</p>
   </section>
@@ -516,12 +516,16 @@ section.rv{margin-bottom:68px}
             <div class="field"><label for="n${i}">Nombre en el juego</label><input id="n${i}" maxlength="30" autocomplete="off"></div>
             <div class="field"><label for="i${i}">ID de jugador</label><input id="i${i}" inputmode="numeric" maxlength="15" autocomplete="off" placeholder="Ej: 123456789"></div>
           </div></div>`).join("");
-      const cobraPremio = kills || Number(t.pozo_pct) > 0 || [t.premio, t.premio2, t.premio3].some(x => x && String(x).trim());   // clásicos con premio también piden dónde cobrar
+      const premios = [t.premio, t.premio2, t.premio3].filter(x => x && String(x).trim());
+      // Premio en diamantes: si todos los premios escritos mencionan "diamantes" (o 💎), se entregan al ID de Free Fire y no se pide cuenta de cobro
+      const premioDiam = !kills && !(Number(t.pozo_pct) > 0) && premios.length > 0 && premios.every(x => /diamante|💎/i.test(String(x)));
+      const cobraPremio = !premioDiam && (kills || Number(t.pozo_pct) > 0 || premios.length > 0);   // clásicos con premio en dinero también piden dónde cobrar
       let metodo = usdt ? "binance" : "mercadopago";   // el cliente puede cambiarlo abajo
       let paso = 1, gu = [];
       try{ gu = JSON.parse(localStorage.getItem("xk_jug_" + u.id) || "[]"); if(!Array.isArray(gu)) gu = []; }catch(_){ gu = []; }
       const monto = m => Cobro.convertir(costo, t.moneda, m);
       const cobro = cobraPremio ? `<div class="field"><label for="ico" id="icl"></label><input id="ico" maxlength="100" autocomplete="off"></div>` : "";
+      const avisoDiam = premioDiam ? `<div class="tn-min" style="margin:0 0 14px">💎 <b>El premio se entrega en diamantes</b> directo a tu ID de Free Fire, el que cargaste en el paso anterior. No tenés que indicar ninguna cuenta de cobro.</div>` : "";
       const pago = (costo <= 0 && !cobraPremio) ? "" : `<div class="tn-pay">
           <div class="tn-pn">${costo > 0 ? "Elegí cómo pagar" : (kills ? "Elegí cómo querés cobrar tus kills" : "Elegí cómo querés cobrar tu premio")}</div>
           <div class="mpick" id="mp" role="group" aria-label="Método de pago">${["mercadopago","binance"].map(m => `<button type="button" data-m="${m}"><b>${Cobro.nombre[m]}</b>${costo > 0 ? "<span>" + Cobro.texto(monto(m), m) + "</span>" : ""}</button>`).join("")}</div>
@@ -535,7 +539,7 @@ section.rv{margin-bottom:68px}
         ${jug}
         <div class="field"><label for="itel">Tu teléfono (WhatsApp)</label><input id="itel" type="tel" inputmode="tel" maxlength="20" autocomplete="tel" placeholder="Ej: +54 9 11 5555 5555"><small style="color:var(--muted);display:block;margin-top:6px">Lo usamos solo para enviarte el comprobante si ganás un premio. Con código de país.</small></div>
         </div>
-        <div id="p2" hidden>${pago}${cobro}
+        <div id="p2" hidden>${avisoDiam}${pago}${cobro}
         <div class="row"><span>Inscripción</span><b id="itot">${costo > 0 ? mon(costo, t.moneda) : "Gratis"}</b></div>
         ${costo > 0 ? '<p class="note">Revisamos tu pago y te confirmamos el lugar. Este pago no usa tu saldo de diamantes.</p>' : ""}
         <div class="tn-min" style="margin-top:14px"><b>Reglas de este torneo</b>${reglasT.length ? '<div style="margin-top:8px;white-space:pre-wrap;word-break:break-word;line-height:1.6">' + esc(reglasT) + "</div>" : '<div style="margin-top:6px">Este torneo no tiene reglas extra: rige el reglamento general.</div>'}<div style="margin-top:8px">📜 <a href="legal.html#reglamento" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">Reglamento general</a> · <a href="legal.html#reembolsos" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">Devoluciones</a></div></div>
@@ -593,7 +597,7 @@ section.rv{margin-bottom:68px}
         }
         const r = await sb.rpc("inscribir_torneo",{
           p_torneo: t.id, p_telefono: tel, p_equipo: n > 1 ? $("ie").value.trim() : null, p_jugadores: jugadores,
-          p_metodo: costo > 0 ? metodo : null, p_ref: sub ? sub.ref : null, p_cobro: co ? Cobro.nombre[metodo] + ": " + co : null
+          p_metodo: costo > 0 ? metodo : null, p_ref: sub ? sub.ref : null, p_cobro: co ? Cobro.nombre[metodo] + ": " + co : (premioDiam ? "Diamantes · ID FF: " + jugadores.map(j => j.id).join(", ") : null)
         });
         if(r.error){ b.disabled = false; b.textContent = costo > 0 ? "Enviar inscripción" : "Confirmar inscripción"; msg.textContent = errTxt(r.error.message); return; }
         if(sub && r.data) await Comprobante.adjuntar("inscripcion", r.data, sub.ruta);
