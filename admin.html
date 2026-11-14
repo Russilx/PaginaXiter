@@ -395,7 +395,8 @@
         <div id="t_prev" class="tprev"></div>
 
         <h4 class="tsh">4 · Reglas y requisitos</h4>
-        <textarea id="t_reglas" rows="4" maxlength="1200" placeholder="Nivel mínimo 40&#10;Prohibido usar hacks&#10;Llegar 10 minutos antes"></textarea>
+        <textarea id="t_reglas" rows="12" maxlength="6000" style="resize:vertical;line-height:1.5" placeholder="Escribilas como quieras: párrafos, títulos, listas con guiones, emojis…&#10;&#10;Se muestran tal cual las escribas, con los mismos saltos de línea."></textarea>
+        <small id="t_rcnt" style="display:block;color:var(--muted);margin-top:4px">0 / 6000 caracteres</small>
         <button type="button" class="btn ghost sm" id="t_rsug" style="margin-top:8px">Usar reglas sugeridas</button>
         <div class="acts" style="margin-top:6px"><button class="btn" type="button" id="tsave">🚀 Publicar torneo</button><button class="btn ghost" type="button" id="tcancel" style="display:none">Descartar cambios</button></div>
       </div>
@@ -755,6 +756,15 @@
     toast(r.error ? "No se pudo (¿ya estaba resuelto?)" : "Listo");
     cargar();
   });
+</script>
+<script>
+  // contador de caracteres de las reglas del torneo
+  (function(){
+    const upd = () => { const t = document.getElementById("t_reglas"), c = document.getElementById("t_rcnt"); if(t && c) c.textContent = t.value.length.toLocaleString("es-AR") + " / " + t.maxLength.toLocaleString("es-AR") + " caracteres"; };
+    document.addEventListener("input", e => { if(e.target && e.target.id === "t_reglas") upd(); });
+    document.addEventListener("focusin", e => { if(e.target && e.target.id === "t_reglas") upd(); });
+    document.addEventListener("click", e => { if(e.target && e.target.closest && e.target.closest("#t_rsug")) setTimeout(upd, 0); });
+  })();
 </script>
 </body>
 </html>
