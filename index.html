@@ -325,9 +325,9 @@ section.rv{margin-bottom:68px}
         ? `<div class="tn-min ok">✓ Mínimo de ${t.minimo} ${unidad} alcanzado · el torneo se juega</div>`
         : `<div class="tn-min">⚠ Mínimo ${t.minimo} ${unidad} para que se juegue · faltan <b>${t.minimo - insc}</b>. Si no se llega al cierre, se cancela y se devuelven los pagos.</div>`) : "";
       const faltaMin = !t.cancelado && cerrado && t.minimo && insc < t.minimo;
-      const reglas = (t.reglas || "").split("\n").map(x => x.trim()).filter(Boolean);
+      const reglas = (t.reglas || "").replace(/\r\n?/g, "\n").replace(/\n{3,}/g, "\n\n").trim();   // se muestra tal cual lo escribió el admin
       const regHtml = reglas.length
-        ? `<details class="tn-det"><summary>Reglas y requisitos de este torneo</summary><ul>${reglas.map(r => `<li>${esc(r)}</li>`).join("")}</ul><p style="margin:0;padding:0 16px 14px;font-size:.85rem;color:var(--muted)">📜 Rige también el <a href="legal.html#reglamento" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">reglamento general</a>.</p></details>`
+        ? `<details class="tn-det"><summary>Reglas y requisitos de este torneo</summary><div style="white-space:pre-wrap;word-break:break-word;padding:0 16px 14px;color:var(--muted);font-size:.9rem;line-height:1.6">${esc(reglas)}</div><p style="margin:0;padding:0 16px 14px;font-size:.85rem;color:var(--muted)">📜 Rige también el <a href="legal.html#reglamento" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">reglamento general</a>.</p></details>`
         : `<div class="tn-min" style="margin-bottom:10px">📜 Rige el <a href="legal.html#reglamento" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">reglamento general de torneos</a>.</div>`;
       const rkHtml = kills ? `<details class="tn-det" data-rank="${t.id}"><summary>Ranking de kills</summary><div class="tn-plist">Cargando…</div></details>` : "";
       const llvHtml = LLV[t.id] ? `<details class="tn-det" data-llave="${t.id}"><summary>🥊 Llaves: cuartos, semifinal y final</summary><div class="tn-llaves">Cargando…</div></details>` : "";
@@ -357,7 +357,7 @@ section.rv{margin-bottom:68px}
         <div class="tn3-body">
         <div class="tn-head"><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="tn-badge">${icono(n)}${esc(t.modo)}</span>${kills ? '<span class="tn-kt">💀 Por kills</span>' : ""}</div><span class="tn-st">${vivo ? "En vivo" : "Próximamente"}</span></div>
         <h3>${esc(t.titulo)}</h3>
-        ${t.descripcion ? `<p class="tn-desc">${esc(t.descripcion)}</p>` : ""}
+        ${t.descripcion ? `<p class="tn-desc" style="white-space:pre-wrap;word-break:break-word">${esc(String(t.descripcion).replace(/\r\n?/g, "\n").replace(/\n{3,}/g, "\n\n").trim())}</p>` : ""}
         ${pod}
         <div class="tn2-chips">${info}</div>
         </div>
@@ -509,7 +509,7 @@ section.rv{margin-bottom:68px}
         ov.classList.add("open"); return;
       }
       modal.classList.add("wide");
-      const reglasT = (t.reglas || "").split("\n").map(x => x.trim()).filter(Boolean);
+      const reglasT = (t.reglas || "").replace(/\r\n?/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
       const jug = Array.from({ length:n }, (_,i) => `<div class="tn-pl">
           <div class="tn-pn">${n === 1 ? "Tu cuenta de Free Fire" : i === 0 ? "Jugador 1 · Capitán" : "Jugador " + (i+1)}</div>
           <div class="tn-pg">
@@ -538,7 +538,7 @@ section.rv{margin-bottom:68px}
         <div id="p2" hidden>${pago}${cobro}
         <div class="row"><span>Inscripción</span><b id="itot">${costo > 0 ? mon(costo, t.moneda) : "Gratis"}</b></div>
         ${costo > 0 ? '<p class="note">Revisamos tu pago y te confirmamos el lugar. Este pago no usa tu saldo de diamantes.</p>' : ""}
-        <div class="tn-min" style="margin-top:14px"><b>Reglas de este torneo</b>${reglasT.length ? '<ul style="margin:8px 0 0;padding-left:20px">' + reglasT.map(r => "<li>" + esc(r) + "</li>").join("") + "</ul>" : '<div style="margin-top:6px">Este torneo no tiene reglas extra: rige el reglamento general.</div>'}<div style="margin-top:8px">📜 <a href="legal.html#reglamento" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">Reglamento general</a> · <a href="legal.html#reembolsos" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">Devoluciones</a></div></div>
+        <div class="tn-min" style="margin-top:14px"><b>Reglas de este torneo</b>${reglasT.length ? '<div style="margin-top:8px;white-space:pre-wrap;word-break:break-word;line-height:1.6">' + esc(reglasT) + "</div>" : '<div style="margin-top:6px">Este torneo no tiene reglas extra: rige el reglamento general.</div>'}<div style="margin-top:8px">📜 <a href="legal.html#reglamento" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">Reglamento general</a> · <a href="legal.html#reembolsos" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">Devoluciones</a></div></div>
         <label style="display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:.88rem;cursor:pointer"><input type="checkbox" id="iac" style="margin-top:3px"><span>Leí y acepto las reglas de este torneo, el <a href="legal.html#reglamento" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">reglamento general</a> y los <a href="legal.html#terminos" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">términos y condiciones</a>. Sé que tengo que hacer el check-in entre 1 hora y 30 minutos antes del inicio.</span></label>
         </div>
         <div class="msg" id="im" role="alert" style="margin-top:12px"></div>
