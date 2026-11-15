@@ -260,3 +260,17 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
 .reg-ok:has(input:checked){border-color:var(--red);background:#240d0e}
 .reg-ok.err{border-color:var(--err);box-shadow:0 0 0 3px #ff6b6b33}
 .reg-ck{margin:10px 2px 0;font-size:.8rem;line-height:1.5;color:var(--muted)}
+
+
+/* ===== Celular: que la cuenta (Admin / Saldo / usuario) se vea completa y no se corte ===== */
+@media(max-width:860px){
+  header.nav2,header{flex-wrap:wrap;row-gap:8px}
+  #acct{flex-wrap:wrap;min-width:0;max-width:100%}
+  #acct .pill.plain[href="mis-torneos.html"]{display:none}   /* "Mis torneos" ya está en la barra de abajo */
+  /* con sesión iniciada: arriba logo + usuario, abajo Admin y Saldo a lo ancho */
+  header.nav2:has(.user) #acct{display:contents}
+  header.nav2:has(.user) .logo{order:1}
+  header.nav2:has(.user) .user{order:2;margin-left:auto}
+  header.nav2:has(.user)::after{content:"";order:3;flex-basis:100%;height:0}
+  header.nav2:has(.user) #acct .pill{order:4;flex:1 1 auto;justify-content:center}
+}
