@@ -245,3 +245,18 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;back
 @media (hover:hover) and (pointer:fine){
   a[href],button:not(:disabled),.btn,.buy,.pack,.product,.bt,.tn3,summary,label[for],select,[role=button],[data-ins],.tabbar a{cursor:url("cursor-diablo.png") 16 16,pointer}
 }
+
+/* ===== Inscripción: reglas del torneo y aceptación ===== */
+.reg-box{margin-top:16px;border:1px solid var(--line2);border-radius:12px;background:#0006;overflow:hidden}
+.reg-h{padding:11px 14px;border-bottom:1px solid var(--line);font:700 .95rem "Chakra Petch",sans-serif;color:var(--text)}
+.reg-t{padding:12px 14px;white-space:pre-wrap;word-break:break-word;line-height:1.65;font-size:.88rem;color:#d4caca;max-height:min(250px,36vh);overflow-y:auto;overscroll-behavior:contain;outline:0;scrollbar-width:thin;scrollbar-color:#6a3636 transparent}
+.reg-t::-webkit-scrollbar{width:6px}
+.reg-t::-webkit-scrollbar-thumb{background:#6a3636;border-radius:3px}
+.reg-hint{padding:6px 14px;text-align:center;font-size:.78rem;font-weight:600;color:var(--gold);background:linear-gradient(#0000,#e5231b14);border-top:1px solid var(--line)}
+.reg-f{padding:9px 14px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted)}
+.reg-f a,.reg-ok a{color:#ff6a4d;text-decoration:underline}
+.reg-ok{display:flex;gap:12px;align-items:flex-start;margin-top:12px;padding:13px 14px;border:1.5px solid var(--line2);border-radius:12px;background:var(--input);font-size:.88rem;line-height:1.5;cursor:pointer;transition:border-color .15s,background .15s}
+.reg-ok input{flex:none;width:20px;height:20px;padding:0;margin:1px 0 0;accent-color:var(--red);cursor:pointer}
+.reg-ok:has(input:checked){border-color:var(--red);background:#240d0e}
+.reg-ok.err{border-color:var(--err);box-shadow:0 0 0 3px #ff6b6b33}
+.reg-ck{margin:10px 2px 0;font-size:.8rem;line-height:1.5;color:var(--muted)}
