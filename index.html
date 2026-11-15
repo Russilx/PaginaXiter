@@ -542,8 +542,9 @@ section.rv{margin-bottom:68px}
         <div id="p2" hidden>${avisoDiam}${pago}${cobro}
         <div class="row"><span>Inscripción</span><b id="itot">${costo > 0 ? mon(costo, t.moneda) : "Gratis"}</b></div>
         ${costo > 0 ? '<p class="note">Revisamos tu pago y te confirmamos el lugar. Este pago no usa tu saldo de diamantes.</p>' : ""}
-        <div class="tn-min" style="margin-top:14px"><b>Reglas de este torneo</b>${reglasT.length ? '<div style="margin-top:8px;white-space:pre-wrap;word-break:break-word;line-height:1.6;max-height:260px;overflow-y:auto;padding-right:6px">' + esc(reglasT) + "</div>" : '<div style="margin-top:6px">Este torneo no tiene reglas extra: rige el reglamento general.</div>'}<div style="margin-top:8px">📜 <a href="legal.html#reglamento" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">Reglamento general</a> · <a href="legal.html#reembolsos" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">Devoluciones</a></div></div>
-        <label style="display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:.88rem;cursor:pointer"><input type="checkbox" id="iac" style="margin-top:3px"><span>Leí y acepto las reglas de este torneo, el <a href="legal.html#reglamento" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">reglamento general</a> y los <a href="legal.html#terminos" target="_blank" rel="noopener" style="color:#ff6a4d;text-decoration:underline">términos y condiciones</a>. Sé que tengo que hacer el check-in entre 1 hora y 30 minutos antes del inicio.</span></label>
+        <div class="reg-box"><div class="reg-h">📜 Reglas de este torneo</div>${reglasT.length ? '<div class="reg-t" id="regt" tabindex="0">' + esc(reglasT) + '</div><div class="reg-hint" id="regh" hidden>↓ Deslizá para leer todas las reglas</div>' : '<div class="reg-t">Este torneo no tiene reglas extra: rige el reglamento general.</div>'}<div class="reg-f">📜 <a href="legal.html#reglamento" target="_blank" rel="noopener">Reglamento general</a> · <a href="legal.html#reembolsos" target="_blank" rel="noopener">Devoluciones</a></div></div>
+        <label class="reg-ok" for="iac"><input type="checkbox" id="iac" onchange="this.parentNode.classList.remove('err')"><span>Leí y acepto <b>las reglas de este torneo</b>, el <a href="legal.html#reglamento" target="_blank" rel="noopener">reglamento general</a> y los <a href="legal.html#terminos" target="_blank" rel="noopener">términos y condiciones</a>.</span></label>
+        <p class="reg-ck">🕐 Check-in obligatorio: se abre 1 hora antes y cierra 30 minutos antes del inicio. Sin check-in perdés tu lugar.</p>
         </div>
         <div class="msg" id="im" role="alert" style="margin-top:12px"></div>
         <div class="acts" style="margin-top:6px"><button class="btn ghost" type="button" id="ic">Cancelar</button><button class="btn" type="button" id="ig">${costo > 0 ? "Enviar inscripción" : "Confirmar inscripción"}</button></div>`;
@@ -551,12 +552,15 @@ section.rv{margin-bottom:68px}
       $("n0").focus();
       for(let i = 0; i < n; i++){ if(gu[i]){ $("n"+i).value = String(gu[i].nombre || "").slice(0,30); $("i"+i).value = String(gu[i].id || "").replace(/\D/g,"").slice(0,15); } }
       try{ $("itel").value = localStorage.getItem("xk_tel_" + u.id) || ""; }catch(_){}
+      // aviso "deslizá" si las reglas son largas y todavía no se leyeron hasta el final
+      const regchk = () => { const rt = $("regt"), rh = $("regh"); if(rt && rh) rh.hidden = rt.scrollHeight - rt.clientHeight - rt.scrollTop < 8; };
+      if($("regt")) $("regt").addEventListener("scroll", regchk);
       const mostrar = () => {
         $("p1").hidden = paso !== 1; $("p2").hidden = paso !== 2;
         $("ipas").textContent = paso === 1 ? "Paso 1 de 2 · Jugadores" : "Paso 2 de 2 · " + ((costo > 0 || cobraPremio) ? "Pago y confirmación" : "Confirmación");
         $("ic").textContent = paso === 1 ? "Cancelar" : "‹ Atrás";
         $("ig").textContent = paso === 1 ? "Siguiente" : (costo > 0 ? "Enviar inscripción" : "Confirmar inscripción");
-        $("im").textContent = ""; modal.scrollTop = 0;
+        $("im").textContent = ""; modal.scrollTop = 0; if(paso === 2) regchk();
       };
       $("ic").onclick = () => { if(paso === 2){ paso = 1; mostrar(); } else cerrar(); };
       mostrar();
@@ -588,7 +592,7 @@ section.rv{margin-bottom:68px}
         const co = cobraPremio ? $("ico").value.trim() : "", arch = costo > 0 ? $("ir").files[0] : null;
         if(cobraPremio && co.length < 3){ msg.textContent = kills ? "Escribí dónde querés cobrar tus kills." : "Escribí dónde querés cobrar tu premio."; return; }
         if(costo > 0){ const ev = Comprobante.validar(arch); if(ev){ msg.textContent = ev; return; } }
-        if(!$("iac").checked){ msg.textContent = "Tenés que aceptar las reglas del torneo."; return; }
+        if(!$("iac").checked){ msg.textContent = "Tenés que aceptar las reglas del torneo."; const lb = $("iac").closest(".reg-ok"); lb.classList.add("err"); lb.scrollIntoView({ block: "nearest", behavior: "smooth" }); return; }
         msg.textContent = ""; b.disabled = true; b.innerHTML = '<span class="spin"></span>';
         let sub = null;
         if(costo > 0){
